@@ -3,6 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
+// Use constant year to avoid hydration mismatch
+const CURRENT_YEAR = new Date().getFullYear();
+
 export default function NotFound() {
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen p-6 overflow-hidden z-1">
@@ -40,7 +43,7 @@ export default function NotFound() {
       </div>
       {/* <!-- Footer --> */}
       <p className="absolute text-sm text-center text-gray-500 -translate-x-1/2 bottom-6 left-1/2 dark:text-gray-400">
-        &copy; {new Date().getFullYear()} - TailAdmin
+        &copy; {CURRENT_YEAR} - TailAdmin
       </p>
     </div>
   );
