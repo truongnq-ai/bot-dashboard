@@ -6,15 +6,12 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
   BoxCubeIcon,
-  CalenderIcon,
+  BoltIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
-  ListIcon,
   PageIcon,
-  PieChartIcon,
   PlugInIcon,
-  TableIcon,
   UserCircleIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
@@ -33,9 +30,44 @@ const navItems: NavItem[] = [
     path: "/dashboard",
   },
   {
-    icon: <CalenderIcon />,
-    name: "Calendar",
-    path: "/calendar",
+    icon: <UserCircleIcon />,
+    name: "User Profile",
+    path: "/profile",
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "Users",
+    subItems: [
+      { name: "Students", path: "/users/students", pro: false },
+      { name: "Parents", path: "/users/parents", pro: false },
+      { name: "Admins", path: "/users/admins", pro: false },
+    ],
+  },
+  {
+    icon: <PageIcon />,
+    name: "Content",
+    subItems: [
+      { name: "Skills", path: "/content/skills", pro: false },
+      { name: "Questions", path: "/content/questions", pro: false },
+    ],
+  },
+  {
+    icon: <BoltIcon />,
+    name: "AI Quality",
+    subItems: [
+      { name: "Solutions Review", path: "/ai-quality/solutions", pro: false },
+      { name: "Accuracy Metrics", path: "/ai-quality/accuracy", pro: false },
+      { name: "Error Analysis", path: "/ai-quality/errors", pro: false },
+    ],
+  },
+  {
+    icon: <BoxCubeIcon />,
+    name: "System",
+    subItems: [
+      { name: "Metrics", path: "/system/metrics", pro: false },
+      { name: "Logs", path: "/system/logs", pro: false },
+      { name: "Health", path: "/system/health", pro: false },
+    ],
   },
 ];
 
