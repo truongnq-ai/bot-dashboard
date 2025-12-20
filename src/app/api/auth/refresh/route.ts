@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     // Call Core Service refresh token endpoint
     const apiUrl = getApiBaseUrl();
-    const response = await fetch(`${apiUrl}/v1/auth/refresh_token`, {
+    const response = await fetch(`${apiUrl}/api/v1/auth/refresh_token`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${refreshToken}`,

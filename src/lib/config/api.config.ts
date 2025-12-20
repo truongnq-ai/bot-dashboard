@@ -5,10 +5,10 @@
  * Environment variables should only contain secrets/keys for third-party services.
  */
 
-// Production API URL
-const PRODUCTION_API_URL = 'https://apitutor.dienluc.vn/api';
+// Production API URL (base domain only, without /api)
+const PRODUCTION_API_URL = 'https://apitutor.dienluc.vn';
 // Development API URL
-const DEVELOPMENT_API_URL = 'https://apitutor.dienluc.vn/api';
+const DEVELOPMENT_API_URL = 'https://apitutor.dienluc.vn';
 
 export function getApiBaseUrl(): string {
   // Determine default URL based on environment

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (refreshToken) {
       // Call Core Service logout endpoint to revoke refresh token
       const apiUrl = getApiBaseUrl();
-      await fetch(`${apiUrl}/v1/auth/logout`, {
+      await fetch(`${apiUrl}/api/v1/auth/logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${refreshToken}`,
