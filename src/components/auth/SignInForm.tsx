@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 import styles from "./AnimatedLoginForm.module.css";
 import "remixicon/fonts/remixicon.css";
 
@@ -10,11 +11,23 @@ export default function SignInForm() {
   const [isChecked, setIsChecked] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // TODO: Integrate with API
-    console.log("Login:", { username, password, rememberMe: isChecked });
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      await login(username, password);
+      // Redirect is handled by AuthContext
+    } catch (err: any) {
+      setError(err.message || "Login failed. Please check your credentials.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -82,6 +95,13 @@ export default function SignInForm() {
           </div>
         </div>
 
+        {/* Error message */}
+        {error && (
+          <div className={styles.loginError} style={{ color: 'red', marginBottom: '1rem', fontSize: '0.875rem' }}>
+            {error}
+          </div>
+        )}
+
         {/* Remember me & Forgot password */}
         <div className={styles.loginCheck}>
           <div className={styles.loginCheckGroup}>
@@ -101,8 +121,12 @@ export default function SignInForm() {
           </Link>
         </div>
 
-        <button type="submit" className={styles.loginButton}>
-          Login
+        <button 
+          type="submit" 
+          className={styles.loginButton}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Logging in...' : 'Login'}
         </button>
       </form>
     </div>
