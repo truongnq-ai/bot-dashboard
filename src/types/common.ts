@@ -1,5 +1,8 @@
 import { ReactNode } from 'react';
 
+/**
+ * Action item for ActionsDropdown component
+ */
 export interface ActionItem {
   id: string;
   label: string;
@@ -25,16 +28,3 @@ export interface PageResponse<T> {
   hasPrevious?: boolean;
 }
 
-import { ReactNode } from 'react';
-
-/**
- * Action item for ActionsDropdown component
- */
-export interface ActionItem {
-  id: string;
-  label: string;
-  type: 'success' | 'warning' | 'danger' | 'info';
-  icon?: ReactNode;
-  onClick: () => void;
-  disabled?: boolean;
-}
