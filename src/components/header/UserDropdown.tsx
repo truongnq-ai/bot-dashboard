@@ -4,9 +4,11 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
+import { useAuth } from "@/context/AuthContext";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const { logout } = useAuth();
 
 function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
   e.stopPropagation();
@@ -16,6 +18,19 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
   function closeDropdown() {
     setIsOpen(false);
   }
+
+  async function handleLogout() {
+    closeDropdown();
+    try {
+      await logout();
+      // Redirect is handled by AuthContext
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if logout fails, redirect to login
+      window.location.href = '/login';
+    }
+  }
+
   return (
     <div className="relative">
       <button
@@ -27,7 +42,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
             width={44}
             height={44}
             src="/images/user/owner.jpg"
-            alt="User"
+            alt="Người dùng"
           />
         </span>
 
@@ -90,7 +105,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
                   fill=""
                 />
               </svg>
-              Edit profile
+              Chỉnh sửa hồ sơ
             </DropdownItem>
           </li>
           <li>
@@ -115,7 +130,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
                   fill=""
                 />
               </svg>
-              Account settings
+              Cài đặt tài khoản
             </DropdownItem>
           </li>
           <li>
@@ -140,12 +155,14 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
                   fill=""
                 />
               </svg>
-              Support
+              Hỗ trợ
             </DropdownItem>
           </li>
         </ul>
-        <Link
-          href="/login"
+        <DropdownItem
+          onItemClick={closeDropdown}
+          tag="button"
+          onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <svg
@@ -164,7 +181,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
             />
           </svg>
           Đăng xuất
-        </Link>
+        </DropdownItem>
       </Dropdown>
     </div>
   );

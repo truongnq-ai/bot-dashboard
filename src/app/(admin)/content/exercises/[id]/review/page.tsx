@@ -6,8 +6,8 @@ import { Metadata } from 'next';
 import ExerciseReviewPanel from '@/components/exercises/ExerciseReviewPanel';
 
 export const metadata: Metadata = {
-  title: 'Review Exercise | Tutor Admin Dashboard',
-  description: 'Review exercise',
+  title: 'Duyệt bài tập | Tutor Admin Dashboard',
+  description: 'Duyệt bài tập',
 };
 
 export default function ReviewExercisePage({ params }: { params: { id: string } }) {

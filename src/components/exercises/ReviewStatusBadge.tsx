@@ -15,7 +15,7 @@ export default function ReviewStatusBadge({ status, className = '' }: ReviewStat
     switch (status) {
       case ReviewStatus.PENDING:
         return {
-          label: 'Pending',
+          label: 'Chờ duyệt',
           bgColor: 'bg-yellow-100',
           textColor: 'text-yellow-800',
           darkBgColor: 'dark:bg-yellow-900',
@@ -23,7 +23,7 @@ export default function ReviewStatusBadge({ status, className = '' }: ReviewStat
         };
       case ReviewStatus.APPROVED:
         return {
-          label: 'Approved',
+          label: 'Đã duyệt',
           bgColor: 'bg-green-100',
           textColor: 'text-green-800',
           darkBgColor: 'dark:bg-green-900',
@@ -31,7 +31,7 @@ export default function ReviewStatusBadge({ status, className = '' }: ReviewStat
         };
       case ReviewStatus.REJECTED:
         return {
-          label: 'Rejected',
+          label: 'Đã từ chối',
           bgColor: 'bg-red-100',
           textColor: 'text-red-800',
           darkBgColor: 'dark:bg-red-900',
@@ -39,7 +39,7 @@ export default function ReviewStatusBadge({ status, className = '' }: ReviewStat
         };
       case ReviewStatus.NEEDS_REVISION:
         return {
-          label: 'Needs Revision',
+          label: 'Cần chỉnh sửa',
           bgColor: 'bg-orange-100',
           textColor: 'text-orange-800',
           darkBgColor: 'dark:bg-orange-900',

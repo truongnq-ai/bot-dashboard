@@ -21,7 +21,7 @@ export const ERROR_CODES = {
  */
 export function handleApiError<T>(response: ResponseObject<T> | null): string {
   if (!response) {
-    return 'An unexpected error occurred';
+    return 'Đã xảy ra lỗi không mong muốn';
   }
 
   if (response.errorCode === ERROR_CODES.SUCCESS) {
@@ -31,17 +31,17 @@ export function handleApiError<T>(response: ResponseObject<T> | null): string {
   // Map error codes to user-friendly messages
   switch (response.errorCode) {
     case ERROR_CODES.UNAUTHORIZED:
-      return 'You are not authorized to perform this action. Please log in again.';
+      return 'Bạn không được phép thực hiện hành động này. Vui lòng đăng nhập lại.';
     case ERROR_CODES.FORBIDDEN:
-      return 'You do not have permission to perform this action.';
+      return 'Bạn không có quyền thực hiện hành động này.';
     case ERROR_CODES.NOT_FOUND:
-      return 'The requested resource was not found.';
+      return 'Không tìm thấy tài nguyên được yêu cầu.';
     case ERROR_CODES.VALIDATION_ERROR:
-      return response.errorDetail || 'Validation error. Please check your input.';
+      return response.errorDetail || 'Lỗi xác thực. Vui lòng kiểm tra thông tin nhập vào.';
     case ERROR_CODES.INTERNAL_SERVER_ERROR:
-      return 'An internal server error occurred. Please try again later.';
+      return 'Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau.';
     default:
-      return response.errorDetail || 'An error occurred. Please try again.';
+      return response.errorDetail || 'Đã xảy ra lỗi. Vui lòng thử lại.';
   }
 }
 

@@ -34,17 +34,17 @@ export default function ExerciseListTable({
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this exercise?')) {
+    if (!confirm('Bạn có chắc chắn muốn xóa bài tập này?')) {
       return;
     }
 
     try {
       setDeletingId(id);
       await deleteExercise(id);
-      showSuccess('Exercise deleted successfully');
+      showSuccess('Xóa bài tập thành công');
       onDelete?.();
     } catch (error) {
-      showError('Failed to delete exercise: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showError('Xóa bài tập thất bại: ' + (error instanceof Error ? error.message : 'Lỗi không xác định'));
     } finally {
       setDeletingId(null);
     }
@@ -62,28 +62,28 @@ export default function ExerciseListTable({
                     ID
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Problem Text
+                    Nội dung bài toán
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Grade
+                    Lớp
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Difficulty
+                    Độ khó
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Status
+                    Trạng thái
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Quality Score
+                    Điểm chất lượng
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Usage Count
+                    Số lần sử dụng
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Created At
+                    Ngày tạo
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Actions
+                    Thao tác
                   </TableCell>
                 </TableRow>
               </TableHeader>
@@ -91,7 +91,7 @@ export default function ExerciseListTable({
                 {exercises.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
-                      No exercises found
+                      Không tìm thấy bài tập nào
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -127,20 +127,20 @@ export default function ExerciseListTable({
                             href={`/content/exercises/${exercise.id}`}
                             className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                           >
-                            View
+                            Xem
                           </Link>
                           <Link
                             href={`/content/exercises/${exercise.id}/edit`}
                             className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
                           >
-                            Edit
+                            Sửa
                           </Link>
                           {exercise.reviewStatus === ReviewStatus.PENDING && (
                             <Link
                               href={`/content/exercises/${exercise.id}/review`}
                               className="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
                             >
-                              Review
+                              Duyệt
                             </Link>
                           )}
                           <button
@@ -148,7 +148,7 @@ export default function ExerciseListTable({
                             disabled={deletingId === exercise.id}
                             className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
                           >
-                            {deletingId === exercise.id ? 'Deleting...' : 'Delete'}
+                            {deletingId === exercise.id ? 'Đang xóa...' : 'Xóa'}
                           </button>
                         </div>
                       </TableCell>
@@ -165,9 +165,9 @@ export default function ExerciseListTable({
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-700 dark:text-gray-300">
-            Showing {pagination.page * pagination.pageSize + 1} to{' '}
-            {Math.min((pagination.page + 1) * pagination.pageSize, pagination.totalElements)} of{' '}
-            {pagination.totalElements} results
+            Hiển thị {pagination.page * pagination.pageSize + 1} đến{' '}
+            {Math.min((pagination.page + 1) * pagination.pageSize, pagination.totalElements)} trong tổng số{' '}
+            {pagination.totalElements} kết quả
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -175,17 +175,17 @@ export default function ExerciseListTable({
               disabled={pagination.page === 0}
               className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Previous
+              Trước
             </button>
             <span className="text-sm text-gray-700 dark:text-gray-300">
-              Page {pagination.page + 1} of {pagination.totalPages}
+              Trang {pagination.page + 1} / {pagination.totalPages}
             </span>
             <button
               onClick={() => pagination.onPageChange(pagination.page + 1)}
               disabled={pagination.page >= pagination.totalPages - 1}
               className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next
+              Sau
             </button>
           </div>
         </div>

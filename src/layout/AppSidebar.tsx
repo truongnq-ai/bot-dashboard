@@ -26,48 +26,48 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Dashboard",
+    name: "Bảng điều khiển",
     path: "/dashboard",
   },
   {
     icon: <UserCircleIcon />,
-    name: "User Profile",
+    name: "Hồ sơ người dùng",
     path: "/profile",
   },
   {
     icon: <UserCircleIcon />,
-    name: "Users",
+    name: "Người dùng",
     subItems: [
-      { name: "Students", path: "/users/students", pro: false },
-      { name: "Parents", path: "/users/parents", pro: false },
-      { name: "Admins", path: "/users/admins", pro: false },
+      { name: "Học sinh", path: "/users/students", pro: false },
+      { name: "Phụ huynh", path: "/users/parents", pro: false },
+      { name: "Quản trị viên", path: "/users/admins", pro: false },
     ],
   },
   {
     icon: <PageIcon />,
-    name: "Content",
+    name: "Nội dung",
     subItems: [
-      { name: "Skills", path: "/content/skills", pro: false },
-      { name: "Questions", path: "/content/questions", pro: false },
-      { name: "Exercises", path: "/content/exercises", pro: false },
+      { name: "Kỹ năng", path: "/content/skills", pro: false },
+      { name: "Câu hỏi", path: "/content/questions", pro: false },
+      { name: "Bài tập", path: "/content/exercises", pro: false },
     ],
   },
   {
     icon: <BoltIcon />,
-    name: "AI Quality",
+    name: "Chất lượng AI",
     subItems: [
-      { name: "Solutions Review", path: "/ai-quality/solutions", pro: false },
-      { name: "Accuracy Metrics", path: "/ai-quality/accuracy", pro: false },
-      { name: "Error Analysis", path: "/ai-quality/errors", pro: false },
+      { name: "Đánh giá giải pháp", path: "/ai-quality/solutions", pro: false },
+      { name: "Chỉ số độ chính xác", path: "/ai-quality/accuracy", pro: false },
+      { name: "Phân tích lỗi", path: "/ai-quality/errors", pro: false },
     ],
   },
   {
     icon: <BoxCubeIcon />,
-    name: "System",
+    name: "Hệ thống",
     subItems: [
-      { name: "Metrics", path: "/system/metrics", pro: false },
-      { name: "Logs", path: "/system/logs", pro: false },
-      { name: "Health", path: "/system/health", pro: false },
+      { name: "Chỉ số", path: "/system/metrics", pro: false },
+      { name: "Nhật ký", path: "/system/logs", pro: false },
+      { name: "Sức khỏe", path: "/system/health", pro: false },
     ],
   },
 ];
@@ -75,10 +75,10 @@ const navItems: NavItem[] = [
 const othersItems: NavItem[] = [
   {
     icon: <PlugInIcon />,
-    name: "Authentication",
+    name: "Xác thực",
     subItems: [
-      { name: "Login", path: "/login", pro: false },
-      { name: "Reset Password", path: "/reset-password", pro: false },
+      { name: "Đăng nhập", path: "/login", pro: false },
+      { name: "Đặt lại mật khẩu", path: "/reset-password", pro: false },
     ],
   },
 ];
@@ -354,7 +354,7 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
+                  "Khác"
                 ) : (
                   <HorizontaLDots />
                 )}

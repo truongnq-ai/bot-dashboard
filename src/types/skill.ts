@@ -7,13 +7,34 @@ import { ResponseObject, PageResponse } from './common';
 // Skill Entity
 export interface Skill {
   id: string;
+  code: string;
+  grade: number;
+  chapter: string;
   name: string;
-  description?: string;
-  grade?: number;
-  subject?: string;
-  parentSkillId?: string;
+  prerequisiteIds?: string[];
+  prerequisites?: Skill[];
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
+}
+
+// Search Params
+export interface SkillSearchParams {
+  searchText?: string;
+  grade?: 6 | 7;
+  chapter?: string;
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+}
+
+// Request DTOs
+export interface CreateSkillRequest {
+  code: string;
+  grade: 6 | 7;
+  chapter: string;
+  name: string;
+  prerequisiteIds?: string[];
 }
 
 // Response DTOs

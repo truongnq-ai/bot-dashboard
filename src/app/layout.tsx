@@ -1,4 +1,4 @@
-import { Outfit, Poppins } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 
 import { SidebarProvider } from '@/context/SidebarContext';
@@ -6,14 +6,10 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import Toaster from '@/components/common/Toaster';
 
-const outfit = Outfit({
-  subsets: ["latin"],
-});
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: '--font-poppins',
+const inter = Inter({
+  subsets: ["latin", "vietnamese"],
+  variable: '--font-inter',
+  display: 'swap',
 });
 
 export default function RootLayout({
@@ -22,9 +18,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="vi">
       <body 
-        className={`${outfit.className} ${poppins.variable} dark:bg-gray-900`}
+        className={`${inter.variable} font-sans dark:bg-gray-900`}
         suppressHydrationWarning
       >
         <ThemeProvider>

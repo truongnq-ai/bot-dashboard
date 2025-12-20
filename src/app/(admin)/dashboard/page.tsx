@@ -9,8 +9,8 @@ import DemographicCard from "@/components/ecommerce/DemographicCard";
 
 export const metadata: Metadata = {
   title:
-    "Dashboard | Tutor Admin Dashboard",
-  description: "Tutor Admin Dashboard Overview",
+    "Bảng điều khiển | Tutor Admin Dashboard",
+  description: "Tổng quan Bảng điều khiển Quản trị viên Tutor",
 };
 
 export default function Dashboard() {

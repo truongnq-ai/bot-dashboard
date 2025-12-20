@@ -24,13 +24,13 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
   const [activeTab, setActiveTab] = useState<'info' | 'history' | 'stats'>('info');
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return <div className="text-center py-8">Đang tải...</div>;
   }
 
   if (error || !exercise) {
     return (
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-        <p className="text-red-800 dark:text-red-200">Error: {error?.message || 'Exercise not found'}</p>
+        <p className="text-red-800 dark:text-red-200">Lỗi: {error?.message || 'Không tìm thấy bài tập'}</p>
       </div>
     );
   }
@@ -39,7 +39,7 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Exercise Details</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Chi tiết bài tập</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">ID: {exercise.id}</p>
         </div>
         <div className="flex gap-2">
@@ -47,21 +47,21 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
             href={`/content/exercises/${exercise.id}/edit`}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
-            Edit
+            Sửa
           </Link>
           {exercise.reviewStatus === ReviewStatus.PENDING && (
             <Link
               href={`/content/exercises/${exercise.id}/review`}
               className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
             >
-              Review
+              Duyệt
             </Link>
           )}
           <button
             onClick={() => router.back()}
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
           >
-            Back
+            Quay lại
           </button>
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
             }`}
           >
-            Information
+            Thông tin
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -87,7 +87,7 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
             }`}
           >
-            Review History
+            Lịch sử duyệt
           </button>
           {exercise.reviewStatus === ReviewStatus.APPROVED && (
             <button
@@ -98,7 +98,7 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
               }`}
             >
-              Statistics
+              Thống kê
             </button>
           )}
         </nav>
@@ -110,28 +110,28 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Trạng thái</label>
                 <div className="mt-1">
                   <ReviewStatusBadge status={exercise.reviewStatus} />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Grade</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Lớp</label>
                 <p className="mt-1 text-gray-900 dark:text-white">{exercise.grade}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Difficulty</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Độ khó</label>
                 <p className="mt-1 text-gray-900 dark:text-white">{exercise.difficultyLevel || '-'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Quality Score</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Điểm chất lượng</label>
                 <p className="mt-1 text-gray-900 dark:text-white">{exercise.qualityScore?.toFixed(2) || '-'}</p>
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Problem Text
+                Nội dung bài toán
               </label>
               <div className="mt-1 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
                 <p className="text-gray-900 dark:text-white whitespace-pre-wrap">{exercise.problemText}</p>
@@ -141,11 +141,11 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
             {exercise.problemImageUrl && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Problem Image
+                  Hình ảnh bài toán
                 </label>
                 <img
                   src={exercise.problemImageUrl}
-                  alt="Problem"
+                  alt="Bài toán"
                   className="mt-1 max-w-md rounded-lg border border-gray-300 dark:border-gray-600"
                 />
               </div>
@@ -153,13 +153,13 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Solution Steps
+                Các bước giải
               </label>
               <div className="mt-1 space-y-4">
                 {exercise.solutionSteps.map((step, index) => (
                   <div key={index} className="p-4 border rounded-lg">
                     <div className="font-medium text-gray-900 dark:text-white mb-2">
-                      Step {step.stepNumber}: {step.description || 'No description'}
+                      Bước {step.stepNumber}: {step.description || 'Không có mô tả'}
                     </div>
                     <div className="text-gray-700 dark:text-gray-300 mb-2" dangerouslySetInnerHTML={{ __html: step.content }} />
                     {step.explanation && (
@@ -173,7 +173,7 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
             {exercise.commonMistakes && exercise.commonMistakes.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Common Mistakes
+                  Lỗi thường gặp
                 </label>
                 <div className="mt-1 space-y-2">
                   {exercise.commonMistakes.map((mistake, index) => (
@@ -190,11 +190,11 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
 
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Created At</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Ngày tạo</label>
                 <p className="mt-1 text-gray-900 dark:text-white">{formatDateTime(exercise.createdAt)}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Updated At</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Ngày cập nhật</label>
                 <p className="mt-1 text-gray-900 dark:text-white">{formatDateTime(exercise.updatedAt)}</p>
               </div>
             </div>
@@ -210,12 +210,12 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
                     <div>
                       <ReviewStatusBadge status={log.reviewStatus} />
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Reviewed by {log.reviewedBy} on {formatDateTime(log.reviewedAt)}
+                        Được duyệt bởi {log.reviewedBy} vào {formatDateTime(log.reviewedAt)}
                       </p>
                     </div>
                     {log.qualityScore && (
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Score: {log.qualityScore.toFixed(2)}
+                        Điểm: {log.qualityScore.toFixed(2)}
                       </div>
                     )}
                   </div>
@@ -225,7 +225,7 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 dark:text-gray-400">No review history available</p>
+              <p className="text-gray-500 dark:text-gray-400">Không có lịch sử duyệt</p>
             )}
           </div>
         )}
@@ -233,21 +233,21 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
         {activeTab === 'stats' && stats && (
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Total Attempts</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tổng số lần thử</label>
               <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{stats.totalAttempts}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Success Rate</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tỷ lệ thành công</label>
               <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
                 {(stats.avgSuccessRate * 100).toFixed(1)}%
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Usage Count</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Số lần sử dụng</label>
               <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{stats.usageCount}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Average Time</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Thời gian trung bình</label>
               <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
                 {stats.avgTimeSec ? `${stats.avgTimeSec}s` : '-'}
               </p>

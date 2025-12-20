@@ -6,8 +6,8 @@ import { Metadata } from 'next';
 import ExerciseDetailView from '@/components/exercises/ExerciseDetailView';
 
 export const metadata: Metadata = {
-  title: 'Exercise Detail | Tutor Admin Dashboard',
-  description: 'View exercise details',
+  title: 'Chi tiết bài tập | Tutor Admin Dashboard',
+  description: 'Xem chi tiết bài tập',
 };
 
 export default function ExerciseDetailPage({ params }: { params: { id: string } }) {

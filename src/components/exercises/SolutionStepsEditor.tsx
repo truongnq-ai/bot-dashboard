@@ -59,7 +59,7 @@ function SortableStepItem({ step, index, onUpdate, onRemove }: SortableStepItemP
     extensions: [
       StarterKit,
       Placeholder.configure({
-        placeholder: 'Enter step content...',
+        placeholder: 'Nhập nội dung bước...',
       }),
     ],
     content: step.content,
@@ -79,19 +79,19 @@ function SortableStepItem({ step, index, onUpdate, onRemove }: SortableStepItemP
           >
             ☰
           </button>
-          <span className="font-medium text-gray-700 dark:text-gray-300">Step {step.stepNumber}</span>
+          <span className="font-medium text-gray-700 dark:text-gray-300">Bước {step.stepNumber}</span>
         </div>
         <button
           onClick={() => onRemove(index)}
           className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
         >
-          Remove
+          Xóa
         </button>
       </div>
       <div className="space-y-2">
         <input
           type="text"
-          placeholder="Description (optional)"
+          placeholder="Mô tả (tùy chọn)"
           value={step.description || ''}
           onChange={(e) => onUpdate(index, { ...step, description: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -100,7 +100,7 @@ function SortableStepItem({ step, index, onUpdate, onRemove }: SortableStepItemP
           <EditorContent editor={editor} />
         </div>
         <textarea
-          placeholder="Explanation (optional)"
+          placeholder="Giải thích (tùy chọn)"
           value={step.explanation || ''}
           onChange={(e) => onUpdate(index, { ...step, explanation: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -165,12 +165,12 @@ export default function SolutionStepsEditor({ steps, onChange }: SolutionStepsEd
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Solution Steps</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Các bước giải</h3>
         <button
           onClick={handleAdd}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          Add Step
+          Thêm bước
         </button>
       </div>
 
@@ -190,7 +190,7 @@ export default function SolutionStepsEditor({ steps, onChange }: SolutionStepsEd
 
       {steps.length === 0 && (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          No solution steps added. Click "Add Step" to get started.
+          Chưa có bước giải nào. Nhấp "Thêm bước" để bắt đầu.
         </div>
       )}
     </div>

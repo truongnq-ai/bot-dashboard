@@ -60,7 +60,7 @@ export default function ResetPasswordForm() {
     <div className={styles.login}>
       <Image
         src="/images/auth/login-bg.png"
-        alt="reset password background"
+        alt="nền đặt lại mật khẩu"
         className={styles.loginImg}
         fill
         priority

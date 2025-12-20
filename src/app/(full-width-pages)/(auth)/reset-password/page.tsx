@@ -2,8 +2,8 @@ import ResetPasswordForm from "@/components/auth/ResetPasswordForm";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Reset Password | Tutor Admin Dashboard",
-  description: "Reset password for Tutor Admin Dashboard",
+  title: "Đặt lại mật khẩu | Tutor Admin Dashboard",
+  description: "Đặt lại mật khẩu cho Tutor Admin Dashboard",
 };
 
 export default function ResetPassword() {

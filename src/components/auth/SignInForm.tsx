@@ -24,7 +24,7 @@ export default function SignInForm() {
       await login(username, password);
       // Redirect is handled by AuthContext
     } catch (err: any) {
-      setError(err.message || "Login failed. Please check your credentials.");
+      setError(err.message || "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.");
     } finally {
       setIsSubmitting(false);
     }
@@ -34,7 +34,7 @@ export default function SignInForm() {
     <div className={styles.login}>
       <Image
         src="/images/auth/login-bg.png"
-        alt="login background"
+        alt="nền đăng nhập"
         className={styles.loginImg}
         fill
         priority
@@ -42,7 +42,7 @@ export default function SignInForm() {
       />
       
       <form className={styles.loginForm} onSubmit={handleSubmit}>
-        <h1 className={styles.loginTitle}>Login</h1>
+        <h1 className={styles.loginTitle}>Đăng nhập</h1>
 
         <div className={styles.loginContent}>
           {/* Username Input */}
@@ -59,7 +59,7 @@ export default function SignInForm() {
                 required
               />
               <label htmlFor="login-username" className={styles.loginLabel}>
-                Username
+                Tên đăng nhập
               </label>
             </div>
           </div>
@@ -78,7 +78,7 @@ export default function SignInForm() {
                 required
               />
               <label htmlFor="login-pass" className={styles.loginLabel}>
-                Password
+                Mật khẩu
               </label>
               <i
                 className={`${showPassword ? "ri-eye-line" : "ri-eye-off-line"} ${styles.loginEye}`}
@@ -113,11 +113,11 @@ export default function SignInForm() {
               onChange={(e) => setIsChecked(e.target.checked)}
             />
             <label htmlFor="login-check" className={styles.loginCheckLabel}>
-              Remember me
+              Ghi nhớ đăng nhập
             </label>
           </div>
           <Link href="/reset-password" className={styles.loginForgot}>
-            Forgot Password?
+            Quên mật khẩu?
           </Link>
         </div>
 
@@ -126,7 +126,7 @@ export default function SignInForm() {
           className={styles.loginButton}
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Logging in...' : 'Login'}
+          {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
         </button>
       </form>
     </div>

@@ -6,8 +6,8 @@ import { Metadata } from 'next';
 import ExerciseCreateForm from '@/components/exercises/ExerciseCreateForm';
 
 export const metadata: Metadata = {
-  title: 'Create Exercise | Tutor Admin Dashboard',
-  description: 'Create a new exercise',
+  title: 'Tạo bài tập | Tutor Admin Dashboard',
+  description: 'Tạo bài tập mới',
 };
 
 export default function CreateExercisePage() {

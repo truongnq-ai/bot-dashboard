@@ -6,8 +6,8 @@ import { Metadata } from 'next';
 import ExerciseList from '@/components/exercises/ExerciseList';
 
 export const metadata: Metadata = {
-  title: 'Exercises | Tutor Admin Dashboard',
-  description: 'Manage exercises',
+  title: 'Bài tập | Tutor Admin Dashboard',
+  description: 'Quản lý bài tập',
 };
 
 export default function ExercisesPage() {

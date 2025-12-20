@@ -12,6 +12,11 @@ import { isTokenExpiringSoon } from '../utils/jwt';
 let isRefreshing = false;
 let refreshSubscribers: Array<(token: string) => void> = [];
 
+// Token cache to prevent excessive API calls
+let cachedToken: string | null = null;
+let tokenCacheTime: number = 0;
+const TOKEN_CACHE_DURATION = 30 * 1000; // Cache for 30 seconds
+
 function subscribeTokenRefresh(cb: (token: string) => void) {
   refreshSubscribers.push(cb);
 }
@@ -25,8 +30,15 @@ function onRefreshed(token: string) {
  * Get access token from API route (server-side proxy)
  * Since httpOnly cookies cannot be read from client-side,
  * we need to call an API route to get the token.
+ * Uses caching to prevent excessive API calls.
  */
 async function getAccessToken(): Promise<string | null> {
+  // Return cached token if still valid
+  const now = Date.now();
+  if (cachedToken && (now - tokenCacheTime) < TOKEN_CACHE_DURATION) {
+    return cachedToken;
+  }
+  
   try {
     const response = await fetch('/api/auth/token', {
       method: 'GET',
@@ -34,13 +46,28 @@ async function getAccessToken(): Promise<string | null> {
     });
     
     if (!response.ok) {
+      cachedToken = null;
+      tokenCacheTime = 0;
       return null;
     }
     
     const data = await response.json();
-    return data.token || null;
+    const token = data.token || null;
+    
+    // Cache the token
+    if (token) {
+      cachedToken = token;
+      tokenCacheTime = now;
+    } else {
+      cachedToken = null;
+      tokenCacheTime = 0;
+    }
+    
+    return token;
   } catch (error) {
     console.error('Error getting access token:', error);
+    cachedToken = null;
+    tokenCacheTime = 0;
     return null;
   }
 }
@@ -130,6 +157,10 @@ apiClient.interceptors.response.use(
         const newToken = await refreshAccessToken();
         
         if (newToken) {
+          // Update cache with new token
+          cachedToken = newToken;
+          tokenCacheTime = Date.now();
+          
           onRefreshed(newToken);
           
           if (originalRequest.headers) {
@@ -138,11 +169,17 @@ apiClient.interceptors.response.use(
           
           return apiClient(originalRequest);
         } else {
+          // Clear cache on refresh failure
+          cachedToken = null;
+          tokenCacheTime = 0;
           // Refresh failed, redirect to login
           window.location.href = '/login';
           return Promise.reject(error);
         }
       } catch (refreshError) {
+        // Clear cache on refresh error
+        cachedToken = null;
+        tokenCacheTime = 0;
         // Refresh failed, redirect to login
         window.location.href = '/login';
         return Promise.reject(refreshError);

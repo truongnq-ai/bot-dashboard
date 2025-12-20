@@ -13,7 +13,7 @@ export function formatDate(date: Date | string | null | undefined): string {
   if (isNaN(dateObj.getTime())) {
     return '-';
   }
-  return dateObj.toLocaleDateString('en-US', {
+  return dateObj.toLocaleDateString('vi-VN', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -31,7 +31,7 @@ export function formatDateTime(date: Date | string | null | undefined): string {
   if (isNaN(dateObj.getTime())) {
     return '-';
   }
-  return dateObj.toLocaleString('en-US', {
+  return dateObj.toLocaleString('vi-VN', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

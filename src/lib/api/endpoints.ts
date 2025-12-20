@@ -24,6 +24,19 @@ export const API_ENDPOINTS = {
 
   // Skills
   SKILLS_LIST: `${API_VERSION}/admin/skills`,
+  SKILLS_CREATE: `${API_VERSION}/admin/skills`,
+  SKILLS_GET: (id: string) => `${API_VERSION}/admin/skills/${id}`,
+  SKILLS_UPDATE: (id: string) => `${API_VERSION}/admin/skills/${id}`,
+  SKILLS_DELETE: (id: string) => `${API_VERSION}/admin/skills/${id}`,
+
+  // Admins
+  ADMINS_LIST: `${API_VERSION}/admin/users/admins`,
+  ADMINS_GET: (id: string) => `${API_VERSION}/admin/users/admins/${id}`,
+  ADMINS_CREATE: `${API_VERSION}/admin/create`,
+  ADMINS_UPDATE_STATUS: (id: string) => `${API_VERSION}/admin/users/admins/${id}/status`,
+
+  // Grades
+  GRADES_LIST: `${API_VERSION}/admin/grades`,
 
   // Images
   IMAGES_UPLOAD: `${API_VERSION}/images/upload`,

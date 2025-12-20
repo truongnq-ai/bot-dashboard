@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { createExercise } from '@/lib/api/exercise.service';
 import { CreateExerciseRequest, SolutionStepRequest, CommonMistakeRequest } from '@/types/exercise';
 import { useSkills } from '@/lib/hooks/useSkills';
+import { useGrades } from '@/lib/hooks/useGrades';
 import { Skill } from '@/types/skill';
 import SolutionStepsEditor from './SolutionStepsEditor';
 import { uploadImage } from '@/lib/api/image.service';
@@ -19,11 +20,11 @@ import { useDropzone } from 'react-dropzone';
 import { showError, showSuccess } from '@/lib/utils/toast';
 
 const exerciseSchema = z.object({
-  skillId: z.string().min(1, 'Skill is required'),
+  skillId: z.string().min(1, 'Kỹ năng là bắt buộc'),
   grade: z.number().min(6).max(7),
   chapter: z.string().optional(),
   problemType: z.string().optional(),
-  problemText: z.string().min(1, 'Problem text is required'),
+  problemText: z.string().min(1, 'Nội dung bài toán là bắt buộc'),
   problemLatex: z.string().optional(),
   problemImageUrl: z.string().optional(),
   difficultyLevel: z.number().min(1).max(5).optional(),
@@ -37,6 +38,7 @@ type ExerciseFormData = z.infer<typeof exerciseSchema>;
 export default function ExerciseCreateForm() {
   const router = useRouter();
   const { data: skillsData } = useSkills();
+  const { data: gradesData } = useGrades();
   const [solutionSteps, setSolutionSteps] = useState<SolutionStepRequest[]>([
     { stepNumber: 1, content: '', description: '', explanation: '' },
   ]);
@@ -72,7 +74,7 @@ export default function ExerciseCreateForm() {
         setValue('problemImageUrl', response.data.imageUrl);
       }
     } catch (error) {
-      showError('Failed to upload image: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showError('Tải hình ảnh thất bại: ' + (error instanceof Error ? error.message : 'Lỗi không xác định'));
     } finally {
       setUploading(false);
     }
@@ -88,7 +90,7 @@ export default function ExerciseCreateForm() {
 
   const onSubmit = async (data: ExerciseFormData) => {
     if (solutionSteps.length === 0 || solutionSteps.some((s) => !s.content.trim())) {
-      showError('Please add at least one solution step with content');
+      showError('Vui lòng thêm ít nhất một bước giải có nội dung');
       return;
     }
 
@@ -104,10 +106,10 @@ export default function ExerciseCreateForm() {
       };
 
       await createExercise(request);
-      showSuccess('Exercise created successfully');
+      showSuccess('Tạo bài tập thành công');
       router.push('/content/exercises');
     } catch (error) {
-      showError('Failed to create exercise: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showError('Tạo bài tập thất bại: ' + (error instanceof Error ? error.message : 'Lỗi không xác định'));
     } finally {
       setSubmitting(false);
     }
@@ -144,12 +146,12 @@ export default function ExerciseCreateForm() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Exercise</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tạo bài tập</h1>
         <button
           onClick={() => router.back()}
           className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
         >
-          Cancel
+          Hủy
         </button>
       </div>
 
@@ -159,17 +161,17 @@ export default function ExerciseCreateForm() {
           <div className="lg:col-span-2 space-y-6">
             {/* Basic Info */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Basic Information</h2>
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Thông tin cơ bản</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Skill *
+                    Kỹ năng *
                   </label>
                   <select
                     {...register('skillId')}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
-                    <option value="">Select a skill</option>
+                    <option value="">Chọn kỹ năng</option>
                     {skillsData?.content?.map((skill: Skill) => (
                       <option key={skill.id} value={skill.id}>
                         {skill.name}
@@ -184,44 +186,47 @@ export default function ExerciseCreateForm() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Grade *
+                      Lớp *
                     </label>
                     <select
                       {...register('grade', { valueAsNumber: true })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
-                      <option value={6}>Grade 6</option>
-                      <option value={7}>Grade 7</option>
+                      {gradesData?.map((grade) => (
+                        <option key={grade} value={grade}>
+                          Lớp {grade}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Difficulty Level
+                      Độ khó
                     </label>
                     <select
                       {...register('difficultyLevel', { valueAsNumber: true })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
-                      <option value="">Select difficulty</option>
-                      <option value={1}>1 - Very Easy</option>
-                      <option value={2}>2 - Easy</option>
-                      <option value={3}>3 - Medium</option>
-                      <option value={4}>4 - Hard</option>
-                      <option value={5}>5 - Very Hard</option>
+                      <option value="">Chọn độ khó</option>
+                      <option value={1}>1 - Rất dễ</option>
+                      <option value={2}>2 - Dễ</option>
+                      <option value={3}>3 - Trung bình</option>
+                      <option value={4}>4 - Khó</option>
+                      <option value={5}>5 - Rất khó</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Problem Text *
+                    Nội dung bài toán *
                   </label>
                   <textarea
                     {...register('problemText')}
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="Enter the problem text..."
+                    placeholder="Nhập nội dung bài toán..."
                   />
                   {errors.problemText && (
                     <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.problemText.message}</p>
@@ -231,7 +236,7 @@ export default function ExerciseCreateForm() {
                 {/* Image Upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Problem Image
+                    Hình ảnh bài toán
                   </label>
                   <div
                     {...getRootProps()}
@@ -243,19 +248,19 @@ export default function ExerciseCreateForm() {
                   >
                     <input {...getInputProps()} />
                     {uploading ? (
-                      <p className="text-gray-600 dark:text-gray-400">Uploading...</p>
+                      <p className="text-gray-600 dark:text-gray-400">Đang tải lên...</p>
                     ) : imageUrl ? (
                       <div>
-                        <img src={imageUrl} alt="Problem" className="max-h-48 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Click to change image</p>
+                        <img src={imageUrl} alt="Bài toán" className="max-h-48 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Nhấp để đổi hình ảnh</p>
                       </div>
                     ) : (
                       <div>
                         <p className="text-gray-600 dark:text-gray-400">
-                          Drag and drop an image here, or click to select
+                          Kéo thả hình ảnh vào đây, hoặc nhấp để chọn
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-                          PNG, JPG, GIF up to 10MB
+                          PNG, JPG, GIF tối đa 10MB
                         </p>
                       </div>
                     )}
@@ -272,36 +277,36 @@ export default function ExerciseCreateForm() {
             {/* Common Mistakes */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Common Mistakes</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Lỗi thường gặp</h2>
                 <button
                   type="button"
                   onClick={addMistake}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Add Mistake
+                  Thêm lỗi
                 </button>
               </div>
               {commonMistakes.map((mistake, index) => (
                 <div key={index} className="mb-4 p-4 border rounded-lg">
                   <div className="flex justify-between mb-2">
-                    <span className="font-medium text-gray-700 dark:text-gray-300">Mistake {index + 1}</span>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Lỗi {index + 1}</span>
                     <button
                       type="button"
                       onClick={() => removeMistake(index)}
                       className="text-red-600 hover:text-red-800 dark:text-red-400"
                     >
-                      Remove
+                      Xóa
                     </button>
                   </div>
                   <input
                     type="text"
-                    placeholder="Mistake description"
+                    placeholder="Mô tả lỗi"
                     value={mistake.mistake}
                     onChange={(e) => updateMistake(index, { ...mistake, mistake: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-2"
                   />
                   <textarea
-                    placeholder="Explanation (optional)"
+                    placeholder="Giải thích (tùy chọn)"
                     value={mistake.explanation || ''}
                     onChange={(e) => updateMistake(index, { ...mistake, explanation: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -314,20 +319,20 @@ export default function ExerciseCreateForm() {
             {/* Hints */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Hints</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Gợi ý</h2>
                 <button
                   type="button"
                   onClick={addHint}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Add Hint
+                  Thêm gợi ý
                 </button>
               </div>
               {hints.map((hint, index) => (
                 <div key={index} className="mb-2 flex gap-2">
                   <input
                     type="text"
-                    placeholder={`Hint ${index + 1}`}
+                    placeholder={`Gợi ý ${index + 1}`}
                     value={hint}
                     onChange={(e) => updateHint(index, e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -337,7 +342,7 @@ export default function ExerciseCreateForm() {
                     onClick={() => removeHint(index)}
                     className="px-3 py-2 text-red-600 hover:text-red-800 dark:text-red-400"
                   >
-                    Remove
+                    Xóa
                   </button>
                 </div>
               ))}
@@ -347,11 +352,11 @@ export default function ExerciseCreateForm() {
           {/* Right Column - Preview & Metadata */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Additional Info</h2>
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Thông tin bổ sung</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Chapter
+                    Chương
                   </label>
                   <input
                     type="text"
@@ -362,7 +367,7 @@ export default function ExerciseCreateForm() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Problem Type
+                    Loại bài toán
                   </label>
                   <input
                     type="text"
@@ -373,7 +378,7 @@ export default function ExerciseCreateForm() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Final Answer
+                    Đáp án cuối cùng
                   </label>
                   <input
                     type="text"
@@ -384,7 +389,7 @@ export default function ExerciseCreateForm() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Learning Objective
+                    Mục tiêu học tập
                   </label>
                   <textarea
                     {...register('learningObjective')}
@@ -404,14 +409,14 @@ export default function ExerciseCreateForm() {
             onClick={() => router.back()}
             className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
           >
-            Cancel
+            Hủy
           </button>
           <button
             type="submit"
             disabled={submitting}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? 'Creating...' : 'Create Exercise'}
+            {submitting ? 'Đang tạo...' : 'Tạo bài tập'}
           </button>
         </div>
       </form>

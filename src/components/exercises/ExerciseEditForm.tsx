@@ -104,7 +104,7 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
         setValue('problemImageUrl', response.data.imageUrl);
       }
     } catch (error) {
-      showError('Failed to upload image: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showError('Tải hình ảnh thất bại: ' + (error instanceof Error ? error.message : 'Lỗi không xác định'));
     } finally {
       setUploading(false);
     }
@@ -120,7 +120,7 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
 
   const onSubmit = async (data: ExerciseFormData) => {
     if (solutionSteps.length === 0 || solutionSteps.some((s) => !s.content.trim())) {
-      showError('Please add at least one solution step with content');
+      showError('Vui lòng thêm ít nhất một bước giải có nội dung');
       return;
     }
 
@@ -136,10 +136,10 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
       };
 
       await updateExercise(id, request);
-      showSuccess('Exercise updated successfully');
+      showSuccess('Cập nhật bài tập thành công');
       router.push(`/content/exercises/${id}`);
     } catch (error) {
-      showError('Failed to update exercise: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showError('Cập nhật bài tập thất bại: ' + (error instanceof Error ? error.message : 'Lỗi không xác định'));
     } finally {
       setSubmitting(false);
     }
@@ -174,11 +174,11 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
   };
 
   if (exerciseLoading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return <div className="text-center py-8">Đang tải...</div>;
   }
 
   if (!exercise) {
-    return <div className="text-center py-8">Exercise not found</div>;
+    return <div className="text-center py-8">Không tìm thấy bài tập</div>;
   }
 
   const isApproved = exercise.reviewStatus === ReviewStatus.APPROVED;
@@ -186,19 +186,19 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Edit Exercise</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sửa bài tập</h1>
         <button
           onClick={() => router.back()}
           className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
         >
-          Cancel
+          Hủy
         </button>
       </div>
 
       {isApproved && (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
           <p className="text-yellow-800 dark:text-yellow-200">
-            Warning: This exercise is approved. Editing will reset its status to PENDING.
+            Cảnh báo: Bài tập này đã được duyệt. Chỉnh sửa sẽ đặt lại trạng thái thành CHỜ DUYỆT.
           </p>
         </div>
       )}
@@ -206,15 +206,15 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Similar form structure as CreateForm but with pre-filled values */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Basic Information</h2>
+          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Thông tin cơ bản</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Skill</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kỹ năng</label>
               <select
                 {...register('skillId')}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">Select a skill</option>
+                <option value="">Chọn kỹ năng</option>
                 {skillsData?.content?.map((skill: Skill) => (
                   <option key={skill.id} value={skill.id}>
                     {skill.name}
@@ -224,7 +224,7 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Problem Text</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nội dung bài toán</label>
               <textarea
                 {...register('problemText')}
                 rows={4}
@@ -244,14 +244,14 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
             onClick={() => router.back()}
             className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
           >
-            Cancel
+            Hủy
           </button>
           <button
             type="submit"
             disabled={submitting}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? 'Updating...' : 'Update Exercise'}
+            {submitting ? 'Đang cập nhật...' : 'Cập nhật bài tập'}
           </button>
         </div>
       </form>

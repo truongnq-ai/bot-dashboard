@@ -1,0 +1,209 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Modal } from '@/components/ui/modal';
+import { AdminRegistrationRequest } from '@/types/admin';
+import { createAdmin } from '@/lib/api/admin.service';
+import { showError, showSuccess } from '@/lib/utils/toast';
+
+interface AdminCreateModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+}
+
+export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCreateModalProps) {
+  const [formData, setFormData] = useState<AdminRegistrationRequest>({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    name: '',
+    department: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.username.trim()) {
+      newErrors.username = 'Tên đăng nhập là bắt buộc';
+    } else if (!/^[a-zA-Z0-9]+$/.test(formData.username)) {
+      newErrors.username = 'Tên đăng nhập chỉ được chứa chữ cái và số';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email là bắt buộc';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Email không hợp lệ';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Mật khẩu là bắt buộc';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+    }
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Tên là bắt buộc';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validate()) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await createAdmin(formData);
+      if (response.errorCode === '0000') {
+        showSuccess('Tạo tài khoản admin thành công');
+        onSuccess?.();
+        onClose();
+        setFormData({
+          username: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          name: '',
+          department: '',
+        });
+        setErrors({});
+      } else {
+        showError(response.errorDetail || 'Tạo tài khoản admin thất bại');
+      }
+    } catch (error) {
+      showError('Hệ thống không có phản hồi.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div className="p-4 sm:p-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tạo tài khoản Admin</h2>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Tên đăng nhập <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                errors.username ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+            />
+            {errors.username && <p className="mt-1 text-sm text-red-500">{errors.username}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Email <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+            {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Mật khẩu <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="password"
+              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                errors.password ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            />
+            {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Xác nhận mật khẩu <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="password"
+              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                errors.confirmPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+            />
+            {errors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Tên <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            />
+            {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Phòng ban
+            </label>
+            <input
+              type="text"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              value={formData.department}
+              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Đang tạo...' : 'Tạo mới'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </Modal>
+  );
+}
+
