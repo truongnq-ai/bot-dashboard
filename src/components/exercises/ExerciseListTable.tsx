@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components
 import ReviewStatusBadge from './ReviewStatusBadge';
 import { formatDate, truncateText } from '@/lib/utils/formatters';
 import { deleteExercise } from '@/lib/api/exercise.service';
+import { showError, showSuccess } from '@/lib/utils/toast';
 
 interface ExerciseListTableProps {
   exercises: Exercise[];
@@ -40,9 +41,10 @@ export default function ExerciseListTable({
     try {
       setDeletingId(id);
       await deleteExercise(id);
+      showSuccess('Exercise deleted successfully');
       onDelete?.();
     } catch (error) {
-      alert('Failed to delete exercise: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showError('Failed to delete exercise: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setDeletingId(null);
     }

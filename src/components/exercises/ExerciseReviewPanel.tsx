@@ -11,6 +11,7 @@ import { reviewExercise } from '@/lib/api/exercise.service';
 import { ReviewExerciseRequest, ReviewStatus } from '@/types/exercise';
 import ReviewStatusBadge from './ReviewStatusBadge';
 import { formatDateTime } from '@/lib/utils/formatters';
+import { showError, showSuccess } from '@/lib/utils/toast';
 
 interface ExerciseReviewPanelProps {
   id: string;
@@ -28,12 +29,12 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
   const handleSubmit = async (status: ReviewStatus) => {
     // Validation
     if (status === ReviewStatus.REJECTED && !reviewNotes.trim()) {
-      alert('Review notes are required when rejecting an exercise');
+      showError('Review notes are required when rejecting an exercise');
       return;
     }
 
     if (status === ReviewStatus.APPROVED && qualityScore < 0.7) {
-      alert('Quality score must be at least 0.7 to approve an exercise');
+      showError('Quality score must be at least 0.7 to approve an exercise');
       return;
     }
 
@@ -47,9 +48,10 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
       };
 
       await reviewExercise(id, request);
+      showSuccess(`Exercise ${status.toLowerCase()} successfully`);
       router.push(`/content/exercises/${id}`);
     } catch (error) {
-      alert('Failed to review exercise: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showError('Failed to review exercise: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setSubmitting(false);
     }

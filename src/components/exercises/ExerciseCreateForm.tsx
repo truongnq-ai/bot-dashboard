@@ -15,6 +15,7 @@ import { useSkills } from '@/lib/hooks/useSkills';
 import SolutionStepsEditor from './SolutionStepsEditor';
 import { uploadImage } from '@/lib/api/image.service';
 import { useDropzone } from 'react-dropzone';
+import { showError, showSuccess } from '@/lib/utils/toast';
 
 const exerciseSchema = z.object({
   skillId: z.string().min(1, 'Skill is required'),
@@ -70,7 +71,7 @@ export default function ExerciseCreateForm() {
         setValue('problemImageUrl', response.data.imageUrl);
       }
     } catch (error) {
-      alert('Failed to upload image: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showError('Failed to upload image: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setUploading(false);
     }
@@ -86,7 +87,7 @@ export default function ExerciseCreateForm() {
 
   const onSubmit = async (data: ExerciseFormData) => {
     if (solutionSteps.length === 0 || solutionSteps.some((s) => !s.content.trim())) {
-      alert('Please add at least one solution step with content');
+      showError('Please add at least one solution step with content');
       return;
     }
 
@@ -102,9 +103,10 @@ export default function ExerciseCreateForm() {
       };
 
       await createExercise(request);
+      showSuccess('Exercise created successfully');
       router.push('/content/exercises');
     } catch (error) {
-      alert('Failed to create exercise: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showError('Failed to create exercise: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setSubmitting(false);
     }

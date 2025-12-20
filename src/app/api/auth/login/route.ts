@@ -41,7 +41,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(error, { status: response.status });
     }
 
-    const authResponse: AuthenticationResponse = await response.json();
+    const backendResponse: ResponseObject<AuthenticationResponse> = await response.json();
+    
+    if (backendResponse.errorCode !== '0000' || !backendResponse.data) {
+      return NextResponse.json(
+        {
+          errorCode: backendResponse.errorCode || '5001',
+          errorDetail: backendResponse.errorDetail || 'Login failed',
+          data: null,
+        } as ResponseObject<null>,
+        { status: 400 }
+      );
+    }
+
+    const authResponse: AuthenticationResponse = backendResponse.data;
 
     // Set httpOnly cookies
     const cookieStore = await cookies();

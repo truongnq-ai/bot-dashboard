@@ -34,7 +34,8 @@ export async function login(
   
   if (!response.ok) {
     const error = await response.json();
-    throw error;
+    const errorMessage = error.errorDetail || error.message || 'Login failed';
+    throw new Error(errorMessage);
   }
   
   return response.json();
@@ -53,7 +54,8 @@ export async function refreshToken(): Promise<ResponseObject<AuthenticationRespo
   
   if (!response.ok) {
     const error = await response.json();
-    throw error;
+    const errorMessage = error.errorDetail || error.message || 'Token refresh failed';
+    throw new Error(errorMessage);
   }
   
   return response.json();
@@ -72,7 +74,8 @@ export async function logout(): Promise<ResponseObject<void>> {
   
   if (!response.ok) {
     const error = await response.json();
-    throw error;
+    const errorMessage = error.errorDetail || error.message || 'Logout failed';
+    throw new Error(errorMessage);
   }
   
   return response.json();

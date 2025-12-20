@@ -17,6 +17,7 @@ import SolutionStepsEditor from './SolutionStepsEditor';
 import { uploadImage } from '@/lib/api/image.service';
 import { useDropzone } from 'react-dropzone';
 import { ReviewStatus } from '@/types/exercise';
+import { showError, showSuccess } from '@/lib/utils/toast';
 
 const exerciseSchema = z.object({
   skillId: z.string().optional(),
@@ -102,7 +103,7 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
         setValue('problemImageUrl', response.data.imageUrl);
       }
     } catch (error) {
-      alert('Failed to upload image: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showError('Failed to upload image: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setUploading(false);
     }
@@ -118,13 +119,7 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
 
   const onSubmit = async (data: ExerciseFormData) => {
     if (solutionSteps.length === 0 || solutionSteps.some((s) => !s.content.trim())) {
-      alert('Please add at least one solution step with content');
-      return;
-    }
-
-    // Business rule: Cannot edit APPROVED exercise with usage_count > 0
-    if (exercise?.reviewStatus === ReviewStatus.APPROVED && (exercise?.usageCount || 0) > 0) {
-      alert('Cannot edit approved exercise that has been used. Please create a new version.');
+      showError('Please add at least one solution step with content');
       return;
     }
 
@@ -140,9 +135,10 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
       };
 
       await updateExercise(id, request);
+      showSuccess('Exercise updated successfully');
       router.push(`/content/exercises/${id}`);
     } catch (error) {
-      alert('Failed to update exercise: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showError('Failed to update exercise: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setSubmitting(false);
     }
@@ -184,7 +180,7 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
     return <div className="text-center py-8">Exercise not found</div>;
   }
 
-  const isApprovedWithUsage = exercise.reviewStatus === ReviewStatus.APPROVED && (exercise.usageCount || 0) > 0;
+  const isApproved = exercise.reviewStatus === ReviewStatus.APPROVED;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -198,10 +194,10 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
         </button>
       </div>
 
-      {isApprovedWithUsage && (
+      {isApproved && (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
           <p className="text-yellow-800 dark:text-yellow-200">
-            Warning: This exercise is approved and has been used. Editing will reset its status to PENDING.
+            Warning: This exercise is approved. Editing will reset its status to PENDING.
           </p>
         </div>
       )}
@@ -216,7 +212,6 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
               <select
                 {...register('skillId')}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                disabled={isApprovedWithUsage}
               >
                 <option value="">Select a skill</option>
                 {skillsData?.content?.map((skill) => (
@@ -233,7 +228,6 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
                 {...register('problemText')}
                 rows={4}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                disabled={isApprovedWithUsage}
               />
             </div>
           </div>
@@ -253,7 +247,7 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
           </button>
           <button
             type="submit"
-            disabled={submitting || isApprovedWithUsage}
+            disabled={submitting}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? 'Updating...' : 'Update Exercise'}

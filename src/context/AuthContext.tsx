@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { login, logout as logoutService } from '@/lib/api/auth.service';
 import { ResponseObject } from '@/types/common';
 import { AuthenticationResponse } from '@/types/auth';
+import { showError } from '@/lib/utils/toast';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -61,10 +62,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Redirect to dashboard
         router.push('/dashboard');
       } else {
-        throw new Error(response.errorDetail || 'Login failed');
+        const errorMessage = response.errorDetail || 'Login failed';
+        showError(errorMessage);
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Login error:', error);
+      if (error instanceof Error && !error.message.includes('Login failed')) {
+        showError(error.message || 'Login failed. Please check your credentials.');
+      }
       throw error;
     } finally {
       setLoading(false);
