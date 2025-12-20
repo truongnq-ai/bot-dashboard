@@ -9,6 +9,7 @@ import { useExercises } from '@/lib/hooks/useExercises';
 import { ExerciseSearchParams, ReviewStatus } from '@/types/exercise';
 import ExerciseListTable from './ExerciseListTable';
 import { useSkills } from '@/lib/hooks/useSkills';
+import { Skill } from '@/types/skill';
 
 export default function ExerciseList() {
   const [searchParams, setSearchParams] = useState<ExerciseSearchParams>({
@@ -97,7 +98,7 @@ export default function ExerciseList() {
               onChange={(e) => handleFilterChange({ skillId: e.target.value || undefined })}
             >
               <option value="">All Skills</option>
-              {skillsData?.content?.map((skill) => (
+              {skillsData?.content?.map((skill: Skill) => (
                 <option key={skill.id} value={skill.id}>
                   {skill.name}
                 </option>

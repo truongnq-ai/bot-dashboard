@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { createExercise } from '@/lib/api/exercise.service';
 import { CreateExerciseRequest, SolutionStepRequest, CommonMistakeRequest } from '@/types/exercise';
 import { useSkills } from '@/lib/hooks/useSkills';
+import { Skill } from '@/types/skill';
 import SolutionStepsEditor from './SolutionStepsEditor';
 import { uploadImage } from '@/lib/api/image.service';
 import { useDropzone } from 'react-dropzone';
@@ -169,7 +170,7 @@ export default function ExerciseCreateForm() {
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="">Select a skill</option>
-                    {skillsData?.content?.map((skill) => (
+                    {skillsData?.content?.map((skill: Skill) => (
                       <option key={skill.id} value={skill.id}>
                         {skill.name}
                       </option>

@@ -18,6 +18,7 @@ import { uploadImage } from '@/lib/api/image.service';
 import { useDropzone } from 'react-dropzone';
 import { ReviewStatus } from '@/types/exercise';
 import { showError, showSuccess } from '@/lib/utils/toast';
+import { Skill } from '@/types/skill';
 
 const exerciseSchema = z.object({
   skillId: z.string().optional(),
@@ -214,7 +215,7 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">Select a skill</option>
-                {skillsData?.content?.map((skill) => (
+                {skillsData?.content?.map((skill: Skill) => (
                   <option key={skill.id} value={skill.id}>
                     {skill.name}
                   </option>

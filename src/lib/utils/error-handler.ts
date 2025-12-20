@@ -2,7 +2,7 @@
  * Error Handler Utilities
  */
 
-import { ResponseObject } from '../types/common';
+import { ResponseObject } from '../../types/common';
 
 /**
  * Error codes mapping

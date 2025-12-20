@@ -3,7 +3,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { Skill, PageResponse } from '@/types/skill';
+import { Skill } from '@/types/skill';
+import { PageResponse } from '@/types/common';
 import { getSkills } from '@/lib/api/skill.service';
 
 /**
