@@ -2,13 +2,9 @@
  * Authentication Service
  */
 
-import apiClient from './client';
-import { API_ENDPOINTS } from './endpoints';
 import {
   AuthenticationRequest,
   AuthenticationResponse,
-  AuthenticationResponseData,
-  RefreshTokenResponseData,
 } from '../../types/auth';
 import { ResponseObject } from '../../types/common';
 
