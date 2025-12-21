@@ -26,7 +26,10 @@ export default function AdminStatusBadge({ status }: AdminStatusBadgeProps) {
     },
   };
 
-  const config = statusConfig[status];
+  const config = statusConfig[status] || {
+    label: status || 'Không xác định',
+    className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
+  };
 
   return (
     <span
