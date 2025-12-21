@@ -50,6 +50,7 @@ const navItems: NavItem[] = [
       { name: "Kỹ năng", path: "/content/skills", pro: false },
       { name: "Câu hỏi", path: "/content/questions", pro: false },
       { name: "Bài tập", path: "/content/exercises", pro: false },
+      { name: "Prompt", path: "/content/prompt-templates", pro: false },
     ],
   },
   {

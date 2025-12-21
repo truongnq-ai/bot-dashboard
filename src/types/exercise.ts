@@ -180,7 +180,8 @@ export interface GenerateExercisesRequest {
   promptTemplateId?: string; // Optional, uses default if not provided
 }
 
-export interface GenerateExercisesResponse extends PageResponse<Exercise> {
+export interface GenerateExercisesResponse {
+  exercises: Exercise[];
   providerUsed?: string; // gemini, huggingface, openai
   overallConfidence?: number; // 0.0-1.0
   totalGenerated?: number;

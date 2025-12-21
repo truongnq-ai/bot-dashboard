@@ -85,9 +85,9 @@ export default function ExerciseGenerateModal({
     try {
       const response = await generateExercises(formData);
       
-      if (response.data && response.data.content) {
-        showSuccess(`Đã tạo thành công ${response.data.content.length} bài tập`);
-        onSuccess(response.data.content, {
+      if (response.data && response.data.exercises) {
+        showSuccess(`Đã tạo thành công ${response.data.exercises.length} bài tập`);
+        onSuccess(response.data.exercises, {
           providerUsed: response.data.providerUsed,
           overallConfidence: response.data.overallConfidence,
           totalGenerated: response.data.totalGenerated,

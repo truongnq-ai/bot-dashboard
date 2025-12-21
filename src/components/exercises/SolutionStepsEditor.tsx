@@ -37,9 +37,10 @@ interface SortableStepItemProps {
   index: number;
   onUpdate: (index: number, step: SolutionStepRequest) => void;
   onRemove: (index: number) => void;
+  isMounted: boolean;
 }
 
-function SortableStepItem({ step, index, onUpdate, onRemove }: SortableStepItemProps) {
+function SortableStepItem({ step, index, onUpdate, onRemove, isMounted }: SortableStepItemProps) {
   const {
     attributes,
     listeners,
@@ -62,12 +63,73 @@ function SortableStepItem({ step, index, onUpdate, onRemove }: SortableStepItemP
         placeholder: 'Nhập nội dung bước...',
       }),
     ],
-    content: step.content,
+    content: step.content || '',
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       onUpdate(index, { ...step, content: editor.getHTML() });
     },
   });
+
+  // Cập nhật editor khi step.content thay đổi từ bên ngoài
+  useEffect(() => {
+    if (editor && isMounted && step.content !== editor.getHTML()) {
+      editor.commands.setContent(step.content || '');
+    }
+  }, [step.content, editor, isMounted]);
+
+  // Cleanup editor khi component unmount
+  useEffect(() => {
+    return () => {
+      if (editor) {
+        editor.destroy();
+      }
+    };
+  }, [editor]);
+
+  // Chỉ render editor khi đã được khởi tạo và đã mount
+  if (!editor || !isMounted) {
+    return (
+      <div ref={setNodeRef} style={style} className="border rounded-lg p-4 mb-2 bg-white dark:bg-gray-800">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <button
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              ☰
+            </button>
+            <span className="font-medium text-gray-700 dark:text-gray-300">Bước {step.stepNumber}</span>
+          </div>
+          <button
+            onClick={() => onRemove(index)}
+            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+          >
+            Xóa
+          </button>
+        </div>
+        <div className="space-y-2">
+          <input
+            type="text"
+            placeholder="Mô tả (tùy chọn)"
+            value={step.description || ''}
+            onChange={(e) => onUpdate(index, { ...step, description: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-2 min-h-[100px]">
+            {/* Editor will be rendered after mount */}
+          </div>
+          <textarea
+            placeholder="Giải thích (tùy chọn)"
+            value={step.explanation || ''}
+            onChange={(e) => onUpdate(index, { ...step, explanation: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            rows={2}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={setNodeRef} style={style} className="border rounded-lg p-4 mb-2 bg-white dark:bg-gray-800">
@@ -97,7 +159,7 @@ function SortableStepItem({ step, index, onUpdate, onRemove }: SortableStepItemP
           onChange={(e) => onUpdate(index, { ...step, description: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         />
-        <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-2 min-h-[100px]">
+        <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-2 min-h-[100px] focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
           <EditorContent editor={editor} />
         </div>
         <textarea
@@ -253,6 +315,7 @@ export default function SolutionStepsEditor({ steps, onChange }: SolutionStepsEd
               index={index}
               onUpdate={handleUpdate}
               onRemove={handleRemove}
+              isMounted={isMounted}
             />
           ))}
         </SortableContext>
