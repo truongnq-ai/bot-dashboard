@@ -157,12 +157,16 @@ export interface ExerciseStatsResponse {
   lastUsedAt?: string;
 }
 
+// Review History Response
+export interface ReviewHistoryResponse {
+  exerciseId: string;
+  reviewLogs: ExerciseReviewLog[];
+}
+
 export interface ExerciseReviewLog {
   id: string;
-  exerciseId: string;
   reviewedBy: string;
-  reviewedAt: string;
   reviewStatus: ReviewStatus;
-  qualityScore?: number;
   reviewNotes?: string;
+  createdAt: string;
 }

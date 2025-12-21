@@ -8,7 +8,9 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useExercise, useExerciseStats, useReviewHistory } from '@/lib/hooks/useExercises';
+import { useQuestionsByExercise } from '@/lib/hooks/useQuestions';
 import ReviewStatusBadge from './ReviewStatusBadge';
+import QuestionListCompact from '@/components/questions/QuestionListCompact';
 import { formatDate, formatDateTime } from '@/lib/utils/formatters';
 import { ReviewStatus } from '@/types/exercise';
 
@@ -21,7 +23,8 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
   const { data: exercise, loading, error } = useExercise(id);
   const { data: stats } = useExerciseStats(id);
   const { data: reviewHistory } = useReviewHistory(id);
-  const [activeTab, setActiveTab] = useState<'info' | 'history' | 'stats'>('info');
+  const { data: questions, loading: questionsLoading } = useQuestionsByExercise(id);
+  const [activeTab, setActiveTab] = useState<'info' | 'history' | 'stats' | 'questions'>('info');
 
   if (loading) {
     return <div className="text-center py-8">Đang tải...</div>;
@@ -90,16 +93,28 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
             Lịch sử duyệt
           </button>
           {exercise.reviewStatus === ReviewStatus.APPROVED && (
-            <button
-              onClick={() => setActiveTab('stats')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'stats'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-              }`}
-            >
-              Thống kê
-            </button>
+            <>
+              <button
+                onClick={() => setActiveTab('stats')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'stats'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                Thống kê
+              </button>
+              <button
+                onClick={() => setActiveTab('questions')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'questions'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                Câu hỏi đã sinh {questions && questions.length > 0 && `(${questions.length})`}
+              </button>
+            </>
           )}
         </nav>
       </div>
@@ -210,14 +225,9 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
                     <div>
                       <ReviewStatusBadge status={log.reviewStatus} />
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Được duyệt bởi {log.reviewedBy} vào {formatDateTime(log.reviewedAt)}
+                        Được duyệt bởi {log.reviewedBy} vào {formatDateTime(log.createdAt)}
                       </p>
                     </div>
-                    {log.qualityScore && (
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Điểm: {log.qualityScore.toFixed(2)}
-                      </div>
-                    )}
                   </div>
                   {log.reviewNotes && (
                     <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">{log.reviewNotes}</p>
@@ -252,6 +262,16 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
                 {stats.avgTimeSec ? `${stats.avgTimeSec}s` : '-'}
               </p>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'questions' && (
+          <div>
+            {questionsLoading ? (
+              <div className="text-center py-8">Đang tải câu hỏi...</div>
+            ) : (
+              <QuestionListCompact questions={questions || []} maxItems={10} />
+            )}
           </div>
         )}
       </div>

@@ -230,7 +230,7 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
                   <div key={log.id} className="p-3 border rounded-lg">
                     <ReviewStatusBadge status={log.reviewStatus} />
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {formatDateTime(log.reviewedAt)}
+                      {formatDateTime(log.createdAt)}
                     </p>
                   </div>
                 ))}

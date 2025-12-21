@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   description: 'Chỉnh sửa bài tập',
 };
 
-export default function EditExercisePage({ params }: { params: { id: string } }) {
-  return <ExerciseEditForm id={params.id} />;
+export default async function EditExercisePage({ 
+  params 
+}: { 
+  params: Promise<{ id: string }> | { id: string } 
+}) {
+  const resolvedParams = await Promise.resolve(params);
+  return <ExerciseEditForm id={resolvedParams.id} />;
 }

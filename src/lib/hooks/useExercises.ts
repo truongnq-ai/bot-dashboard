@@ -2,7 +2,7 @@
  * Exercise Hooks
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Exercise,
   ExerciseSearchParams,
@@ -25,11 +25,25 @@ export function useExercises(searchParams: ExerciseSearchParams = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Memoize searchParams to create a stable reference based on actual values
+  const memoizedSearchParams = useMemo(
+    () => ({ ...searchParams }),
+    [
+      searchParams.skillId,
+      searchParams.grade,
+      searchParams.reviewStatus,
+      searchParams.difficultyLevel,
+      searchParams.searchText,
+      searchParams.page,
+      searchParams.pageSize,
+    ]
+  );
+
   const fetchExercises = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getExercises(searchParams);
+      const response = await getExercises(memoizedSearchParams);
       if (response.data) {
         setData(response.data);
       }
@@ -38,7 +52,7 @@ export function useExercises(searchParams: ExerciseSearchParams = {}) {
     } finally {
       setLoading(false);
     }
-  }, [searchParams]);
+  }, [memoizedSearchParams]);
 
   useEffect(() => {
     fetchExercises();
@@ -138,8 +152,8 @@ export function useReviewHistory(id: string | null) {
       setLoading(true);
       setError(null);
       const response = await getReviewHistory(id);
-      if (response.data) {
-        setData(response.data);
+      if (response.data && response.data.reviewLogs) {
+        setData(response.data.reviewLogs);
       }
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch review history'));

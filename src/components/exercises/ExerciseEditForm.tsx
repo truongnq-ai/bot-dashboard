@@ -98,7 +98,8 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
     setUploading(true);
 
     try {
-      const response = await uploadImage(file, 'practice');
+      // Pass exercise ID as questionId in metadata when editing
+      const response = await uploadImage(file, 'practice', { questionId: id });
       if (response.data) {
         setImageUrl(response.data.imageUrl);
         setValue('problemImageUrl', response.data.imageUrl);

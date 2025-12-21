@@ -5,10 +5,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Exercise, ReviewStatus } from '@/types/exercise';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import ReviewStatusBadge from './ReviewStatusBadge';
+import ActionsDropdown from '@/components/common/ActionsDropdown';
+import { ActionItem } from '@/types/common';
 import { formatDate, truncateText } from '@/lib/utils/formatters';
 import { deleteExercise } from '@/lib/api/exercise.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
@@ -31,6 +33,7 @@ export default function ExerciseListTable({
   onDelete,
   pagination,
 }: ExerciseListTableProps) {
+  const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
@@ -50,10 +53,47 @@ export default function ExerciseListTable({
     }
   };
 
+  const getActions = (exercise: Exercise): ActionItem[] => {
+    const actions: ActionItem[] = [
+      {
+        id: 'view',
+        label: 'Xem chi tiết',
+        type: 'info',
+        onClick: () => router.push(`/content/exercises/${exercise.id}`),
+      },
+      {
+        id: 'edit',
+        label: 'Chỉnh sửa',
+        type: 'warning',
+        onClick: () => router.push(`/content/exercises/${exercise.id}/edit`),
+      },
+    ];
+
+    // Only show review action when status is PENDING
+    if (exercise.reviewStatus === ReviewStatus.PENDING) {
+      actions.push({
+        id: 'review',
+        label: 'Duyệt',
+        type: 'warning',
+        onClick: () => router.push(`/content/exercises/${exercise.id}/review`),
+      });
+    }
+
+    actions.push({
+      id: 'delete',
+      label: deletingId === exercise.id ? 'Đang xóa...' : 'Xóa',
+      type: 'danger',
+      onClick: () => handleDelete(exercise.id),
+      disabled: deletingId === exercise.id,
+    });
+
+    return actions;
+  };
+
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-        <div className="max-w-full overflow-x-auto">
+      <div className="overflow-x-hidden overflow-y-visible rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="max-w-full overflow-x-auto no-scrollbar">
           <div className="min-w-[1200px]">
             <Table>
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
@@ -122,35 +162,7 @@ export default function ExerciseListTable({
                         {formatDate(exercise.createdAt)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-start">
-                        <div className="flex items-center gap-2">
-                          <Link
-                            href={`/content/exercises/${exercise.id}`}
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                          >
-                            Xem
-                          </Link>
-                          <Link
-                            href={`/content/exercises/${exercise.id}/edit`}
-                            className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
-                          >
-                            Sửa
-                          </Link>
-                          {exercise.reviewStatus === ReviewStatus.PENDING && (
-                            <Link
-                              href={`/content/exercises/${exercise.id}/review`}
-                              className="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
-                            >
-                              Duyệt
-                            </Link>
-                          )}
-                          <button
-                            onClick={() => handleDelete(exercise.id)}
-                            disabled={deletingId === exercise.id}
-                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
-                          >
-                            {deletingId === exercise.id ? 'Đang xóa...' : 'Xóa'}
-                          </button>
-                        </div>
+                        <ActionsDropdown actions={getActions(exercise)} />
                       </TableCell>
                     </TableRow>
                   ))

@@ -738,3 +738,16 @@ span.flatpickr-weekday,
   opacity: 0.8;
   cursor: grabbing; /* Changes the cursor to indicate dragging */
 }
+
+/* Ensure toast notifications are always on top of modals and other content */
+div[data-sonner-toaster],
+div[data-sonner-toast],
+.react-hot-toast,
+.react-hot-toast > div {
+  z-index: 999999 !important;
+}
+
+/* Target react-hot-toast container specifically */
+body > div[id^="react-hot-toast"] {
+  z-index: 999999 !important;
+}

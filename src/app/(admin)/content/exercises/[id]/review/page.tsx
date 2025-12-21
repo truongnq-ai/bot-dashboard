@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   description: 'Duyệt bài tập',
 };
 
-export default function ReviewExercisePage({ params }: { params: { id: string } }) {
-  return <ExerciseReviewPanel id={params.id} />;
+export default async function ReviewExercisePage({ 
+  params 
+}: { 
+  params: Promise<{ id: string }> | { id: string } 
+}) {
+  const resolvedParams = await Promise.resolve(params);
+  return <ExerciseReviewPanel id={resolvedParams.id} />;
 }

@@ -14,6 +14,7 @@ import {
   ExerciseResponse,
   ExerciseStatsResponse,
   ExerciseReviewLog,
+  ReviewHistoryResponse,
 } from '../../types/exercise';
 import { ResponseObject, PageResponse } from '../../types/common';
 
@@ -191,8 +192,8 @@ export async function reviewExercise(
  */
 export async function getReviewHistory(
   id: string
-): Promise<ResponseObject<ExerciseReviewLog[]>> {
-  const response = await apiClient.get<ResponseObject<ExerciseReviewLog[]>>(
+): Promise<ResponseObject<ReviewHistoryResponse>> {
+  const response = await apiClient.get<ResponseObject<ReviewHistoryResponse>>(
     API_ENDPOINTS.EXERCISES_REVIEW_HISTORY(id)
   );
   

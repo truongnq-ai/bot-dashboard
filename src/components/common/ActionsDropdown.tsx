@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Dropdown } from '@/components/ui/dropdown/Dropdown';
+import { createPortal } from 'react-dom';
 import { ActionItem } from '@/types/common';
 
 interface ActionsDropdownProps {
@@ -39,14 +39,49 @@ const actionColors = {
 export default function ActionsDropdown({ actions, trigger }: ActionsDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hoveredActionId, setHoveredActionId] = useState<string | null>(null);
+  const [position, setPosition] = useState({ top: 0, right: 0 });
+  const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const updatePosition = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const dropdownWidth = 160; // min-w-[160px]
+      const spacing = 8; // mt-2 = 8px
+      
+      // Calculate position
+      let top = rect.bottom + window.scrollY + spacing;
+      let right = window.innerWidth - rect.right + window.scrollX;
+      
+      // Adjust if dropdown would go off screen
+      if (right < 0) {
+        right = window.innerWidth - rect.left + window.scrollX - dropdownWidth;
+      }
+      
+      // Adjust if dropdown would go below viewport
+      const viewportHeight = window.innerHeight;
+      const dropdownHeight = actions.length * 40 + 8; // Approximate height
+      if (rect.bottom + dropdownHeight > viewportHeight) {
+        // Show above trigger instead
+        top = rect.top + window.scrollY - dropdownHeight - spacing;
+      }
+      
+      setPosition({ top, right });
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node) &&
-        !(event.target as HTMLElement).closest('.actions-dropdown-toggle')
+        !(event.target as HTMLElement).closest('.actions-dropdown-toggle') &&
+        !triggerRef.current?.contains(event.target as Node)
       ) {
         setIsOpen(false);
       }
@@ -54,11 +89,20 @@ export default function ActionsDropdown({ actions, trigger }: ActionsDropdownPro
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      updatePosition();
+      
+      const handleResize = () => updatePosition();
+      const handleScroll = () => updatePosition();
+      
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('scroll', handleScroll, true);
+      
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('scroll', handleScroll, true);
+      };
     }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
   }, [isOpen]);
 
   const handleActionClick = (action: ActionItem) => {
@@ -90,11 +134,16 @@ export default function ActionsDropdown({ actions, trigger }: ActionsDropdownPro
     </button>
   );
 
-  return (
-    <div ref={dropdownRef} className="relative">
-      <div onClick={() => setIsOpen(!isOpen)}>{trigger || defaultTrigger}</div>
-
-      <Dropdown isOpen={isOpen} onClose={() => setIsOpen(false)}>
+  const dropdownContent = isOpen && mounted ? (
+    createPortal(
+      <div
+        ref={dropdownRef}
+        className="fixed z-50 rounded-xl border border-gray-200 bg-white shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
+        style={{
+          top: `${position.top}px`,
+          right: `${position.right}px`,
+        }}
+      >
         <div className="py-1 min-w-[160px]">
           {actions.map((action) => {
             const colors = actionColors[action.type];
@@ -133,7 +182,15 @@ export default function ActionsDropdown({ actions, trigger }: ActionsDropdownPro
             );
           })}
         </div>
-      </Dropdown>
+      </div>,
+      document.body
+    )
+  ) : null;
+
+  return (
+    <div ref={triggerRef} className="relative">
+      <div onClick={() => setIsOpen(!isOpen)}>{trigger || defaultTrigger}</div>
+      {dropdownContent}
     </div>
   );
 }

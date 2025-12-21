@@ -1,16 +1,15 @@
-import ComingSoon from "@/components/common/ComingSoon";
-import { Metadata } from "next";
+/**
+ * Questions List Page
+ */
+
+import { Metadata } from 'next';
+import QuestionList from '@/components/questions/QuestionList';
 
 export const metadata: Metadata = {
-  title: "Quản lý Questions | Tutor Admin Dashboard",
-  description: "Quản lý questions và practice items",
+  title: 'Câu hỏi | Tutor Admin Dashboard',
+  description: 'Quản lý câu hỏi',
 };
 
 export default function QuestionsPage() {
-  return (
-    <ComingSoon
-      title="Quản lý Questions"
-      description="Tính năng quản lý questions đang được phát triển. Bạn sẽ có thể xem danh sách questions, tạo mới, chỉnh sửa, và phê duyệt nội dung."
-    />
-  );
+  return <QuestionList />;
 }

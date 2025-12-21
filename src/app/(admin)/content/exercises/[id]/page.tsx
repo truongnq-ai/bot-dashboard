@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   description: 'Xem chi tiết bài tập',
 };
 
-export default function ExerciseDetailPage({ params }: { params: { id: string } }) {
-  return <ExerciseDetailView id={params.id} />;
+export default async function ExerciseDetailPage({ 
+  params 
+}: { 
+  params: Promise<{ id: string }> | { id: string } 
+}) {
+  const resolvedParams = await Promise.resolve(params);
+  return <ExerciseDetailView id={resolvedParams.id} />;
 }

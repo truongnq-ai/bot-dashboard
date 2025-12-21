@@ -1,19 +1,17 @@
+/**
+ * Question List Table Component
+ */
+
 'use client';
 
-import React, { useState } from 'react';
-import { Admin } from '@/types/admin';
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { Question, QuestionStatus } from '@/types/question';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import AdminStatusBadge from './AdminStatusBadge';
-import ActionsDropdown from '@/components/common/ActionsDropdown';
-import { ActionItem } from '@/types/common';
 import { formatDate, truncateText } from '@/lib/utils/formatters';
-import { updateAdminStatus } from '@/lib/api/admin.service';
-import { showError, showSuccess } from '@/lib/utils/toast';
 
-interface AdminListTableProps {
-  admins: Admin[];
-  onStatusChange?: () => void;
-  onViewDetail?: (admin: Admin) => void;
+interface QuestionListTableProps {
+  questions: Question[];
   pagination?: {
     page: number;
     pageSize: number;
@@ -24,66 +22,27 @@ interface AdminListTableProps {
   };
 }
 
-export default function AdminListTable({
-  admins,
-  onStatusChange,
-  onViewDetail,
+function getStatusBadge(status: QuestionStatus) {
+  const baseClasses = 'px-2 py-1 rounded text-xs font-medium';
+  switch (status) {
+    case QuestionStatus.DRAFT:
+      return <span className={`${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400`}>Nháp</span>;
+    case QuestionStatus.ASSIGNED:
+      return <span className={`${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200`}>Đã assign</span>;
+    case QuestionStatus.COMPLETED:
+      return <span className={`${baseClasses} bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200`}>Đã hoàn thành</span>;
+    case QuestionStatus.SKIPPED:
+      return <span className={`${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200`}>Đã bỏ qua</span>;
+    default:
+      return <span className={`${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200`}>{status}</span>;
+  }
+}
+
+export default function QuestionListTable({
+  questions,
   pagination,
-}: AdminListTableProps) {
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-
-  const handleStatusChange = async (admin: Admin, newStatus: 'ACTIVE' | 'INACTIVE') => {
-    if (!confirm(`Bạn có chắc muốn thay đổi trạng thái của ${admin.username} thành ${newStatus === 'ACTIVE' ? 'Hoạt động' : 'Không hoạt động'}?`)) {
-      return;
-    }
-
-    try {
-      setUpdatingId(admin.userId);
-      const response = await updateAdminStatus(admin.userId, newStatus);
-      if (response.errorCode === '0000') {
-        showSuccess('Cập nhật trạng thái thành công');
-        onStatusChange?.();
-      } else {
-        showError(response.errorDetail || 'Cập nhật trạng thái thất bại');
-      }
-    } catch (error) {
-      showError('Hệ thống không có phản hồi.');
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  const getActions = (admin: Admin): ActionItem[] => {
-    const actions: ActionItem[] = [
-      {
-        id: 'view',
-        label: 'Xem chi tiết',
-        type: 'success',
-        onClick: () => onViewDetail?.(admin),
-      },
-    ];
-
-    // Only super admin can change status (for now, allow all admins)
-    if (admin.status === 'ACTIVE') {
-      actions.push({
-        id: 'deactivate',
-        label: 'Vô hiệu hóa',
-        type: 'danger',
-        onClick: () => handleStatusChange(admin, 'INACTIVE'),
-        disabled: updatingId === admin.userId,
-      });
-    } else if (admin.status === 'INACTIVE') {
-      actions.push({
-        id: 'activate',
-        label: 'Kích hoạt',
-        type: 'success',
-        onClick: () => handleStatusChange(admin, 'ACTIVE'),
-        disabled: updatingId === admin.userId,
-      });
-    }
-
-    return actions;
-  };
+}: QuestionListTableProps) {
+  const router = useRouter();
 
   return (
     <div className="space-y-4">
@@ -97,19 +56,22 @@ export default function AdminListTable({
                     ID
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Username
+                    Exercise
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Email
+                    Kỹ năng
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Role
+                    Nội dung
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Trạng thái
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Lần đăng nhập cuối
+                    Practice Count
+                  </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    Kết quả
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Ngày tạo
@@ -120,40 +82,58 @@ export default function AdminListTable({
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {admins.length === 0 ? (
+                {questions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
-                      Không tìm thấy admin nào
+                    <TableCell colSpan={9} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                      Không có câu hỏi nào
                     </TableCell>
                   </TableRow>
                 ) : (
-                  admins.map((admin) => (
-                    <TableRow key={admin.id}>
-                      <TableCell className="px-5 py-4 sm:px-6 text-start text-theme-sm dark:text-white/90">
-                        {truncateText(admin.id, 8)}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-900 text-start text-theme-sm dark:text-white font-medium">
-                        {admin.username}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {admin.email}
+                  questions.map((question) => (
+                    <TableRow
+                      key={question.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
+                      onClick={() => router.push(`/content/questions/${question.id}`)}
+                    >
+                      <TableCell className="px-5 py-4 sm:px-6 text-start text-theme-sm dark:text-white/90 font-mono">
+                        {truncateText(question.id, 8)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                          {admin.role || 'ROLE_ADMIN'}
-                        </span>
+                        {question.exerciseName || truncateText(question.exerciseId, 8)}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                        {question.skillCode && (
+                          <span>
+                            {question.skillCode} - {question.skillName || ''}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                        {truncateText(question.problemText, 100)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-start">
-                        <AdminStatusBadge status={admin.status} />
+                        {getStatusBadge(question.status)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                        {admin.lastLoginAt ? formatDate(admin.lastLoginAt) : 'Chưa đăng nhập'}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                        {formatDate(admin.createdAt)}
+                        {question.practiceCount || 0}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-start">
-                        <ActionsDropdown actions={getActions(admin)} />
+                        {question.isCorrect !== undefined && (
+                          <span className={question.isCorrect ? 'text-green-600' : 'text-red-600'}>
+                            {question.isCorrect ? '✓' : '✗'}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                        {formatDate(question.createdAt)}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-start" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                          onClick={() => router.push(`/content/questions/${question.id}`)}
+                        >
+                          Xem chi tiết
+                        </button>
                       </TableCell>
                     </TableRow>
                   ))

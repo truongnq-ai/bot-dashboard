@@ -41,4 +41,13 @@ export const API_ENDPOINTS = {
   // Images
   IMAGES_UPLOAD: `${API_VERSION}/images/upload`,
   IMAGES_DELETE: (publicId: string) => `${API_VERSION}/images/${publicId}`,
+
+  // Questions
+  QUESTIONS_LIST: `${API_VERSION}/admin/questions`,
+  QUESTIONS_GET: (id: string) => `${API_VERSION}/admin/questions/${id}`,
+  QUESTIONS_BY_EXERCISE: (exerciseId: string) => `${API_VERSION}/admin/exercises/${exerciseId}/questions`,
+  QUESTIONS_BY_SKILL: (skillId: string) => `${API_VERSION}/admin/skills/${skillId}/questions`,
+  QUESTIONS_STATS: (id: string) => `${API_VERSION}/admin/questions/${id}/stats`,
+  QUESTIONS_PRACTICES: (id: string) => `${API_VERSION}/admin/questions/${id}/practices`,
+  QUESTIONS_GENERATE: `${API_VERSION}/admin/questions/generate`,
 } as const;
