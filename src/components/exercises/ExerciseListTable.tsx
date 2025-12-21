@@ -14,6 +14,7 @@ import { ActionItem } from '@/types/common';
 import { formatDate, truncateText } from '@/lib/utils/formatters';
 import { deleteExercise } from '@/lib/api/exercise.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
+import MathText from '@/components/common/MathText';
 
 interface ExerciseListTableProps {
   exercises: Exercise[];
@@ -141,7 +142,9 @@ export default function ExerciseListTable({
                         {truncateText(exercise.id, 8)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {truncateText(exercise.problemText, 50)}
+                        <div className="max-w-md truncate">
+                          <MathText text={truncateText(exercise.problemText, 50)} />
+                        </div>
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {exercise.grade}

@@ -12,6 +12,7 @@ import { ReviewExerciseRequest, ReviewStatus } from '@/types/exercise';
 import ReviewStatusBadge from './ReviewStatusBadge';
 import { formatDateTime } from '@/lib/utils/formatters';
 import { showError, showSuccess } from '@/lib/utils/toast';
+import MathText from '@/components/common/MathText';
 
 interface ExerciseReviewPanelProps {
   id: string;
@@ -98,7 +99,10 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Problem Text</label>
                 <div className="mt-1 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                  <p className="text-gray-900 dark:text-white whitespace-pre-wrap">{exercise.problemText}</p>
+                  <MathText 
+                    text={exercise.problemText} 
+                    className="text-gray-900 dark:text-white whitespace-pre-wrap" 
+                  />
                 </div>
               </div>
 
@@ -125,7 +129,9 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
                       <div className="font-medium text-gray-900 dark:text-white">
                         Step {step.stepNumber}: {step.description || 'No description'}
                       </div>
-                      <div className="text-gray-700 dark:text-gray-300 mt-1" dangerouslySetInnerHTML={{ __html: step.content }} />
+                      <div className="text-gray-700 dark:text-gray-300 mt-1">
+                        <MathText text={step.content} />
+                      </div>
                     </div>
                   ))}
                 </div>

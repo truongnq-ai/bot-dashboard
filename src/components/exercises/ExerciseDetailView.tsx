@@ -13,6 +13,7 @@ import ReviewStatusBadge from './ReviewStatusBadge';
 import QuestionListCompact from '@/components/questions/QuestionListCompact';
 import { formatDate, formatDateTime } from '@/lib/utils/formatters';
 import { ReviewStatus } from '@/types/exercise';
+import MathText from '@/components/common/MathText';
 
 interface ExerciseDetailViewProps {
   id: string;
@@ -175,7 +176,10 @@ export default function ExerciseDetailView({ id, aiMetadata }: ExerciseDetailVie
                 Nội dung bài toán
               </label>
               <div className="mt-1 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                <p className="text-gray-900 dark:text-white whitespace-pre-wrap">{exercise.problemText}</p>
+                <MathText 
+                  text={exercise.problemText} 
+                  className="text-gray-900 dark:text-white whitespace-pre-wrap" 
+                />
               </div>
             </div>
 
@@ -202,9 +206,13 @@ export default function ExerciseDetailView({ id, aiMetadata }: ExerciseDetailVie
                     <div className="font-medium text-gray-900 dark:text-white mb-2">
                       Bước {step.stepNumber}: {step.description || 'Không có mô tả'}
                     </div>
-                    <div className="text-gray-700 dark:text-gray-300 mb-2" dangerouslySetInnerHTML={{ __html: step.content }} />
+                    <div className="text-gray-700 dark:text-gray-300 mb-2">
+                      <MathText text={step.content} />
+                    </div>
                     {step.explanation && (
-                      <div className="text-sm text-gray-600 dark:text-gray-400 italic">{step.explanation}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 italic">
+                        <MathText text={step.explanation} />
+                      </div>
                     )}
                   </div>
                 ))}
@@ -219,9 +227,13 @@ export default function ExerciseDetailView({ id, aiMetadata }: ExerciseDetailVie
                 <div className="mt-1 space-y-2">
                   {exercise.commonMistakes.map((mistake, index) => (
                     <div key={index} className="p-3 border rounded-lg">
-                      <div className="font-medium text-gray-900 dark:text-white">{mistake.mistake}</div>
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        <MathText text={mistake.mistake} />
+                      </div>
                       {mistake.explanation && (
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">{mistake.explanation}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          <MathText text={mistake.explanation} />
+                        </div>
                       )}
                     </div>
                   ))}

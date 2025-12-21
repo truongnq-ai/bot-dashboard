@@ -13,6 +13,7 @@ import ReviewStatusBadge from './ReviewStatusBadge';
 import { truncateText } from '@/lib/utils/formatters';
 import { reviewExercise } from '@/lib/api/exercise.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
+import MathText from '@/components/common/MathText';
 
 interface ExercisePreviewModalProps {
   isOpen: boolean;
@@ -279,7 +280,7 @@ export default function ExercisePreviewModal({
                           className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
                           onClick={() => onViewDetail(exercise.id)}
                         >
-                          {truncateText(exercise.problemText, 60)}
+                          <MathText text={truncateText(exercise.problemText, 60)} />
                         </span>
                       </TableCell>
                       <TableCell className="px-4 py-3">
