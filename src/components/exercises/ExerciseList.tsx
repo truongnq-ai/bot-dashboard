@@ -5,18 +5,32 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useExercises } from '@/lib/hooks/useExercises';
-import { ExerciseSearchParams, ReviewStatus } from '@/types/exercise';
+import { ExerciseSearchParams, ReviewStatus, Exercise } from '@/types/exercise';
 import ExerciseListTable from './ExerciseListTable';
+import ExerciseGenerateModal from './ExerciseGenerateModal';
+import ExercisePreviewModal from './ExercisePreviewModal';
 import { useSkills } from '@/lib/hooks/useSkills';
 import { useGrades } from '@/lib/hooks/useGrades';
 import { Skill } from '@/types/skill';
 
 export default function ExerciseList() {
+  const router = useRouter();
   const [searchParams, setSearchParams] = useState<ExerciseSearchParams>({
     page: 0,
     pageSize: 10,
   });
+
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [generatedExercises, setGeneratedExercises] = useState<Exercise[]>([]);
+  const [generationMetadata, setGenerationMetadata] = useState<{
+    providerUsed?: string;
+    overallConfidence?: number;
+    totalGenerated?: number;
+    totalValid?: number;
+  }>();
 
   const { data, loading, error, refetch } = useExercises(searchParams);
   const { data: skillsData } = useSkills();
@@ -55,17 +69,66 @@ export default function ExerciseList() {
     setSearchParams((prev) => ({ ...prev, pageSize, page: 0 }));
   };
 
+  const handleGenerateSuccess = (exercises: Exercise[], metadata?: {
+    providerUsed?: string;
+    overallConfidence?: number;
+    totalGenerated?: number;
+    totalValid?: number;
+  }) => {
+    setGeneratedExercises(exercises);
+    setGenerationMetadata(metadata);
+    setIsPreviewModalOpen(true);
+    refetch(); // Refresh the list
+  };
+
+  const handleViewDetail = (exerciseId: string) => {
+    router.push(`/content/exercises/${exerciseId}`);
+    setIsPreviewModalOpen(false);
+  };
+
+  const handleBulkApprove = () => {
+    refetch();
+  };
+
+  const handleBulkReject = () => {
+    refetch();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Bài tập</h1>
-        <a
-          href="/content/exercises/create"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Tạo bài tập
-        </a>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsGenerateModalOpen(true)}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            Tạo với AI
+          </button>
+          <a
+            href="/content/exercises/create"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Tạo bài tập
+          </a>
+        </div>
       </div>
+
+      {/* Modals */}
+      <ExerciseGenerateModal
+        isOpen={isGenerateModalOpen}
+        onClose={() => setIsGenerateModalOpen(false)}
+        onSuccess={(exercises, metadata) => handleGenerateSuccess(exercises, metadata)}
+      />
+      <ExercisePreviewModal
+        isOpen={isPreviewModalOpen}
+        exercises={generatedExercises}
+        generationMetadata={generationMetadata}
+        onClose={() => setIsPreviewModalOpen(false)}
+        onViewDetail={handleViewDetail}
+        onBulkApprove={handleBulkApprove}
+        onBulkReject={handleBulkReject}
+      />
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

@@ -153,8 +153,8 @@ export default function QuestionList() {
         <QuestionListTable
           questions={data.content || []}
           pagination={{
-            page: data.number || 0,
-            pageSize: data.size || 10,
+            page: data.page || 0,
+            pageSize: data.pageSize || 10,
             totalElements: data.totalElements || 0,
             totalPages: data.totalPages || 0,
             onPageChange: handlePageChange,

@@ -15,6 +15,8 @@ import {
   ExerciseStatsResponse,
   ExerciseReviewLog,
   ReviewHistoryResponse,
+  GenerateExercisesRequest,
+  GenerateExercisesResponse,
 } from '../../types/exercise';
 import { ResponseObject, PageResponse } from '../../types/common';
 
@@ -199,6 +201,24 @@ export async function getReviewHistory(
   
   if (response.data.errorCode !== '0000') {
     throw new Error(response.data.errorDetail || 'Failed to fetch review history');
+  }
+  
+  return response.data;
+}
+
+/**
+ * Generate exercises with AI
+ */
+export async function generateExercises(
+  data: GenerateExercisesRequest
+): Promise<ResponseObject<GenerateExercisesResponse>> {
+  const response = await apiClient.post<ResponseObject<GenerateExercisesResponse>>(
+    API_ENDPOINTS.EXERCISES_GENERATE,
+    data
+  );
+  
+  if (response.data.errorCode !== '0000') {
+    throw new Error(response.data.errorDetail || 'Failed to generate exercises');
   }
   
   return response.data;

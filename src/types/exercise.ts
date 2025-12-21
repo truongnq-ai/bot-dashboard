@@ -170,3 +170,19 @@ export interface ExerciseReviewLog {
   reviewNotes?: string;
   createdAt: string;
 }
+
+// AI Generation Request/Response
+export interface GenerateExercisesRequest {
+  skillId: string;
+  grade: number; // 6 or 7
+  difficultyLevel?: number; // 1-5, optional (AI can suggest)
+  count: number; // 1-20
+  promptTemplateId?: string; // Optional, uses default if not provided
+}
+
+export interface GenerateExercisesResponse extends PageResponse<Exercise> {
+  providerUsed?: string; // gemini, huggingface, openai
+  overallConfidence?: number; // 0.0-1.0
+  totalGenerated?: number;
+  totalValid?: number;
+}

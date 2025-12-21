@@ -21,6 +21,7 @@ export const API_ENDPOINTS = {
   EXERCISES_STATS: (id: string) => `${API_VERSION}/admin/exercises/${id}/stats`,
   EXERCISES_REVIEW: (id: string) => `${API_VERSION}/admin/exercises/${id}/review`,
   EXERCISES_REVIEW_HISTORY: (id: string) => `${API_VERSION}/admin/exercises/${id}/review-history`,
+  EXERCISES_GENERATE: `${API_VERSION}/admin/exercises/generate`,
 
   // Skills
   SKILLS_LIST: `${API_VERSION}/admin/skills`,
@@ -50,4 +51,14 @@ export const API_ENDPOINTS = {
   QUESTIONS_STATS: (id: string) => `${API_VERSION}/admin/questions/${id}/stats`,
   QUESTIONS_PRACTICES: (id: string) => `${API_VERSION}/admin/questions/${id}/practices`,
   QUESTIONS_GENERATE: `${API_VERSION}/admin/questions/generate`,
+
+  // Prompt Templates
+  PROMPT_TEMPLATES_LIST: `${API_VERSION}/admin/prompt-templates`,
+  PROMPT_TEMPLATES_CREATE: `${API_VERSION}/admin/prompt-templates`,
+  PROMPT_TEMPLATES_GET: (id: string) => `${API_VERSION}/admin/prompt-templates/${id}`,
+  PROMPT_TEMPLATES_UPDATE: (id: string) => `${API_VERSION}/admin/prompt-templates/${id}`,
+  PROMPT_TEMPLATES_DELETE: (id: string) => `${API_VERSION}/admin/prompt-templates/${id}`,
+  PROMPT_TEMPLATES_ACTIVATE: (id: string) => `${API_VERSION}/admin/prompt-templates/${id}/activate`,
+  PROMPT_TEMPLATES_DEACTIVATE: (id: string) => `${API_VERSION}/admin/prompt-templates/${id}/deactivate`,
+  PROMPT_TEMPLATES_ACTIVE: `${API_VERSION}/admin/prompt-templates/active`,
 } as const;

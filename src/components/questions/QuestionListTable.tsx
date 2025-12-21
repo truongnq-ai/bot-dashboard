@@ -127,7 +127,7 @@ export default function QuestionListTable({
                       <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                         {formatDate(question.createdAt)}
                       </TableCell>
-                      <TableCell className="px-4 py-3 text-start" onClick={(e) => e.stopPropagation()}>
+                      <TableCell className="px-4 py-3 text-start">
                         <button
                           className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                           onClick={() => router.push(`/content/questions/${question.id}`)}

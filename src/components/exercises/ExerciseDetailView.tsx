@@ -16,9 +16,14 @@ import { ReviewStatus } from '@/types/exercise';
 
 interface ExerciseDetailViewProps {
   id: string;
+  aiMetadata?: {
+    providerUsed?: string;
+    confidence?: number;
+    generationTimestamp?: string;
+  };
 }
 
-export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
+export default function ExerciseDetailView({ id, aiMetadata }: ExerciseDetailViewProps) {
   const router = useRouter();
   const { data: exercise, loading, error } = useExercise(id);
   const { data: stats } = useExerciseStats(id);
@@ -68,6 +73,27 @@ export default function ExerciseDetailView({ id }: ExerciseDetailViewProps) {
           </button>
         </div>
       </div>
+
+      {/* AI Generated Badge */}
+      {(aiMetadata || (exercise.qualityScore && exercise.createdBy)) && (
+        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-1 bg-blue-600 text-white text-xs font-medium rounded">
+              AI Generated
+            </span>
+            {aiMetadata?.providerUsed && (
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Provider: {aiMetadata.providerUsed.toUpperCase()}
+              </span>
+            )}
+            {(aiMetadata?.confidence !== undefined || exercise.qualityScore) && (
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Confidence: {((aiMetadata?.confidence ?? exercise.qualityScore ?? 0) * 100).toFixed(1)}%
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200 dark:border-gray-700">

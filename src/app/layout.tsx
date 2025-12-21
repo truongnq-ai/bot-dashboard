@@ -5,6 +5,7 @@ import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import Toaster from '@/components/common/Toaster';
+import QueryProvider from '@/components/providers/QueryProvider';
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
@@ -24,12 +25,14 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider>
-          <SidebarProvider>
-            <AuthProvider>
-              {children}
-              <Toaster />
-            </AuthProvider>
-          </SidebarProvider>
+          <QueryProvider>
+            <SidebarProvider>
+              <AuthProvider>
+                {children}
+                <Toaster />
+              </AuthProvider>
+            </SidebarProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
