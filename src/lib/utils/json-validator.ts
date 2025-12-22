@@ -232,7 +232,9 @@ export function validateExerciseJson(jsonString: string): ValidationResult {
   }
 
   // Step 5: Map AI response format → CreateExerciseRequest format
-  const aiExercise = ex as AIExerciseResponse;
+  // Cast through unknown first to satisfy TypeScript strict type checking
+  // All required fields have been validated above
+  const aiExercise = ex as unknown as AIExerciseResponse;
 
   const createRequest: CreateExerciseRequest = {
     // Note: skillId and grade need to be set by the user in the form
