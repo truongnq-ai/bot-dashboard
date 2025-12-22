@@ -21,39 +21,44 @@ import { showError, showSuccess } from '@/lib/utils/toast';
 import { Skill } from '@/types/skill';
 import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
 
-const exerciseSchema = z.object({
-  skillId: z.string().optional().or(z.literal('')),
-  grade: z.preprocess(
+// Helper function to create optional number schema with preprocessing
+const optionalNumberSchema = (
+  min?: number,
+  max?: number,
+  positive?: boolean
+): z.ZodType<number | undefined, z.ZodTypeDef, unknown> => {
+  return z.preprocess(
     (val) => {
       if (val === '' || val === null || val === undefined) return undefined;
       const num = Number(val);
-      return isNaN(num) ? undefined : num;
+      if (isNaN(num)) return undefined;
+      return num;
     },
-    z.number().min(6).max(7).optional(),
-  ),
+    z.union([z.number(), z.undefined()]).refine(
+      (val) => {
+        if (val === undefined) return true;
+        if (min !== undefined && val < min) return false;
+        if (max !== undefined && val > max) return false;
+        if (positive && val <= 0) return false;
+        return true;
+      },
+      { message: 'Invalid number' }
+    )
+  ) as z.ZodType<number | undefined, z.ZodTypeDef, unknown>;
+};
+
+const exerciseSchema = z.object({
+  skillId: z.string().optional().or(z.literal('')),
+  grade: optionalNumberSchema(6, 7),
   chapter: z.string().optional().or(z.literal('')),
   problemType: z.string().optional().or(z.literal('')),
   problemText: z.string().optional().or(z.literal('')),
   problemLatex: z.string().optional().or(z.literal('')),
   problemImageUrl: z.string().optional().or(z.literal('')),
-  difficultyLevel: z.preprocess(
-    (val) => {
-      if (val === '' || val === null || val === undefined) return undefined;
-      const num = Number(val);
-      return isNaN(num) ? undefined : num;
-    },
-    z.number().min(1).max(5).optional(),
-  ),
+  difficultyLevel: optionalNumberSchema(1, 5),
   finalAnswer: z.string().optional().or(z.literal('')),
   learningObjective: z.string().optional().or(z.literal('')),
-  timeEstimateSec: z.preprocess(
-    (val) => {
-      if (val === '' || val === null || val === undefined) return undefined;
-      const num = Number(val);
-      return isNaN(num) ? undefined : num;
-    },
-    z.number().positive().optional(),
-  ),
+  timeEstimateSec: optionalNumberSchema(undefined, undefined, true),
 });
 
 type ExerciseFormData = z.infer<typeof exerciseSchema>;
