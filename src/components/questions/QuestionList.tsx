@@ -21,6 +21,14 @@ export default function QuestionList() {
   const { data, loading, error, refetch } = useQuestions(searchParams);
   const { data: skillsData } = useSkills();
 
+  // Sort skills by code (6.1.1 -> 6.1.2 -> 6.2.1 -> 6.2.2 ...)
+  const sortedSkills = useMemo(() => {
+    if (!skillsData?.content) return [];
+    return [...skillsData.content].sort((a, b) => {
+      return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [skillsData]);
+
   const statistics = useMemo(() => {
     if (!data) {
       return {
@@ -105,7 +113,7 @@ export default function QuestionList() {
               onChange={(e) => handleFilterChange({ skillId: e.target.value || undefined })}
             >
               <option value="">Tất cả</option>
-              {(skillsData?.content || []).map((skill) => (
+              {sortedSkills.map((skill) => (
                 <option key={skill.id} value={skill.id}>
                   {skill.code} - {skill.name}
                 </option>

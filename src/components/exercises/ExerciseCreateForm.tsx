@@ -4,7 +4,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -38,7 +38,6 @@ type ExerciseFormData = z.infer<typeof exerciseSchema>;
 
 export default function ExerciseCreateForm() {
   const router = useRouter();
-  const { data: skillsData } = useSkills();
   const { data: gradesData } = useGrades();
   const [solutionSteps, setSolutionSteps] = useState<SolutionStepRequest[]>([
     { stepNumber: 1, content: '', description: '', explanation: '' },
@@ -79,6 +78,32 @@ export default function ExerciseCreateForm() {
       grade: 6,
     },
   });
+
+  const selectedGrade = watch('grade');
+
+  const { data: skillsData } = useSkills({
+    grade: selectedGrade as 6 | 7 | undefined,
+    pageSize: 1000,
+    sortBy: 'code',
+    sortDirection: 'asc',
+  });
+
+  // Sort skills by code alphabetically
+  const sortedSkills = useMemo(() => {
+    if (!skillsData?.content) return [];
+    return [...skillsData.content].sort((a, b) => {
+      return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [skillsData]);
+
+  // Reset skillId when grade changes
+  const prevGradeRef = useRef<number | undefined>(selectedGrade);
+  useEffect(() => {
+    if (prevGradeRef.current !== undefined && prevGradeRef.current !== selectedGrade) {
+      setValue('skillId', '');
+    }
+    prevGradeRef.current = selectedGrade;
+  }, [selectedGrade, setValue]);
 
   const onDrop = async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -184,6 +209,22 @@ export default function ExerciseCreateForm() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Lớp *
+                  </label>
+                  <select
+                    {...register('grade', { valueAsNumber: true })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    {gradesData?.map((grade) => (
+                      <option key={grade} value={grade}>
+                        Lớp {grade}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Kỹ năng *
                   </label>
                   <select
@@ -191,9 +232,9 @@ export default function ExerciseCreateForm() {
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="">Chọn kỹ năng</option>
-                    {skillsData?.content?.map((skill: Skill) => (
+                    {sortedSkills.map((skill: Skill) => (
                       <option key={skill.id} value={skill.id}>
-                        {skill.name}
+                        {skill.code} - {skill.name}
                       </option>
                     ))}
                   </select>
@@ -203,21 +244,6 @@ export default function ExerciseCreateForm() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Lớp *
-                    </label>
-                    <select
-                      {...register('grade', { valueAsNumber: true })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    >
-                      {gradesData?.map((grade) => (
-                        <option key={grade} value={grade}>
-                          Lớp {grade}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

@@ -4,7 +4,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { GenerateExercisesRequest, Exercise } from '@/types/exercise';
 import { generateExercises } from '@/lib/api/exercise.service';
@@ -49,7 +49,30 @@ export default function ExerciseGenerateModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadingDots, setLoadingDots] = useState('.');
 
-  const { data: skillsData } = useSkills({ pageSize: 100 });
+  const { data: skillsData } = useSkills({
+    grade: formData.grade as 6 | 7,
+    pageSize: 1000,
+    sortBy: 'code',
+    sortDirection: 'asc',
+  });
+
+  // Sort skills by code alphabetically
+  const sortedSkills = useMemo(() => {
+    if (!skillsData?.content) return [];
+    return [...skillsData.content].sort((a, b) => {
+      return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [skillsData]);
+
+  // Reset skillId when grade changes
+  useEffect(() => {
+    if (formData.skillId) {
+      const selectedSkill = sortedSkills.find((s) => s.id === formData.skillId);
+      if (selectedSkill && selectedSkill.grade !== formData.grade) {
+        setFormData((prev) => ({ ...prev, skillId: '' }));
+      }
+    }
+  }, [formData.grade, formData.skillId, sortedSkills]);
 
   // Animation for loading dots
   useEffect(() => {
@@ -148,6 +171,32 @@ export default function ExerciseGenerateModal({
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Grade Selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Lớp <span className="text-red-500">*</span>
+            </label>
+            <select
+              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                errors.grade
+                  ? 'border-red-500'
+                  : 'border-gray-300 dark:border-gray-600'
+              }`}
+              value={formData.grade}
+              onChange={(e) => {
+                const newGrade = parseInt(e.target.value);
+                setFormData({ ...formData, grade: newGrade, skillId: '' }); // Reset skill when grade changes
+              }}
+              disabled={loading}
+            >
+              <option value={6}>Lớp 6</option>
+              <option value={7}>Lớp 7</option>
+            </select>
+            {errors.grade && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.grade}</p>
+            )}
+          </div>
+
           {/* Skill Selector */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -164,37 +213,14 @@ export default function ExerciseGenerateModal({
               disabled={loading}
             >
               <option value="">Chọn kỹ năng</option>
-              {skillsData?.content?.map((skill: Skill) => (
+              {sortedSkills.map((skill: Skill) => (
                 <option key={skill.id} value={skill.id}>
-                  {skill.name} ({skill.code})
+                  {skill.code} - {skill.name}
                 </option>
               ))}
             </select>
             {errors.skillId && (
               <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.skillId}</p>
-            )}
-          </div>
-
-          {/* Grade Selector */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Lớp <span className="text-red-500">*</span>
-            </label>
-            <select
-              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                errors.grade
-                  ? 'border-red-500'
-                  : 'border-gray-300 dark:border-gray-600'
-              }`}
-              value={formData.grade}
-              onChange={(e) => setFormData({ ...formData, grade: parseInt(e.target.value) })}
-              disabled={loading}
-            >
-              <option value={6}>Lớp 6</option>
-              <option value={7}>Lớp 7</option>
-            </select>
-            {errors.grade && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.grade}</p>
             )}
           </div>
 

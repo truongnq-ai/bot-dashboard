@@ -50,13 +50,13 @@ const navItems: NavItem[] = [
       { name: "Kỹ năng", path: "/content/skills", pro: false },
       { name: "Câu hỏi", path: "/content/questions", pro: false },
       { name: "Bài tập", path: "/content/exercises", pro: false },
-      { name: "Prompt", path: "/content/prompt-templates", pro: false },
     ],
   },
   {
     icon: <BoltIcon />,
     name: "Chất lượng AI",
     subItems: [
+      { name: "Prompt", path: "/content/prompt-templates", pro: false },
       { name: "Đánh giá giải pháp", path: "/ai-quality/solutions", pro: false },
       { name: "Chỉ số độ chính xác", path: "/ai-quality/accuracy", pro: false },
       { name: "Phân tích lỗi", path: "/ai-quality/errors", pro: false },

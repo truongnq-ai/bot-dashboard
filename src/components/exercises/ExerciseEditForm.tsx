@@ -170,12 +170,50 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
   };
 
   // Error handler for form validation errors
-  const onError = (errors: any) => {
-    console.error('Form validation errors:', errors);
-    const errorMessages = Object.entries(errors).map(([field, error]: [string, any]) => {
-      return error?.message || `${field}: Lỗi validation`;
+  const onError = (validationErrors: any) => {
+    console.error('Form validation errors:', validationErrors);
+    
+    // Check if errors object has any keys
+    const errorKeys = Object.keys(validationErrors || {});
+    if (errorKeys.length === 0) {
+      // If errors object is empty, it might be a validation issue that wasn't captured
+      // Check formState.errors as fallback
+      const formStateErrorKeys = Object.keys(errors || {});
+      if (formStateErrorKeys.length > 0) {
+        // Use formState errors if available
+        const errorMessages = formStateErrorKeys.map((field) => {
+          const error = (errors as any)[field];
+          return error?.message || `${field}: Lỗi validation`;
+        });
+        showError(`Lỗi validation: ${errorMessages.join(', ')}`);
+      } else {
+        // Show generic message if no errors found
+        showError('Vui lòng kiểm tra lại các trường trong form');
+      }
+      return;
+    }
+    
+    const errorMessages = errorKeys.map((field) => {
+      const error = validationErrors[field];
+      if (error?.message) {
+        return `${field}: ${error.message}`;
+      }
+      // Handle nested errors (e.g., array fields)
+      if (error && typeof error === 'object') {
+        const nestedErrors = Object.entries(error).map(([key, value]: [string, any]) => {
+          return value?.message || `${key}: Lỗi validation`;
+        });
+        return nestedErrors.length > 0 ? nestedErrors.join(', ') : `${field}: Lỗi validation`;
+      }
+      return `${field}: Lỗi validation`;
     });
-    showError(`Lỗi validation: ${errorMessages.join(', ')}`);
+    
+    if (errorMessages.length > 0) {
+      showError(`Lỗi validation: ${errorMessages.join(', ')}`);
+    } else {
+      // Fallback if no error messages were extracted
+      showError('Có lỗi xảy ra khi xác thực form. Vui lòng kiểm tra lại các trường.');
+    }
   };
 
   const addMistake = () => {

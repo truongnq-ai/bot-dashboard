@@ -4,7 +4,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { GenerateQuestionRequest, QuestionType } from '@/types/question';
 import { generateQuestions } from '@/lib/api/question.service';
@@ -39,6 +39,7 @@ export default function GenerateQuestionsModal({
   const [generateFromExercise, setGenerateFromExercise] = useState(false);
   const [generateFromSkill, setGenerateFromSkill] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingDots, setLoadingDots] = useState('.');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Fetch skills and exercises
@@ -47,6 +48,14 @@ export default function GenerateQuestionsModal({
     reviewStatus: ReviewStatus.APPROVED,
     pageSize: 100,
   });
+
+  // Sort skills by code (6.1.1 -> 6.1.2 -> 6.2.1 -> 6.2.2 ...)
+  const sortedSkills = useMemo(() => {
+    if (!skillsData?.content) return [];
+    return [...skillsData.content].sort((a, b) => {
+      return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [skillsData]);
 
   // Update count when exercise is selected
   useEffect(() => {
@@ -177,7 +186,6 @@ export default function GenerateQuestionsModal({
     }
   };
 
-  const skills = skillsData?.content || [];
   const exercises = exercisesData?.content || [];
 
   return (
@@ -292,7 +300,7 @@ export default function GenerateQuestionsModal({
                   onChange={(e) => setFormData((prev) => ({ ...prev, skillId: e.target.value || undefined }))}
                 >
                   <option value="">Chọn kỹ năng...</option>
-                  {skills.map((skill) => (
+                  {sortedSkills.map((skill) => (
                     <option key={skill.id} value={skill.id}>
                       {skill.code} - {skill.name}
                     </option>

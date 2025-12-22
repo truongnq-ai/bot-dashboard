@@ -4,7 +4,7 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useExercises } from '@/lib/hooks/useExercises';
 import { ExerciseSearchParams, ReviewStatus, Exercise } from '@/types/exercise';
@@ -33,8 +33,31 @@ export default function ExerciseList() {
   }>();
 
   const { data, loading, error, refetch } = useExercises(searchParams);
-  const { data: skillsData } = useSkills();
+  const { data: skillsData } = useSkills({
+    grade: searchParams.grade as 6 | 7 | undefined,
+    pageSize: 1000,
+    sortBy: 'code',
+    sortDirection: 'asc',
+  });
   const { data: gradesData } = useGrades();
+
+  // Sort skills by code alphabetically
+  const sortedSkills = useMemo(() => {
+    if (!skillsData?.content) return [];
+    return [...skillsData.content].sort((a, b) => {
+      return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [skillsData]);
+
+  // Reset skillId when grade changes and selected skill doesn't belong to new grade
+  useEffect(() => {
+    if (searchParams.grade && searchParams.skillId) {
+      const selectedSkill = sortedSkills.find((s) => s.id === searchParams.skillId);
+      if (selectedSkill && selectedSkill.grade !== searchParams.grade) {
+        setSearchParams((prev) => ({ ...prev, skillId: undefined, page: 0 }));
+      }
+    }
+  }, [searchParams.grade, searchParams.skillId, sortedSkills]);
 
   const statistics = useMemo(() => {
     if (!data) {
@@ -155,6 +178,30 @@ export default function ExerciseList() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Lớp
+            </label>
+            <select
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              value={searchParams.grade || ''}
+              onChange={(e) => {
+                const newGrade = e.target.value ? parseInt(e.target.value) : undefined;
+                handleFilterChange({ 
+                  grade: newGrade,
+                  skillId: undefined, // Reset skill when grade changes
+                });
+              }}
+            >
+              <option value="">Tất cả lớp</option>
+              {gradesData?.map((grade) => (
+                <option key={grade} value={grade}>
+                  Lớp {grade}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Kỹ năng
             </label>
             <select
@@ -163,29 +210,9 @@ export default function ExerciseList() {
               onChange={(e) => handleFilterChange({ skillId: e.target.value || undefined })}
             >
               <option value="">Tất cả kỹ năng</option>
-              {skillsData?.content?.map((skill: Skill) => (
+              {sortedSkills.map((skill: Skill) => (
                 <option key={skill.id} value={skill.id}>
-                  {skill.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Lớp
-            </label>
-            <select
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              value={searchParams.grade || ''}
-              onChange={(e) =>
-                handleFilterChange({ grade: e.target.value ? parseInt(e.target.value) : undefined })
-              }
-            >
-              <option value="">Tất cả lớp</option>
-              {gradesData?.map((grade) => (
-                <option key={grade} value={grade}>
-                  Lớp {grade}
+                  {skill.code} - {skill.name}
                 </option>
               ))}
             </select>

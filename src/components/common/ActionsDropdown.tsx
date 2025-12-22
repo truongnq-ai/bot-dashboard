@@ -54,13 +54,14 @@ export default function ActionsDropdown({ actions, trigger }: ActionsDropdownPro
       const dropdownWidth = 160; // min-w-[160px]
       const spacing = 8; // mt-2 = 8px
       
-      // Calculate position
-      let top = rect.bottom + window.scrollY + spacing;
-      let right = window.innerWidth - rect.right + window.scrollX;
+      // Calculate position - using fixed positioning, so no need for scroll offsets
+      // getBoundingClientRect() already returns viewport coordinates
+      let top = rect.bottom + spacing;
+      let right = window.innerWidth - rect.right;
       
       // Adjust if dropdown would go off screen
       if (right < 0) {
-        right = window.innerWidth - rect.left + window.scrollX - dropdownWidth;
+        right = window.innerWidth - rect.left - dropdownWidth;
       }
       
       // Adjust if dropdown would go below viewport
@@ -68,7 +69,7 @@ export default function ActionsDropdown({ actions, trigger }: ActionsDropdownPro
       const dropdownHeight = actions.length * 40 + 8; // Approximate height
       if (rect.bottom + dropdownHeight > viewportHeight) {
         // Show above trigger instead
-        top = rect.top + window.scrollY - dropdownHeight - spacing;
+        top = rect.top - dropdownHeight - spacing;
       }
       
       setPosition({ top, right });
