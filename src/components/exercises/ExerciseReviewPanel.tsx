@@ -26,12 +26,12 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
   const [qualityScore, setQualityScore] = useState<number>(0.7);
   const [reviewNotes, setReviewNotes] = useState<string>('');
   const [reviewStatus, setReviewStatus] = useState<ReviewStatus | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [submittingStatus, setSubmittingStatus] = useState<ReviewStatus | null>(null);
   const [loadingDots, setLoadingDots] = useState('.');
 
   // Animation for loading dots
   useEffect(() => {
-    if (submitting) {
+    if (submittingStatus !== null) {
       const interval = setInterval(() => {
         setLoadingDots((prev) => {
           if (prev === '.') return '..';
@@ -44,21 +44,28 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
     } else {
       setLoadingDots('.');
     }
-  }, [submitting]);
+  }, [submittingStatus]);
+
+  // Auto redirect to exercise list if exercise is already reviewed
+  useEffect(() => {
+    if (!exerciseLoading && exercise && exercise.reviewStatus !== ReviewStatus.PENDING) {
+      router.push('/content/exercises');
+    }
+  }, [exercise, exerciseLoading, router]);
 
   const handleSubmit = async (status: ReviewStatus) => {
     // Validation
     if (status === ReviewStatus.REJECTED && !reviewNotes.trim()) {
-      showError('Review notes are required when rejecting an exercise');
+      showError('Cần nhập ghi chú khi từ chối bài tập');
       return;
     }
 
     if (status === ReviewStatus.APPROVED && qualityScore < 0.7) {
-      showError('Quality score must be at least 0.7 to approve an exercise');
+      showError('Điểm chất lượng phải ít nhất 0.7 để duyệt bài tập');
       return;
     }
 
-    setSubmitting(true);
+    setSubmittingStatus(status);
 
     try {
       const request: ReviewExerciseRequest = {
@@ -68,29 +75,33 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
       };
 
       await reviewExercise(id, request);
-      showSuccess(`Exercise ${status.toLowerCase()} successfully`);
+      const statusText = status === ReviewStatus.APPROVED ? 'đã được duyệt' : 
+                         status === ReviewStatus.REJECTED ? 'đã bị từ chối' : 
+                         'đã được yêu cầu chỉnh sửa';
+      showSuccess(`Bài tập ${statusText} thành công`);
       router.push(`/content/exercises/${id}`);
     } catch (error) {
-      showError('Failed to review exercise: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showError('Duyệt bài tập thất bại: ' + (error instanceof Error ? error.message : 'Lỗi không xác định'));
     } finally {
-      setSubmitting(false);
+      setSubmittingStatus(null);
     }
   };
 
   if (exerciseLoading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return <div className="text-center py-8">Đang tải...</div>;
   }
 
   if (!exercise) {
-    return <div className="text-center py-8">Exercise not found</div>;
+    return <div className="text-center py-8">Không tìm thấy bài tập</div>;
   }
 
   if (exercise.reviewStatus !== ReviewStatus.PENDING) {
+    // Show loading message while redirecting
     return (
       <div className="max-w-4xl mx-auto">
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
           <p className="text-yellow-800 dark:text-yellow-200">
-            This exercise has already been reviewed. Current status: <ReviewStatusBadge status={exercise.reviewStatus} />
+            Bài tập này đã được duyệt. Đang chuyển về danh sách bài tập...
           </p>
         </div>
       </div>
@@ -100,12 +111,12 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Review Exercise</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Duyệt bài tập</h1>
         <button
           onClick={() => router.back()}
           className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
         >
-          Back
+          Quay lại
         </button>
       </div>
 
@@ -113,10 +124,10 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
         {/* Left Column - Exercise Preview */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Exercise Preview</h2>
+            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Xem trước bài tập</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Problem Text</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nội dung bài toán</label>
                 <div className="mt-1 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
                   <MathText 
                     text={exercise.problemText} 
@@ -128,11 +139,11 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
               {exercise.problemImageUrl && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Problem Image
+                    Hình ảnh bài toán
                   </label>
                   <img
                     src={exercise.problemImageUrl}
-                    alt="Problem"
+                    alt="Bài toán"
                     className="mt-1 max-w-md rounded-lg border border-gray-300 dark:border-gray-600"
                   />
                 </div>
@@ -140,13 +151,13 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Solution Steps
+                  Các bước giải
                 </label>
                 <div className="mt-1 space-y-2">
                   {exercise.solutionSteps.map((step, index) => (
                     <div key={index} className="p-3 border rounded-lg">
                       <div className="font-medium text-gray-900 dark:text-white">
-                        Step {step.stepNumber}: {step.description || 'No description'}
+                        Bước {step.stepNumber}: {step.description || 'Không có mô tả'}
                       </div>
                       <div className="text-gray-700 dark:text-gray-300 mt-1">
                         <MathText text={step.content} />
@@ -160,11 +171,11 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
 
           {/* Review Form */}
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Review Form</h2>
+            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Biểu mẫu duyệt</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Quality Score: {qualityScore.toFixed(2)}
+                  Điểm chất lượng: {qualityScore.toFixed(2)}
                 </label>
                 <input
                   type="range"
@@ -184,14 +195,14 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Review Notes
+                  Ghi chú duyệt
                 </label>
                 <textarea
                   value={reviewNotes}
                   onChange={(e) => setReviewNotes(e.target.value)}
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Enter review notes..."
+                  placeholder="Nhập ghi chú duyệt..."
                 />
               </div>
             </div>
@@ -201,34 +212,34 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
         {/* Right Column - Info & Actions */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Exercise Info</h2>
+            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Thông tin bài tập</h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Trạng thái</label>
                 <div className="mt-1">
                   <ReviewStatusBadge status={exercise.reviewStatus} />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Grade</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Lớp</label>
                 <p className="mt-1 text-gray-900 dark:text-white">{exercise.grade}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Difficulty</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Độ khó</label>
                 <p className="mt-1 text-gray-900 dark:text-white">{exercise.difficultyLevel || '-'}</p>
               </div>
             </div>
           </div>
 
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Review Actions</h2>
+            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Hành động duyệt</h2>
             <div className="space-y-3">
               <button
                 onClick={() => handleSubmit(ReviewStatus.APPROVED)}
-                disabled={submitting || qualityScore < 0.7}
+                disabled={submittingStatus !== null || qualityScore < 0.7}
                 className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {submitting && (
+                {submittingStatus === ReviewStatus.APPROVED && (
                   <svg
                     className="animate-spin h-4 w-4 text-white"
                     xmlns="http://www.w3.org/2000/svg"
@@ -250,14 +261,14 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
                     ></path>
                   </svg>
                 )}
-                {submitting ? `Đang duyệt${loadingDots}` : 'Approve (Score ≥ 0.7)'}
+                {submittingStatus === ReviewStatus.APPROVED ? `Đang duyệt${loadingDots}` : 'Duyệt (Điểm ≥ 0.7)'}
               </button>
               <button
                 onClick={() => handleSubmit(ReviewStatus.REJECTED)}
-                disabled={submitting || !reviewNotes.trim()}
+                disabled={submittingStatus !== null || !reviewNotes.trim()}
                 className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {submitting && (
+                {submittingStatus === ReviewStatus.REJECTED && (
                   <svg
                     className="animate-spin h-4 w-4 text-white"
                     xmlns="http://www.w3.org/2000/svg"
@@ -279,14 +290,14 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
                     ></path>
                   </svg>
                 )}
-                {submitting ? `Đang từ chối${loadingDots}` : 'Reject (Requires Notes)'}
+                {submittingStatus === ReviewStatus.REJECTED ? `Đang từ chối${loadingDots}` : 'Từ chối (Cần ghi chú)'}
               </button>
               <button
                 onClick={() => handleSubmit(ReviewStatus.NEEDS_REVISION)}
-                disabled={submitting}
+                disabled={submittingStatus !== null}
                 className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {submitting && (
+                {submittingStatus === ReviewStatus.NEEDS_REVISION && (
                   <svg
                     className="animate-spin h-4 w-4 text-white"
                     xmlns="http://www.w3.org/2000/svg"
@@ -308,14 +319,14 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
                     ></path>
                   </svg>
                 )}
-                {submitting ? `Đang yêu cầu chỉnh sửa${loadingDots}` : 'Needs Revision'}
+                {submittingStatus === ReviewStatus.NEEDS_REVISION ? `Đang yêu cầu chỉnh sửa${loadingDots}` : 'Yêu cầu chỉnh sửa'}
               </button>
             </div>
           </div>
 
           {reviewHistory && reviewHistory.length > 0 && (
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Review History</h2>
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Lịch sử duyệt</h2>
               <div className="space-y-3">
                 {reviewHistory.map((log) => (
                   <div key={log.id} className="p-3 border rounded-lg">

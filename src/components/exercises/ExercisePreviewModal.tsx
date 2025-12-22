@@ -42,6 +42,7 @@ export default function ExercisePreviewModal({
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const handleSelectAll = () => {
     if (selectedIds.size === exercises.length) {
@@ -139,9 +140,19 @@ export default function ExercisePreviewModal({
     onClose();
   };
 
+  const toggleExpand = (exerciseId: string) => {
+    const newExpanded = new Set(expandedIds);
+    if (newExpanded.has(exerciseId)) {
+      newExpanded.delete(exerciseId);
+    } else {
+      newExpanded.add(exerciseId);
+    }
+    setExpandedIds(newExpanded);
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="max-w-6xl">
-      <div className="p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-[95vw]">
+      <div className="p-4 sm:p-6 max-h-[95vh] overflow-y-auto">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
           Xem trước bài tập đã tạo
         </h2>
@@ -244,12 +255,12 @@ export default function ExercisePreviewModal({
                       className="rounded border-gray-300 dark:border-gray-600"
                     />
                   </TableCell>
-                  <TableCell isHeader className="px-4 py-3">ID</TableCell>
-                  <TableCell isHeader className="px-4 py-3">Nội dung bài toán</TableCell>
-                  <TableCell isHeader className="px-4 py-3">Độ khó</TableCell>
-                  <TableCell isHeader className="px-4 py-3">Độ tin cậy</TableCell>
-                  <TableCell isHeader className="px-4 py-3">Trạng thái</TableCell>
-                  <TableCell isHeader className="px-4 py-3">Thao tác</TableCell>
+                  <TableCell isHeader className="px-4 py-3 w-24">ID</TableCell>
+                  <TableCell isHeader className="px-4 py-3 min-w-[400px]">Nội dung bài toán</TableCell>
+                  <TableCell isHeader className="px-4 py-3 w-24">Độ khó</TableCell>
+                  <TableCell isHeader className="px-4 py-3 w-32">Độ tin cậy</TableCell>
+                  <TableCell isHeader className="px-4 py-3 w-32">Trạng thái</TableCell>
+                  <TableCell isHeader className="px-4 py-3 w-32">Thao tác</TableCell>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -272,16 +283,40 @@ export default function ExercisePreviewModal({
                           className="rounded border-gray-300 dark:border-gray-600"
                         />
                       </TableCell>
-                      <TableCell className="px-4 py-3 font-mono text-sm">
-                        {truncateText(exercise.id, 8)}
+                      <TableCell className="px-4 py-3 font-mono text-xs">
+                        {truncateText(exercise.id, 12)}
                       </TableCell>
-                      <TableCell className="px-4 py-3">
-                        <span
-                          className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
-                          onClick={() => onViewDetail(exercise.id)}
-                        >
-                          <MathText text={truncateText(exercise.problemText, 60)} />
-                        </span>
+                      <TableCell className="px-4 py-3 max-w-md">
+                        <div className="space-y-1">
+                          <div
+                            className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                            onClick={() => toggleExpand(exercise.id)}
+                          >
+                            <MathText 
+                              text={
+                                expandedIds.has(exercise.id)
+                                  ? exercise.problemText
+                                  : truncateText(exercise.problemText, 200)
+                              } 
+                            />
+                          </div>
+                          {exercise.problemText.length > 200 && (
+                            <button
+                              onClick={() => toggleExpand(exercise.id)}
+                              className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                            >
+                              {expandedIds.has(exercise.id) ? 'Thu gọn' : 'Xem thêm...'}
+                            </button>
+                          )}
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            <button
+                              onClick={() => onViewDetail(exercise.id)}
+                              className="hover:text-blue-600 dark:hover:text-blue-400"
+                            >
+                              Xem chi tiết đầy đủ →
+                            </button>
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell className="px-4 py-3">
                         {exercise.difficultyLevel ? (

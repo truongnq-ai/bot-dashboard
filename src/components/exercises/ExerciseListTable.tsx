@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components
 import ReviewStatusBadge from './ReviewStatusBadge';
 import ActionsDropdown from '@/components/common/ActionsDropdown';
 import { ActionItem } from '@/types/common';
-import { formatDate, truncateText } from '@/lib/utils/formatters';
+import { formatDate, truncateText, formatIdShort } from '@/lib/utils/formatters';
 import { deleteExercise } from '@/lib/api/exercise.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import MathText from '@/components/common/MathText';
@@ -138,8 +138,11 @@ export default function ExerciseListTable({
                 ) : (
                   exercises.map((exercise) => (
                     <TableRow key={exercise.id}>
-                      <TableCell className="px-5 py-4 sm:px-6 text-start text-theme-sm dark:text-white/90">
-                        {truncateText(exercise.id, 8)}
+                      <TableCell 
+                        className="px-5 py-4 sm:px-6 text-start text-theme-sm dark:text-white/90 font-mono cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                        onClick={() => router.push(`/content/exercises/${exercise.id}`)}
+                      >
+                        {formatIdShort(exercise.id)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         <div className="max-w-md truncate">

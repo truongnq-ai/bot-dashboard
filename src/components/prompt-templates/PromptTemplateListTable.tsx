@@ -5,7 +5,7 @@ import { PromptTemplate } from '@/types/prompt-template';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import ActionsDropdown from '@/components/common/ActionsDropdown';
 import { ActionItem } from '@/types/common';
-import { formatDate } from '@/lib/utils/formatters';
+import { formatDate, formatIdShort } from '@/lib/utils/formatters';
 
 interface PromptTemplateListTableProps {
   templates: PromptTemplate[];
@@ -89,6 +89,9 @@ export default function PromptTemplateListTable({
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    ID
+                  </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Tên template
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
@@ -111,13 +114,19 @@ export default function PromptTemplateListTable({
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {templates.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
                       Không tìm thấy prompt template nào
                     </TableCell>
                   </TableRow>
                 ) : (
                   templates.map((template) => (
                     <TableRow key={template.id}>
+                      <TableCell 
+                        className="px-5 py-4 sm:px-6 text-start text-theme-sm dark:text-white/90 font-mono cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                        onClick={() => onViewDetail?.(template)}
+                      >
+                        {formatIdShort(template.id)}
+                      </TableCell>
                       <TableCell className="px-5 py-4 sm:px-6 text-start text-theme-sm dark:text-white/90 font-medium">
                         {template.name}
                       </TableCell>

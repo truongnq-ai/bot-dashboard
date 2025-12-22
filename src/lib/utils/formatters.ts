@@ -52,3 +52,17 @@ export function truncateText(text: string | null | undefined, maxLength: number 
   }
   return text.substring(0, maxLength) + '...';
 }
+
+/**
+ * Format ID to show only last 3 characters with ellipsis prefix
+ * Example: "019b452c-e31e-75b3-b7d9-02cd5b31459d" -> "...59d"
+ */
+export function formatIdShort(id: string | null | undefined): string {
+  if (!id) {
+    return '';
+  }
+  if (id.length <= 3) {
+    return id;
+  }
+  return '...' + id.slice(-3);
+}

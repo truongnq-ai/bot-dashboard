@@ -178,6 +178,8 @@ export interface GenerateExercisesRequest {
   difficultyLevel?: number; // 1-5, optional (AI can suggest)
   count: number; // 1-20
   promptTemplateId?: string; // Optional, uses default if not provided
+  nonce?: string; // UUID for cache key variation, prevents duplicate exercises
+  generationIndex?: number; // 0-based index for sequential generation (for prompt variation)
 }
 
 export interface GenerateExercisesResponse {

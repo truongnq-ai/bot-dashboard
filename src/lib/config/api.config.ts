@@ -26,7 +26,7 @@ export function getApiBaseUrl(): string {
 }
 
 export function getApiTimeout(): number {
-  return parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || '30000', 10);
+  return parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || '60000', 10);
 }
 
 export const API_CONFIG = {

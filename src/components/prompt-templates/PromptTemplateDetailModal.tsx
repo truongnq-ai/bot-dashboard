@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { PromptTemplate } from '@/types/prompt-template';
 import { formatDateTime } from '@/lib/utils/formatters';
+import { showSuccess, showError } from '@/lib/utils/toast';
 
 interface PromptTemplateDetailModalProps {
   isOpen: boolean;
@@ -16,6 +17,25 @@ export default function PromptTemplateDetailModal({
   onClose,
   template,
 }: PromptTemplateDetailModalProps) {
+  const [showTooltip, setShowTooltip] = useState<{
+    systemPrompt: boolean;
+    userPrompt: boolean;
+    outputSchema: boolean;
+  }>({
+    systemPrompt: false,
+    userPrompt: false,
+    outputSchema: false,
+  });
+
+  const handleCopy = async (text: string, fieldName: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showSuccess(`Đã copy ${fieldName} vào clipboard`);
+    } catch (error) {
+      showError(`Không thể copy ${fieldName}`);
+    }
+  };
+
   if (!template) return null;
 
   return (
@@ -93,8 +113,35 @@ export default function PromptTemplateDetailModal({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               System Prompt
             </label>
-            <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-              <pre className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono">
+            <div className="mt-1 relative p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => handleCopy(template.systemPrompt, 'System Prompt')}
+                onMouseEnter={() => setShowTooltip({ ...showTooltip, systemPrompt: true })}
+                onMouseLeave={() => setShowTooltip({ ...showTooltip, systemPrompt: false })}
+                className="absolute top-2 right-2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                title="Copy System Prompt"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+              </button>
+              {showTooltip.systemPrompt && (
+                <div className="absolute top-10 right-2 z-10 px-2 py-1 text-xs text-white bg-gray-900 dark:bg-gray-700 rounded shadow-lg">
+                  Copy System Prompt
+                </div>
+              )}
+              <pre className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono pr-8">
                 {template.systemPrompt}
               </pre>
             </div>
@@ -104,8 +151,35 @@ export default function PromptTemplateDetailModal({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               User Prompt Template
             </label>
-            <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-              <pre className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono">
+            <div className="mt-1 relative p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => handleCopy(template.userPromptTemplate, 'User Prompt Template')}
+                onMouseEnter={() => setShowTooltip({ ...showTooltip, userPrompt: true })}
+                onMouseLeave={() => setShowTooltip({ ...showTooltip, userPrompt: false })}
+                className="absolute top-2 right-2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                title="Copy User Prompt Template"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+              </button>
+              {showTooltip.userPrompt && (
+                <div className="absolute top-10 right-2 z-10 px-2 py-1 text-xs text-white bg-gray-900 dark:bg-gray-700 rounded shadow-lg">
+                  Copy User Prompt Template
+                </div>
+              )}
+              <pre className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono pr-8">
                 {template.userPromptTemplate}
               </pre>
             </div>
@@ -116,8 +190,40 @@ export default function PromptTemplateDetailModal({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Output Format Schema
               </label>
-              <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-                <pre className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono overflow-x-auto">
+              <div className="mt-1 relative p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() =>
+                    handleCopy(
+                      JSON.stringify(template.outputFormatSchema, null, 2),
+                      'Output Format Schema'
+                    )
+                  }
+                  onMouseEnter={() => setShowTooltip({ ...showTooltip, outputSchema: true })}
+                  onMouseLeave={() => setShowTooltip({ ...showTooltip, outputSchema: false })}
+                  className="absolute top-2 right-2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                  title="Copy Output Format Schema"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
+                {showTooltip.outputSchema && (
+                  <div className="absolute top-10 right-2 z-10 px-2 py-1 text-xs text-white bg-gray-900 dark:bg-gray-700 rounded shadow-lg">
+                    Copy Output Format Schema
+                  </div>
+                )}
+                <pre className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono overflow-x-auto pr-8">
                   {JSON.stringify(template.outputFormatSchema, null, 2)}
                 </pre>
               </div>

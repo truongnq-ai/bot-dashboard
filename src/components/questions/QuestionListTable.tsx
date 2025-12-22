@@ -8,7 +8,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Question, QuestionStatus } from '@/types/question';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import { formatDate, truncateText } from '@/lib/utils/formatters';
+import { formatDate, truncateText, formatIdShort } from '@/lib/utils/formatters';
 
 interface QuestionListTableProps {
   questions: Question[];
@@ -95,8 +95,14 @@ export default function QuestionListTable({
                       className="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
                       onClick={() => router.push(`/content/questions/${question.id}`)}
                     >
-                      <TableCell className="px-5 py-4 sm:px-6 text-start text-theme-sm dark:text-white/90 font-mono">
-                        {truncateText(question.id, 8)}
+                      <TableCell 
+                        className="px-5 py-4 sm:px-6 text-start text-theme-sm dark:text-white/90 font-mono cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Ngăn event bubbling nếu row có onClick
+                          router.push(`/content/questions/${question.id}`);
+                        }}
+                      >
+                        {formatIdShort(question.id)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {question.exerciseName || truncateText(question.exerciseId, 8)}
