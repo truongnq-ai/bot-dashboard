@@ -4,7 +4,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useExercise, useReviewHistory } from '@/lib/hooks/useExercises';
 import { reviewExercise } from '@/lib/api/exercise.service';
@@ -13,6 +13,7 @@ import ReviewStatusBadge from './ReviewStatusBadge';
 import { formatDateTime } from '@/lib/utils/formatters';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import MathText from '@/components/common/MathText';
+import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
 
 interface ExerciseReviewPanelProps {
   id: string;
@@ -26,6 +27,24 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
   const [reviewNotes, setReviewNotes] = useState<string>('');
   const [reviewStatus, setReviewStatus] = useState<ReviewStatus | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingDots, setLoadingDots] = useState('.');
+
+  // Animation for loading dots
+  useEffect(() => {
+    if (submitting) {
+      const interval = setInterval(() => {
+        setLoadingDots((prev) => {
+          if (prev === '.') return '..';
+          if (prev === '..') return '...';
+          return '.';
+        });
+      }, BUTTON_LOADING_CONFIG.DOTS_ANIMATION_INTERVAL);
+
+      return () => clearInterval(interval);
+    } else {
+      setLoadingDots('.');
+    }
+  }, [submitting]);
 
   const handleSubmit = async (status: ReviewStatus) => {
     // Validation
@@ -207,23 +226,89 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
               <button
                 onClick={() => handleSubmit(ReviewStatus.APPROVED)}
                 disabled={submitting || qualityScore < 0.7}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Approve (Score ≥ 0.7)
+                {submitting && (
+                  <svg
+                    className="animate-spin h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                )}
+                {submitting ? `Đang duyệt${loadingDots}` : 'Approve (Score ≥ 0.7)'}
               </button>
               <button
                 onClick={() => handleSubmit(ReviewStatus.REJECTED)}
                 disabled={submitting || !reviewNotes.trim()}
-                className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Reject (Requires Notes)
+                {submitting && (
+                  <svg
+                    className="animate-spin h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                )}
+                {submitting ? `Đang từ chối${loadingDots}` : 'Reject (Requires Notes)'}
               </button>
               <button
                 onClick={() => handleSubmit(ReviewStatus.NEEDS_REVISION)}
                 disabled={submitting}
-                className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Needs Revision
+                {submitting && (
+                  <svg
+                    className="animate-spin h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                )}
+                {submitting ? `Đang yêu cầu chỉnh sửa${loadingDots}` : 'Needs Revision'}
               </button>
             </div>
           </div>

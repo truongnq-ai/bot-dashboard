@@ -1,9 +1,10 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./AnimatedLoginForm.module.css";
 import "remixicon/fonts/remixicon.css";
+import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -13,6 +14,25 @@ export default function ResetPasswordForm() {
   const [emailError, setEmailError] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [loadingDots, setLoadingDots] = useState('.');
+
+  // Animation for loading dots
+  useEffect(() => {
+    if (loading) {
+      const interval = setInterval(() => {
+        setLoadingDots((prev) => {
+          if (prev === '.') return '..';
+          if (prev === '..') return '...';
+          return '.';
+        });
+      }, BUTTON_LOADING_CONFIG.DOTS_ANIMATION_INTERVAL);
+
+      return () => clearInterval(interval);
+    } else {
+      setLoadingDots('.');
+    }
+  }, [loading]);
 
   const validateEmail = (emailValue: string): boolean => {
     if (!emailValue.trim()) {
@@ -27,14 +47,25 @@ export default function ResetPasswordForm() {
     return true;
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (validateEmail(email)) {
+    if (!validateEmail(email)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
       // TODO: Integrate with API
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
       setSubmittedEmail(email);
       setIsSubmitted(true);
       console.log("Reset password for:", email);
+    } catch (error) {
+      setEmailError('Gửi email thất bại. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -111,8 +142,36 @@ export default function ResetPasswordForm() {
               )}
             </div>
 
-            <button type="submit" className={styles.loginButton}>
-              Gửi mật khẩu mới
+            <button 
+              type="submit" 
+              className={styles.loginButton}
+              disabled={loading}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+            >
+              {loading && (
+                <svg
+                  className="animate-spin"
+                  style={{ width: '16px', height: '16px', color: 'white' }}
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    style={{ opacity: 0.25 }}
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    style={{ opacity: 0.75 }}
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              )}
+              {loading ? `Đang gửi${loadingDots}` : 'Gửi mật khẩu mới'}
             </button>
 
             <div className="text-center mt-4">

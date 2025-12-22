@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { AdminRegistrationRequest } from '@/types/admin';
 import { createAdmin } from '@/lib/api/admin.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
+import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
 
 interface AdminCreateModalProps {
   isOpen: boolean;
@@ -23,6 +24,24 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loadingDots, setLoadingDots] = useState('.');
+
+  // Animation for loading dots
+  useEffect(() => {
+    if (loading) {
+      const interval = setInterval(() => {
+        setLoadingDots((prev) => {
+          if (prev === '.') return '..';
+          if (prev === '..') return '...';
+          return '.';
+        });
+      }, BUTTON_LOADING_CONFIG.DOTS_ANIMATION_INTERVAL);
+
+      return () => clearInterval(interval);
+    } else {
+      setLoadingDots('.');
+    }
+  }, [loading]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -196,9 +215,31 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {loading ? 'Đang tạo...' : 'Tạo mới'}
+              {loading && (
+                <svg
+                  className="animate-spin h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              )}
+              {loading ? `Đang tạo${loadingDots}` : 'Tạo mới'}
             </button>
           </div>
         </form>

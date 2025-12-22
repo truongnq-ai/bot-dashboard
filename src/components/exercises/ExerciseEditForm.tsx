@@ -19,19 +19,41 @@ import { useDropzone } from 'react-dropzone';
 import { ReviewStatus } from '@/types/exercise';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { Skill } from '@/types/skill';
+import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
 
 const exerciseSchema = z.object({
-  skillId: z.string().optional(),
-  grade: z.number().min(6).max(7).optional(),
-  chapter: z.string().optional(),
-  problemType: z.string().optional(),
-  problemText: z.string().optional(),
-  problemLatex: z.string().optional(),
-  problemImageUrl: z.string().optional(),
-  difficultyLevel: z.number().min(1).max(5).optional(),
-  finalAnswer: z.string().optional(),
-  learningObjective: z.string().optional(),
-  timeEstimateSec: z.number().positive().optional(),
+  skillId: z.string().optional().or(z.literal('')),
+  grade: z.preprocess(
+    (val) => {
+      if (val === '' || val === null || val === undefined) return undefined;
+      const num = Number(val);
+      return isNaN(num) ? undefined : num;
+    },
+    z.number().min(6).max(7).optional(),
+  ),
+  chapter: z.string().optional().or(z.literal('')),
+  problemType: z.string().optional().or(z.literal('')),
+  problemText: z.string().optional().or(z.literal('')),
+  problemLatex: z.string().optional().or(z.literal('')),
+  problemImageUrl: z.string().optional().or(z.literal('')),
+  difficultyLevel: z.preprocess(
+    (val) => {
+      if (val === '' || val === null || val === undefined) return undefined;
+      const num = Number(val);
+      return isNaN(num) ? undefined : num;
+    },
+    z.number().min(1).max(5).optional(),
+  ),
+  finalAnswer: z.string().optional().or(z.literal('')),
+  learningObjective: z.string().optional().or(z.literal('')),
+  timeEstimateSec: z.preprocess(
+    (val) => {
+      if (val === '' || val === null || val === undefined) return undefined;
+      const num = Number(val);
+      return isNaN(num) ? undefined : num;
+    },
+    z.number().positive().optional(),
+  ),
 });
 
 type ExerciseFormData = z.infer<typeof exerciseSchema>;
@@ -50,6 +72,7 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingDots, setLoadingDots] = useState('.');
 
   const {
     register,
@@ -111,7 +134,7 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
     }
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     accept: {
       'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
@@ -144,6 +167,15 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Error handler for form validation errors
+  const onError = (errors: any) => {
+    console.error('Form validation errors:', errors);
+    const errorMessages = Object.entries(errors).map(([field, error]: [string, any]) => {
+      return error?.message || `${field}: Lỗi validation`;
+    });
+    showError(`Lỗi validation: ${errorMessages.join(', ')}`);
   };
 
   const addMistake = () => {
@@ -204,7 +236,7 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
         {/* Similar form structure as CreateForm but with pre-filled values */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Thông tin cơ bản</h2>
@@ -222,6 +254,9 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
                   </option>
                 ))}
               </select>
+              {errors.skillId && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.skillId.message}</p>
+              )}
             </div>
 
             <div>
@@ -231,6 +266,9 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
                 rows={4}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
+              {errors.problemText && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.problemText.message}</p>
+              )}
             </div>
           </div>
         </div>
@@ -250,9 +288,31 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {submitting ? 'Đang cập nhật...' : 'Cập nhật bài tập'}
+            {submitting && (
+              <svg
+                className="animate-spin h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            )}
+            {submitting ? `Đang cập nhật${loadingDots}` : 'Cập nhật bài tập'}
           </button>
         </div>
       </form>

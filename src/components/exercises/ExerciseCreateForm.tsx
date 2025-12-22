@@ -4,7 +4,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,6 +18,7 @@ import SolutionStepsEditor from './SolutionStepsEditor';
 import { uploadImage } from '@/lib/api/image.service';
 import { useDropzone } from 'react-dropzone';
 import { showError, showSuccess } from '@/lib/utils/toast';
+import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
 
 const exerciseSchema = z.object({
   skillId: z.string().min(1, 'Kỹ năng là bắt buộc'),
@@ -47,6 +48,24 @@ export default function ExerciseCreateForm() {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingDots, setLoadingDots] = useState('.');
+
+  // Animation for loading dots
+  useEffect(() => {
+    if (submitting) {
+      const interval = setInterval(() => {
+        setLoadingDots((prev) => {
+          if (prev === '.') return '..';
+          if (prev === '..') return '...';
+          return '.';
+        });
+      }, BUTTON_LOADING_CONFIG.DOTS_ANIMATION_INTERVAL);
+
+      return () => clearInterval(interval);
+    } else {
+      setLoadingDots('.');
+    }
+  }, [submitting]);
 
   const {
     register,
@@ -414,9 +433,31 @@ export default function ExerciseCreateForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {submitting ? 'Đang tạo...' : 'Tạo bài tập'}
+            {submitting && (
+              <svg
+                className="animate-spin h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            )}
+            {submitting ? `Đang tạo${loadingDots}` : 'Tạo bài tập'}
           </button>
         </div>
       </form>
