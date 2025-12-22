@@ -23,6 +23,7 @@ export const API_ENDPOINTS = {
   EXERCISES_REVIEW_HISTORY: (id: string) => `${API_VERSION}/admin/exercises/${id}/review-history`,
   EXERCISES_GENERATE: `${API_VERSION}/admin/exercises/generate`,
   EXERCISES_GENERATE_PROMPT: `${API_VERSION}/admin/exercises/generate-prompt`,
+  EXERCISES_VALIDATE_LATEX: (id: string) => `${API_VERSION}/admin/exercises/${id}/validate-latex`,
 
   // Skills
   SKILLS_LIST: `${API_VERSION}/admin/skills`,

@@ -200,3 +200,30 @@ export interface GeneratePromptRequest {
 export interface GeneratePromptResponse {
   prompt: string;
 }
+
+// LaTeX Validation Types
+export interface ValidateLaTeXRequest {
+  problemText?: string;
+  problemLatex?: string;
+  solutionSteps?: SolutionStepRequest[];
+  finalAnswer?: string;
+  commonMistakes?: CommonMistakeRequest[];
+  hints?: string[];
+}
+
+export interface LaTeXError {
+  field: string;
+  location: string;
+  formula: string;
+  error: string;
+  suggestion?: string;
+  autoFixable: boolean;
+  fixedValue?: string;
+}
+
+export interface ValidateLaTeXResponse {
+  isValid: boolean;
+  errors: LaTeXError[];
+  autoFixableCount: number;
+  autoFixes: Record<string, string>;
+}

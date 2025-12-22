@@ -19,6 +19,8 @@ import {
   GenerateExercisesResponse,
   GeneratePromptRequest,
   GeneratePromptResponse,
+  ValidateLaTeXRequest,
+  ValidateLaTeXResponse,
 } from '../../types/exercise';
 import { ResponseObject, PageResponse } from '../../types/common';
 
@@ -239,6 +241,25 @@ export async function generatePrompt(
   
   if (response.data.errorCode !== '0000') {
     throw new Error(response.data.errorDetail || 'Failed to generate prompt');
+  }
+  
+  return response.data;
+}
+
+/**
+ * Validate LaTeX in exercise fields
+ */
+export async function validateLaTeX(
+  id: string,
+  data: ValidateLaTeXRequest
+): Promise<ResponseObject<ValidateLaTeXResponse>> {
+  const response = await apiClient.post<ResponseObject<ValidateLaTeXResponse>>(
+    API_ENDPOINTS.EXERCISES_VALIDATE_LATEX(id),
+    data
+  );
+  
+  if (response.data.errorCode !== '0000') {
+    throw new Error(response.data.errorDetail || 'Failed to validate LaTeX');
   }
   
   return response.data;
