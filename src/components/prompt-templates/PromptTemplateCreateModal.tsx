@@ -27,7 +27,25 @@ export default function PromptTemplateCreateModal({
     isActive: true,
   });
   const [loading, setLoading] = useState(false);
+  const [loadingDots, setLoadingDots] = useState('.');
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Animation for loading dots
+  useEffect(() => {
+    if (loading) {
+      const interval = setInterval(() => {
+        setLoadingDots((prev) => {
+          if (prev === '.') return '..';
+          if (prev === '..') return '...';
+          return '.';
+        });
+      }, BUTTON_LOADING_CONFIG.DOTS_ANIMATION_INTERVAL);
+
+      return () => clearInterval(interval);
+    } else {
+      setLoadingDots('.');
+    }
+  }, [loading]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
