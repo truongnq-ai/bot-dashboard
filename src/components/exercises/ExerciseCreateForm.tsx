@@ -19,6 +19,7 @@ import { uploadImage } from '@/lib/api/image.service';
 import { useDropzone } from 'react-dropzone';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
+import { getExerciseDataFromJson } from '@/lib/utils/navigation';
 
 const exerciseSchema = z.object({
   skillId: z.string().min(1, 'Kỹ năng là bắt buộc'),
@@ -96,14 +97,113 @@ export default function ExerciseCreateForm() {
     });
   }, [skillsData]);
 
-  // Reset skillId when grade changes
+  // Flag to track if we're loading from JSON (to prevent skillId reset)
+  const isLoadingFromJsonRef = useRef(false);
+
+  // Reset skillId when grade changes (but skip if loading from JSON)
   const prevGradeRef = useRef<number | undefined>(selectedGrade);
   useEffect(() => {
+    // Skip reset if we're currently loading from JSON
+    if (isLoadingFromJsonRef.current) {
+      prevGradeRef.current = selectedGrade;
+      return;
+    }
+
     if (prevGradeRef.current !== undefined && prevGradeRef.current !== selectedGrade) {
       setValue('skillId', '');
     }
     prevGradeRef.current = selectedGrade;
   }, [selectedGrade, setValue]);
+
+  // Load data from JSON if available
+  useEffect(() => {
+    const jsonData = getExerciseDataFromJson();
+    if (jsonData) {
+      // Set flag to prevent skillId reset during loading
+      isLoadingFromJsonRef.current = true;
+      
+      let timer: NodeJS.Timeout | null = null;
+      let clearFlagTimer: NodeJS.Timeout | null = null;
+
+      // Populate form fields
+      // Set grade first, then skillId after a brief delay to avoid reset issue
+      if (jsonData.grade) {
+        setValue('grade', jsonData.grade, { shouldValidate: false });
+      }
+      
+      if (jsonData.skillId) {
+        // Set skillId after a delay to ensure grade is processed first
+        // This prevents the reset logic from clearing skillId
+        timer = setTimeout(() => {
+          setValue('skillId', jsonData.skillId!, { shouldValidate: false });
+          // Clear flag after setting skillId (with additional delay to ensure it's set)
+          clearFlagTimer = setTimeout(() => {
+            isLoadingFromJsonRef.current = false;
+          }, 50);
+        }, 200); // Increased delay to ensure grade change is fully processed
+      } else {
+        // If no skillId, clear flag immediately
+        isLoadingFromJsonRef.current = false;
+      }
+
+      // Continue with other fields
+      if (jsonData.problemText) {
+        setValue('problemText', jsonData.problemText);
+      }
+      if (jsonData.problemLatex) {
+        setValue('problemLatex', jsonData.problemLatex);
+      }
+      if (jsonData.difficultyLevel) {
+        setValue('difficultyLevel', jsonData.difficultyLevel);
+      }
+      if (jsonData.finalAnswer) {
+        setValue('finalAnswer', jsonData.finalAnswer);
+      }
+      if (jsonData.learningObjective) {
+        setValue('learningObjective', jsonData.learningObjective);
+      }
+      if (jsonData.timeEstimateSec) {
+        setValue('timeEstimateSec', jsonData.timeEstimateSec);
+      }
+      if (jsonData.chapter) {
+        setValue('chapter', jsonData.chapter);
+      }
+      if (jsonData.problemType) {
+        setValue('problemType', jsonData.problemType);
+      }
+
+      // Populate solution steps
+      if (jsonData.solutionSteps && jsonData.solutionSteps.length > 0) {
+        setSolutionSteps(jsonData.solutionSteps);
+      }
+
+      // Populate common mistakes
+      if (jsonData.commonMistakes && jsonData.commonMistakes.length > 0) {
+        setCommonMistakes(jsonData.commonMistakes);
+      }
+
+      // Populate hints
+      if (jsonData.hints && jsonData.hints.length > 0) {
+        setHints(jsonData.hints);
+      }
+
+      showSuccess('Đã tải dữ liệu từ JSON');
+
+      // Cleanup timers on unmount
+      return () => {
+        if (timer) {
+          clearTimeout(timer);
+        }
+        if (clearFlagTimer) {
+          clearTimeout(clearFlagTimer);
+        }
+        // Reset flag on unmount if still loading
+        if (isLoadingFromJsonRef.current) {
+          isLoadingFromJsonRef.current = false;
+        }
+      };
+    }
+  }, [setValue]);
 
   const onDrop = async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;

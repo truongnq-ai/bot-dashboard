@@ -7,11 +7,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { GenerateExercisesRequest, Exercise } from '@/types/exercise';
-import { generateExercises } from '@/lib/api/exercise.service';
+import { generateExercises, generatePrompt } from '@/lib/api/exercise.service';
 import { useSkills } from '@/lib/hooks/useSkills';
 import { Skill } from '@/types/skill';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
+import { setPromptContext } from '@/lib/utils/navigation';
 
 interface ExerciseGenerateModalProps {
   isOpen: boolean;
@@ -46,8 +47,10 @@ export default function ExerciseGenerateModal({
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [copyingPrompt, setCopyingPrompt] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadingDots, setLoadingDots] = useState('.');
+  const [copyPromptLoadingDots, setCopyPromptLoadingDots] = useState('.');
 
   const { data: skillsData } = useSkills({
     grade: formData.grade as 6 | 7,
@@ -90,6 +93,23 @@ export default function ExerciseGenerateModal({
       setLoadingDots('.');
     }
   }, [loading]);
+
+  // Animation for copy prompt loading dots
+  useEffect(() => {
+    if (copyingPrompt) {
+      const interval = setInterval(() => {
+        setCopyPromptLoadingDots((prev) => {
+          if (prev === '.') return '..';
+          if (prev === '..') return '...';
+          return '.';
+        });
+      }, BUTTON_LOADING_CONFIG.DOTS_ANIMATION_INTERVAL);
+
+      return () => clearInterval(interval);
+    } else {
+      setCopyPromptLoadingDots('.');
+    }
+  }, [copyingPrompt]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -148,8 +168,52 @@ export default function ExerciseGenerateModal({
     }
   };
 
+  const handleCopyPrompt = async () => {
+    // Validate required fields for prompt generation
+    if (!formData.skillId) {
+      showError('Vui lòng chọn kỹ năng');
+      return;
+    }
+
+    if (!formData.grade || (formData.grade !== 6 && formData.grade !== 7)) {
+      showError('Vui lòng chọn lớp (6 hoặc 7)');
+      return;
+    }
+
+    setCopyingPrompt(true);
+    setErrors({});
+
+    try {
+      const response = await generatePrompt({
+        skillId: formData.skillId,
+        grade: formData.grade,
+        difficultyLevel: formData.difficultyLevel,
+      });
+
+      if (response.data && response.data.prompt) {
+        // Save prompt context (skillId, grade, difficultyLevel) to sessionStorage
+        setPromptContext({
+          skillId: formData.skillId,
+          grade: formData.grade,
+          difficultyLevel: formData.difficultyLevel,
+        });
+
+        // Copy to clipboard
+        await navigator.clipboard.writeText(response.data.prompt);
+        showSuccess('Đã copy prompt vào clipboard');
+      } else {
+        showError('Không thể tạo prompt');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Lỗi không xác định';
+      showError(`Không thể tạo prompt: ${errorMessage}`);
+    } finally {
+      setCopyingPrompt(false);
+    }
+  };
+
   const handleClose = () => {
-    if (!loading) {
+    if (!loading && !copyingPrompt) {
       setFormData({
         skillId: initialSkillId || '',
         grade: initialGrade || 6,
@@ -187,7 +251,7 @@ export default function ExerciseGenerateModal({
                 const newGrade = parseInt(e.target.value);
                 setFormData({ ...formData, grade: newGrade, skillId: '' }); // Reset skill when grade changes
               }}
-              disabled={loading}
+              disabled={loading || copyingPrompt}
             >
               <option value={6}>Lớp 6</option>
               <option value={7}>Lớp 7</option>
@@ -210,7 +274,7 @@ export default function ExerciseGenerateModal({
               }`}
               value={formData.skillId}
               onChange={(e) => setFormData({ ...formData, skillId: e.target.value })}
-              disabled={loading}
+              disabled={loading || copyingPrompt}
             >
               <option value="">Chọn kỹ năng</option>
               {sortedSkills.map((skill: Skill) => (
@@ -242,7 +306,7 @@ export default function ExerciseGenerateModal({
                   difficultyLevel: e.target.value ? parseInt(e.target.value) : undefined,
                 })
               }
-              disabled={loading}
+              disabled={loading || copyingPrompt}
             >
               <option value="">AI tự đề xuất</option>
               <option value={1}>1 - Rất dễ</option>
@@ -274,7 +338,7 @@ export default function ExerciseGenerateModal({
               onChange={(e) =>
                 setFormData({ ...formData, count: parseInt(e.target.value) || 1 })
               }
-              disabled={loading}
+              disabled={loading || copyingPrompt}
             />
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Số lượng từ 1 đến 20 bài tập
@@ -308,7 +372,7 @@ export default function ExerciseGenerateModal({
                       setFormData({ ...formData, promptTemplateId: e.target.value || undefined })
                     }
                     placeholder="Để trống để dùng template mặc định"
-                    disabled={loading}
+                    disabled={loading || copyingPrompt}
                   />
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Để trống để sử dụng prompt template mặc định cho lớp {formData.grade}
@@ -329,14 +393,44 @@ export default function ExerciseGenerateModal({
             <button
               type="button"
               onClick={handleClose}
-              disabled={loading}
+              disabled={loading || copyingPrompt}
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
             >
               Hủy
             </button>
             <button
+              type="button"
+              onClick={handleCopyPrompt}
+              disabled={loading || copyingPrompt}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {copyingPrompt && (
+                <svg
+                  className="animate-spin h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              )}
+              {copyingPrompt ? `Đang tạo${copyPromptLoadingDots}` : 'Copy Prompt'}
+            </button>
+            <button
               type="submit"
-              disabled={loading}
+              disabled={loading || copyingPrompt}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading && (

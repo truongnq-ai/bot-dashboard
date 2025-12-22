@@ -187,3 +187,14 @@ export interface GenerateExercisesResponse {
   totalGenerated?: number;
   totalValid?: number;
 }
+
+// Prompt Generation Request/Response
+export interface GeneratePromptRequest {
+  skillId: string;
+  grade: number; // 6 or 7
+  difficultyLevel?: number; // 1-5, optional
+}
+
+export interface GeneratePromptResponse {
+  prompt: string;
+}

@@ -17,6 +17,8 @@ import {
   ReviewHistoryResponse,
   GenerateExercisesRequest,
   GenerateExercisesResponse,
+  GeneratePromptRequest,
+  GeneratePromptResponse,
 } from '../../types/exercise';
 import { ResponseObject, PageResponse } from '../../types/common';
 
@@ -219,6 +221,24 @@ export async function generateExercises(
   
   if (response.data.errorCode !== '0000') {
     throw new Error(response.data.errorDetail || 'Failed to generate exercises');
+  }
+  
+  return response.data;
+}
+
+/**
+ * Generate prompt for exercise creation
+ */
+export async function generatePrompt(
+  data: GeneratePromptRequest
+): Promise<ResponseObject<GeneratePromptResponse>> {
+  const response = await apiClient.post<ResponseObject<GeneratePromptResponse>>(
+    API_ENDPOINTS.EXERCISES_GENERATE_PROMPT,
+    data
+  );
+  
+  if (response.data.errorCode !== '0000') {
+    throw new Error(response.data.errorDetail || 'Failed to generate prompt');
   }
   
   return response.data;
