@@ -2,8 +2,7 @@
 
 **Module:** Dashboard Web cho Admin Quản trị  
 **Version:** 1.0.0  
-**Status:** 🚧 Đang phát triển (40% hoàn thành)  
-**Last Updated:** 2025-12-16
+**Last Updated:** 2025-12-21
 
 ---
 
@@ -41,6 +40,10 @@ Theo [PRD MVP](../../tutor_docs/prd/prd_mvp_phase_1-2025-12-14-22-15.md):
 - Admin/Ops dashboard nâng cao
 - Quản trị nội dung chi tiết
 - Giám sát chất lượng AI nâng cao
+
+## Roadmap
+
+Xem [Admin Dashboard Roadmap](../../tutor_docs/04-for-developers/roadmap/admin-dashboard.md) để theo dõi tiến độ triển khai chi tiết.
 
 ---
 
