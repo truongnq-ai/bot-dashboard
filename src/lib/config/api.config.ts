@@ -7,7 +7,7 @@
 
 // Production API URL (base domain only, without /api)
 const PRODUCTION_API_URL = 'https://apitutor.dienluc.vn';
-// Development API URL
+// Development API URL - used when running locally
 const DEVELOPMENT_API_URL = 'https://apitutor.dienluc.vn';
 
 export function getApiBaseUrl(): string {
@@ -17,11 +17,17 @@ export function getApiBaseUrl(): string {
   
   if (typeof window === 'undefined') {
     // Server-side: use environment variable or default based on NODE_ENV
+    // For development, always use DEVELOPMENT_API_URL
     return process.env.API_BASE_URL || defaultUrl;
   }
   
-  // Client-side: use environment variable or default based on NODE_ENV
-  // In production, this can be injected at build time
+  // Client-side: for development, always use DEVELOPMENT_API_URL
+  // Only use environment variable if explicitly set (for production overrides)
+  if (!isProduction) {
+    return DEVELOPMENT_API_URL;
+  }
+  
+  // In production, allow environment variable override
   return process.env.NEXT_PUBLIC_API_BASE_URL || defaultUrl;
 }
 

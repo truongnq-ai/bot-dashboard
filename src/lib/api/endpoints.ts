@@ -38,6 +38,16 @@ export const API_ENDPOINTS = {
   ADMINS_CREATE: `${API_VERSION}/admin/create`,
   ADMINS_UPDATE_STATUS: (id: string) => `${API_VERSION}/admin/users/admins/${id}/status`,
 
+  // Students
+  STUDENTS_LIST: `${API_VERSION}/admin/users/students`,
+  STUDENTS_GET: (id: string) => `${API_VERSION}/admin/users/students/${id}`,
+  STUDENTS_UPDATE_STATUS: (id: string) => `${API_VERSION}/admin/users/students/${id}/status`,
+
+  // Parents
+  PARENTS_LIST: `${API_VERSION}/admin/users/parents`,
+  PARENTS_GET: (id: string) => `${API_VERSION}/admin/users/parents/${id}`,
+  PARENTS_UPDATE_STATUS: (id: string) => `${API_VERSION}/admin/users/parents/${id}/status`,
+
   // Grades
   GRADES_LIST: `${API_VERSION}/admin/grades`,
 
