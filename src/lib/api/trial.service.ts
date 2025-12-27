@@ -17,7 +17,7 @@ import { ResponseObject, PageResponse } from '../../types/common';
  * Get trials list with filters and pagination
  */
 export async function getTrials(
-  params: TrialSearchParams = {}
+  params: Partial<TrialSearchParams> = {}
 ): Promise<ResponseObject<PageResponse<Trial>>> {
   const queryParams = new URLSearchParams();
 

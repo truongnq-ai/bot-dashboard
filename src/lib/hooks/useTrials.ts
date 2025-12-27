@@ -10,7 +10,7 @@ import { getTrials, getTrialById } from '@/lib/api/trial.service';
 /**
  * Hook to fetch trials list with pagination
  */
-export function useTrials(searchParams: TrialSearchParams = {}) {
+export function useTrials(searchParams: TrialSearchParams) {
   const [data, setData] = useState<PageResponse<Trial> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -25,9 +25,8 @@ export function useTrials(searchParams: TrialSearchParams = {}) {
     [
       searchParams.page,
       searchParams.pageSize,
-      searchParams.deviceId,
+      searchParams.userId,
       searchParams.status,
-      searchParams.anonymousId,
       searchParams.sortBy,
       searchParams.sortDirection,
     ]
