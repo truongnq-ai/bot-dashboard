@@ -64,7 +64,6 @@ export default function StudentFilters({ searchParams, onFilterChange }: Student
           >
             <option value="">Tất cả</option>
             <option value="PENDING">Chờ xử lý</option>
-            <option value="LINKED">Đã liên kết</option>
             <option value="ACTIVE">Hoạt động</option>
             <option value="INACTIVE">Không hoạt động</option>
           </select>

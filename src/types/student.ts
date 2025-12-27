@@ -15,7 +15,7 @@ export interface Student {
   phoneVerified?: boolean;
   emailVerified?: boolean;
   grade?: number;
-  studentStatus?: 'PENDING' | 'LINKED' | 'ACTIVE' | 'INACTIVE';
+  studentStatus?: 'PENDING' | 'ACTIVE' | 'INACTIVE';
   parentId?: string;
   parentName?: string;
   avatarUrl?: string;
@@ -26,7 +26,7 @@ export interface Student {
 export interface StudentSearchParams {
   searchText?: string;
   status?: 'ACTIVE' | 'INACTIVE' | 'LOCKED';
-  studentStatus?: 'PENDING' | 'LINKED' | 'ACTIVE' | 'INACTIVE';
+  studentStatus?: 'PENDING' | 'ACTIVE' | 'INACTIVE';
   grade?: number;
   parentId?: string;
   page?: number;
