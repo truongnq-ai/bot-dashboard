@@ -38,6 +38,7 @@ const navItems: NavItem[] = [
     icon: <UserCircleIcon />,
     name: "Người dùng",
     subItems: [
+      { name: "Trial", path: "/users/trial", pro: false },
       { name: "Học sinh", path: "/users/students", pro: false },
       { name: "Phụ huynh", path: "/users/parents", pro: false },
       { name: "Quản trị viên", path: "/users/admins", pro: false },

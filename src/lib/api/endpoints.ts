@@ -48,6 +48,14 @@ export const API_ENDPOINTS = {
   PARENTS_GET: (id: string) => `${API_VERSION}/admin/users/parents/${id}`,
   PARENTS_UPDATE_STATUS: (id: string) => `${API_VERSION}/admin/users/parents/${id}/status`,
 
+  // Trials
+  TRIALS_LIST: `${API_VERSION}/admin/users/trials`,
+  TRIALS_GET: (id: string) => `${API_VERSION}/admin/users/trials/${id}`,
+  TRIALS_UPDATE_STATUS: (id: string) => `${API_VERSION}/admin/users/trials/${id}/status`,
+
+  // Devices
+  DEVICES_BY_USER: (userId: string) => `${API_VERSION}/admin/devices/user/${userId}`,
+
   // Grades
   GRADES_LIST: `${API_VERSION}/admin/grades`,
 

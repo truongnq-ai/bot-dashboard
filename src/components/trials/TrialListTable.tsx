@@ -1,20 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Student } from '@/types/student';
+import { Trial, TrialStatus } from '@/types/trial';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import StudentStatusBadge from './StudentStatusBadge';
 import ActionsDropdown from '@/components/common/ActionsDropdown';
 import { ActionItem } from '@/types/common';
 import { formatDate, truncateText } from '@/lib/utils/formatters';
-import { updateStudentStatus } from '@/lib/api/student.service';
+import { updateTrialStatus } from '@/lib/api/trial.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import DeviceListModal from '@/components/devices/DeviceListModal';
 
-interface StudentListTableProps {
-  students: Student[];
+interface TrialListTableProps {
+  trials: Trial[];
   onStatusChange?: () => void;
-  onViewDetail?: (student: Student) => void;
+  onViewDetail?: (trial: Trial) => void;
   pagination?: {
     page: number;
     pageSize: number;
@@ -25,25 +24,52 @@ interface StudentListTableProps {
   };
 }
 
-export default function StudentListTable({
-  students,
+function TrialStatusBadge({ status }: { status: TrialStatus }) {
+  const colors = {
+    ACTIVE: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    EXPIRED: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+    CONSUMED: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  };
+
+  const labels = {
+    ACTIVE: 'Đang hoạt động',
+    EXPIRED: 'Đã hết hạn',
+    CONSUMED: 'Đã sử dụng',
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[status]}`}
+    >
+      {labels[status]}
+    </span>
+  );
+}
+
+export default function TrialListTable({
+  trials,
   onStatusChange,
   onViewDetail,
   pagination,
-}: StudentListTableProps) {
+}: TrialListTableProps) {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deviceModalOpen, setDeviceModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [selectedUserName, setSelectedUserName] = useState<string | null>(null);
 
-  const handleStatusChange = async (student: Student, newStatus: 'ACTIVE' | 'INACTIVE' | 'LOCKED') => {
-    if (!confirm(`Bạn có chắc muốn thay đổi trạng thái của ${student.username} thành ${newStatus === 'ACTIVE' ? 'Hoạt động' : newStatus === 'INACTIVE' ? 'Không hoạt động' : 'Đã khóa'}?`)) {
+  const handleStatusChange = async (trial: Trial, newStatus: TrialStatus) => {
+    if (newStatus === 'CONSUMED') {
+      showError('Không thể thủ công đặt trạng thái CONSUMED. Trạng thái này được tự động đặt khi liên kết phụ huynh thành công.');
+      return;
+    }
+
+    const statusLabel = newStatus === 'ACTIVE' ? 'Đang hoạt động' : 'Đã hết hạn';
+    if (!confirm(`Bạn có chắc muốn thay đổi trạng thái trial thành ${statusLabel}?`)) {
       return;
     }
 
     try {
-      setUpdatingId(student.userId);
-      const response = await updateStudentStatus(student.userId, newStatus);
+      setUpdatingId(trial.id);
+      const response = await updateTrialStatus(trial.id, newStatus);
       if (response.errorCode === '0000') {
         showSuccess('Cập nhật trạng thái thành công');
         onStatusChange?.();
@@ -57,56 +83,41 @@ export default function StudentListTable({
     }
   };
 
-  const getActions = (student: Student): ActionItem[] => {
+  const getActions = (trial: Trial): ActionItem[] => {
     const actions: ActionItem[] = [
       {
         id: 'view',
         label: 'Xem chi tiết',
-        type: 'success',
-        onClick: () => onViewDetail?.(student),
+        type: 'info',
+        onClick: () => onViewDetail?.(trial),
       },
       {
         id: 'devices',
         label: 'Danh sách thiết bị',
         type: 'info',
         onClick: () => {
-          setSelectedUserId(student.userId);
-          setSelectedUserName(student.username);
+          setSelectedUserId(trial.userId);
           setDeviceModalOpen(true);
         },
       },
     ];
 
-    if (student.status === 'ACTIVE') {
+    // Only allow ACTIVE ↔ EXPIRED transitions, not CONSUMED
+    if (trial.trialStatus === 'ACTIVE') {
       actions.push({
-        id: 'deactivate',
-        label: 'Vô hiệu hóa',
-        type: 'danger',
-        onClick: () => handleStatusChange(student, 'INACTIVE'),
-        disabled: updatingId === student.userId,
+        id: 'expire',
+        label: 'Đánh dấu hết hạn',
+        type: 'warning',
+        onClick: () => handleStatusChange(trial, 'EXPIRED'),
+        disabled: updatingId === trial.id,
       });
-      actions.push({
-        id: 'lock',
-        label: 'Khóa',
-        type: 'danger',
-        onClick: () => handleStatusChange(student, 'LOCKED'),
-        disabled: updatingId === student.userId,
-      });
-    } else if (student.status === 'INACTIVE') {
+    } else if (trial.trialStatus === 'EXPIRED') {
       actions.push({
         id: 'activate',
-        label: 'Kích hoạt',
+        label: 'Kích hoạt lại',
         type: 'success',
-        onClick: () => handleStatusChange(student, 'ACTIVE'),
-        disabled: updatingId === student.userId,
-      });
-    } else if (student.status === 'LOCKED') {
-      actions.push({
-        id: 'activate',
-        label: 'Mở khóa',
-        type: 'success',
-        onClick: () => handleStatusChange(student, 'ACTIVE'),
-        disabled: updatingId === student.userId,
+        onClick: () => handleStatusChange(trial, 'ACTIVE'),
+        disabled: updatingId === trial.id,
       });
     }
 
@@ -122,28 +133,28 @@ export default function StudentListTable({
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    ID
-                  </TableCell>
-                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Username
-                  </TableCell>
-                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Tên
-                  </TableCell>
-                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Lớp
-                  </TableCell>
-                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Phụ huynh
+                    User ID
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Trạng thái
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Lần đăng nhập cuối
+                    Bắt đầu
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Ngày tạo
+                    Hết hạn
+                  </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    Còn lại
+                  </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    Phụ huynh
+                  </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    Bài tập
+                  </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    Kỹ năng
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Thao tác
@@ -151,41 +162,41 @@ export default function StudentListTable({
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {students.length === 0 ? (
+                {trials.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
-                      Không tìm thấy học sinh nào
+                      Không tìm thấy trial nào
                     </TableCell>
                   </TableRow>
                 ) : (
-                  students.map((student) => (
-                    <TableRow key={student.id || student.userId}>
-                      <TableCell className="px-5 py-4 sm:px-6 text-start text-theme-sm dark:text-white/90">
-                        {truncateText(student.id || student.userId, 8)}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-900 text-start text-theme-sm dark:text-white font-medium">
-                        {student.username}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {student.name || '-'}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {student.grade ? `Lớp ${student.grade}` : '-'}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {student.parentName || '-'}
+                  trials.map((trial) => (
+                    <TableRow key={trial.id}>
+                      <TableCell className="px-5 py-4 sm:px-6 text-start text-theme-sm dark:text-white/90 font-mono">
+                        {truncateText(trial.userId, 12)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-start">
-                        <StudentStatusBadge status={student.status} />
+                        <TrialStatusBadge status={trial.trialStatus} />
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                        {student.lastLoginAt ? formatDate(student.lastLoginAt) : 'Chưa đăng nhập'}
+                        {formatDate(trial.trialStartedAt)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                        {formatDate(student.createdAt)}
+                        {formatDate(trial.expiresAt)}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                        {trial.daysRemaining > 0 ? `${trial.daysRemaining} ngày` : 'Đã hết'}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                        {trial.linkedParentName || '-'}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                        {trial.totalExercises}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                        {trial.skillsLearned}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-start">
-                        <ActionsDropdown actions={getActions(student)} />
+                        <ActionsDropdown actions={getActions(trial)} />
                       </TableCell>
                     </TableRow>
                   ))
@@ -228,12 +239,10 @@ export default function StudentListTable({
 
       <DeviceListModal
         userId={selectedUserId || ''}
-        userName={selectedUserName || undefined}
         isOpen={deviceModalOpen}
         onClose={() => {
           setDeviceModalOpen(false);
           setSelectedUserId(null);
-          setSelectedUserName(null);
         }}
       />
     </div>
