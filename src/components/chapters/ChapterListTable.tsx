@@ -1,18 +1,17 @@
 'use client';
 
 import React from 'react';
-import { Skill } from '@/types/skill';
+import { Chapter } from '@/types/chapter';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import ActionsDropdown from '@/components/common/ActionsDropdown';
 import { ActionItem } from '@/types/common';
-import SkillPrerequisitesBadge from './SkillPrerequisitesBadge';
 import { formatDate } from '@/lib/utils/formatters';
 
-interface SkillListTableProps {
-  skills: Skill[];
-  onViewDetail?: (skill: Skill) => void;
-  onEdit?: (skill: Skill) => void;
-  onViewRelatedQuestions?: (skill: Skill) => void;
+interface ChapterListTableProps {
+  chapters: Chapter[];
+  onViewDetail?: (chapter: Chapter) => void;
+  onEdit?: (chapter: Chapter) => void;
+  onDelete?: (chapter: Chapter) => void;
   pagination?: {
     page: number;
     pageSize: number;
@@ -23,38 +22,40 @@ interface SkillListTableProps {
   };
 }
 
-export default function SkillListTable({
-  skills,
+export default function ChapterListTable({
+  chapters,
   onViewDetail,
   onEdit,
-  onViewRelatedQuestions,
+  onDelete,
   pagination,
-}: SkillListTableProps) {
-  const getActions = (skill: Skill): ActionItem[] => {
-    const actions: ActionItem[] = [
-      {
+}: ChapterListTableProps) {
+  const getActions = (chapter: Chapter): ActionItem[] => {
+    const actions: ActionItem[] = [];
+
+    if (onViewDetail) {
+      actions.push({
         id: 'view',
         label: 'Xem chi tiết',
         type: 'success',
-        onClick: () => onViewDetail?.(skill),
-      },
-    ];
+        onClick: () => onViewDetail(chapter),
+      });
+    }
 
     if (onEdit) {
       actions.push({
         id: 'edit',
         label: 'Chỉnh sửa',
-        type: 'warning',
-        onClick: () => onEdit(skill),
+        type: 'info',
+        onClick: () => onEdit(chapter),
       });
     }
 
-    if (onViewRelatedQuestions) {
+    if (onDelete) {
       actions.push({
-        id: 'questions',
-        label: 'Xem câu hỏi liên quan',
-        type: 'info',
-        onClick: () => onViewRelatedQuestions(skill),
+        id: 'delete',
+        label: 'Xóa',
+        type: 'danger',
+        onClick: () => onDelete(chapter),
       });
     }
 
@@ -65,7 +66,7 @@ export default function SkillListTable({
     <div className="space-y-4">
       <div className="overflow-x-hidden overflow-y-visible rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto no-scrollbar">
-          <div className="min-w-[1200px]">
+          <div className="min-w-[800px]">
             <Table>
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
@@ -73,16 +74,13 @@ export default function SkillListTable({
                     Code
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Tên kỹ năng
+                    Tên chương
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Lớp
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Chương
-                  </TableCell>
-                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Kỹ năng tiên quyết
+                    Mô tả
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Ngày tạo
@@ -93,41 +91,34 @@ export default function SkillListTable({
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {skills.length === 0 ? (
+                {chapters.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
-                      Không tìm thấy kỹ năng nào
+                    <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                      Không tìm thấy chương nào
                     </TableCell>
                   </TableRow>
                 ) : (
-                  skills.map((skill) => (
-                    <TableRow key={skill.id}>
+                  chapters.map((chapter) => (
+                    <TableRow key={chapter.id}>
                       <TableCell className="px-5 py-4 sm:px-6 text-start text-theme-sm dark:text-white/90 font-mono">
-                        {skill.code}
+                        {chapter.code}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-900 text-start text-theme-sm dark:text-white font-medium">
-                        {skill.name}
+                        {chapter.name}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                          Lớp {skill.grade}
+                          Lớp {chapter.grade}
                         </span>
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {skill.chapterName || '-'}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-start">
-                        <SkillPrerequisitesBadge
-                          prerequisiteNames={skill.prerequisiteNames}
-                          prerequisites={skill.prerequisiteIds || []}
-                          maxDisplay={3}
-                        />
+                        {chapter.description || '-'}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                        {formatDate(skill.createdAt)}
+                        {formatDate(chapter.createdAt)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-start">
-                        <ActionsDropdown actions={getActions(skill)} />
+                        <ActionsDropdown actions={getActions(chapter)} />
                       </TableCell>
                     </TableRow>
                   ))

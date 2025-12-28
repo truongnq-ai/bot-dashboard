@@ -19,6 +19,8 @@ import { useDropzone } from 'react-dropzone';
 import { ReviewStatus } from '@/types/exercise';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { Skill } from '@/types/skill';
+import { getChaptersByGrade } from '@/lib/api/chapter.service';
+import { Chapter } from '@/types/chapter';
 import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
 import { validateExerciseLaTeX, autoFixLaTeX, ValidationResult, LaTeXError, ExerciseFormDataForValidation } from '@/lib/utils/latex-validator';
 import LaTeXPreview from '@/components/common/LaTeXPreview';
@@ -28,7 +30,7 @@ import { ValidateLaTeXRequest } from '@/types/exercise';
 const exerciseSchema = z.object({
   skillId: z.string().optional().or(z.literal('')),
   grade: z.number().min(6).max(7).optional(),
-  chapter: z.string().optional().or(z.literal('')),
+  chapterId: z.string().optional().or(z.literal('')),
   problemType: z.string().optional().or(z.literal('')),
   problemText: z.string().optional().or(z.literal('')),
   problemLatex: z.string().optional().or(z.literal('')),
@@ -59,6 +61,32 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
   const [validationResults, setValidationResults] = useState<ValidationResult | null>(null);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [validating, setValidating] = useState(false);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [chaptersLoading, setChaptersLoading] = useState(false);
+
+  const selectedGrade = watch('grade');
+
+  // Fetch chapters by grade when grade is selected
+  useEffect(() => {
+    const fetchChapters = async () => {
+      if (selectedGrade) {
+        setChaptersLoading(true);
+        try {
+          const response = await getChaptersByGrade(selectedGrade as 6 | 7);
+          if (response.errorCode === '0000' && response.data) {
+            setChapters(response.data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch chapters:', error);
+        } finally {
+          setChaptersLoading(false);
+        }
+      } else {
+        setChapters([]);
+      }
+    };
+    fetchChapters();
+  }, [selectedGrade]);
 
   const {
     register,
@@ -77,7 +105,7 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
       reset({
         skillId: exercise.skillId,
         grade: exercise.grade,
-        chapter: exercise.chapter,
+        chapterId: exercise.chapterId,
         problemType: exercise.problemType,
         problemText: exercise.problemText,
         problemLatex: exercise.problemLatex,
@@ -420,6 +448,34 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Thông tin cơ bản</h2>
           <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lớp</label>
+              <select
+                {...register('grade', { valueAsNumber: true })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                <option value="">Chọn lớp</option>
+                <option value={6}>Lớp 6</option>
+                <option value={7}>Lớp 7</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Chương</label>
+              <select
+                {...register('chapterId')}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                disabled={!selectedGrade || chaptersLoading}
+              >
+                <option value="">{!selectedGrade ? 'Chọn lớp trước' : chaptersLoading ? 'Đang tải...' : 'Chọn chương'}</option>
+                {chapters.map((chapter) => (
+                  <option key={chapter.id} value={chapter.id}>
+                    {chapter.code} - {chapter.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kỹ năng</label>
               <select

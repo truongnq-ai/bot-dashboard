@@ -34,9 +34,9 @@ export async function getExercises(
   
   if (params.skillId) queryParams.append('skillId', params.skillId);
   if (params.grade) queryParams.append('grade', params.grade.toString());
+  if (params.chapterId) queryParams.append('chapterId', params.chapterId);
   if (params.reviewStatus) queryParams.append('reviewStatus', params.reviewStatus);
   if (params.difficultyLevel) queryParams.append('difficultyLevel', params.difficultyLevel.toString());
-  if (params.searchText) queryParams.append('searchText', params.searchText);
   if (params.page) queryParams.append('page', params.page.toString());
   if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
   

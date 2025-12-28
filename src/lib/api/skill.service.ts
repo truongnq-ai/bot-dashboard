@@ -4,7 +4,7 @@
 
 import apiClient from './client';
 import { API_ENDPOINTS } from './endpoints';
-import { Skill, SkillSearchParams, SkillListResponseData, SkillResponse, CreateSkillRequest } from '../../types/skill';
+import { Skill, SkillSearchParams, SkillListResponseData, SkillResponse, CreateSkillRequest, UpdateSkillRequest } from '../../types/skill';
 import { ResponseObject, PageResponse } from '../../types/common';
 
 /**
@@ -17,7 +17,7 @@ export async function getSkills(
 
   if (params.searchText) queryParams.append('searchText', params.searchText);
   if (params.grade) queryParams.append('grade', params.grade.toString());
-  if (params.chapter) queryParams.append('chapter', params.chapter);
+  if (params.chapterId) queryParams.append('chapterId', params.chapterId);
   if (params.page !== undefined) queryParams.append('page', params.page.toString());
   if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
   if (params.sortBy) queryParams.append('sortBy', params.sortBy);
@@ -52,6 +52,19 @@ export async function getSkillById(id: string): Promise<ResponseObject<Skill>> {
  */
 export async function createSkill(data: CreateSkillRequest): Promise<ResponseObject<Skill>> {
   const response = await apiClient.post<SkillResponse>(API_ENDPOINTS.SKILLS_CREATE, data);
+
+  return {
+    errorCode: response.data.errorCode,
+    errorDetail: response.data.errorDetail,
+    data: response.data.data,
+  };
+}
+
+/**
+ * Update skill
+ */
+export async function updateSkill(id: string, data: UpdateSkillRequest): Promise<ResponseObject<Skill>> {
+  const response = await apiClient.put<SkillResponse>(API_ENDPOINTS.SKILLS_UPDATE(id), data);
 
   return {
     errorCode: response.data.errorCode,

@@ -106,6 +106,9 @@ export default function ExerciseListTable({
                     Nội dung bài toán
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    Chương
+                  </TableCell>
+                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Lớp
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
@@ -131,7 +134,7 @@ export default function ExerciseListTable({
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {exercises.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <TableCell colSpan={10} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
                       Không tìm thấy bài tập nào
                     </TableCell>
                   </TableRow>
@@ -148,6 +151,9 @@ export default function ExerciseListTable({
                         <div className="max-w-md truncate">
                           <MathText text={truncateText(exercise.problemText, 50)} />
                         </div>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                        {exercise.chapterName || '-'}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {exercise.grade}

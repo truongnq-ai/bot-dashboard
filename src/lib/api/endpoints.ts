@@ -25,6 +25,14 @@ export const API_ENDPOINTS = {
   EXERCISES_GENERATE_PROMPT: `${API_VERSION}/admin/exercises/generate-prompt`,
   EXERCISES_VALIDATE_LATEX: (id: string) => `${API_VERSION}/admin/exercises/${id}/validate-latex`,
 
+  // Chapters
+  CHAPTERS_LIST: `${API_VERSION}/admin/chapters`,
+  CHAPTERS_CREATE: `${API_VERSION}/admin/chapters`,
+  CHAPTERS_GET: (id: string) => `${API_VERSION}/admin/chapters/${id}`,
+  CHAPTERS_UPDATE: (id: string) => `${API_VERSION}/admin/chapters/${id}`,
+  CHAPTERS_DELETE: (id: string) => `${API_VERSION}/admin/chapters/${id}`,
+  CHAPTERS_BY_GRADE: (grade: number) => `${API_VERSION}/admin/chapters/by-grade/${grade}`,
+
   // Skills
   SKILLS_LIST: `${API_VERSION}/admin/skills`,
   SKILLS_CREATE: `${API_VERSION}/admin/skills`,

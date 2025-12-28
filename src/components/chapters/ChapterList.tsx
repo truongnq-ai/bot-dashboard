@@ -1,29 +1,27 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSkills } from '@/lib/hooks/useSkills';
-import { SkillSearchParams, Skill } from '@/types/skill';
-import SkillListTable from './SkillListTable';
-import SkillFilters from './SkillFilters';
-import SkillDetailModal from './SkillDetailModal';
-import SkillCreateModal from './SkillCreateModal';
-import SkillUpdateModal from './SkillUpdateModal';
+import { useChapters } from '@/lib/hooks/useChapters';
+import { ChapterSearchParams, Chapter } from '@/types/chapter';
+import ChapterListTable from './ChapterListTable';
+import ChapterFilters from './ChapterFilters';
+import ChapterCreateModal from './ChapterCreateModal';
+import ChapterUpdateModal from './ChapterUpdateModal';
+import ChapterDetailModal from './ChapterDetailModal';
 
-export default function SkillList() {
-  const router = useRouter();
-  const [searchParams, setSearchParams] = useState<SkillSearchParams>({
+export default function ChapterList() {
+  const [searchParams, setSearchParams] = useState<ChapterSearchParams>({
     page: 0,
     pageSize: 10,
   });
 
-  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
-  const [skillToUpdate, setSkillToUpdate] = useState<Skill | null>(null);
+  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [chapterToUpdate, setChapterToUpdate] = useState<Chapter | null>(null);
 
-  const { data, loading, error, refetch } = useSkills(searchParams);
+  const { data, loading, error, refetch } = useChapters(searchParams);
 
   const statistics = useMemo(() => {
     if (!data) {
@@ -34,15 +32,15 @@ export default function SkillList() {
       };
     }
 
-    const skills = data.content || [];
+    const chapters = data.content || [];
     return {
       total: data.totalElements || 0,
-      grade6: skills.filter((s) => s.grade === 6).length,
-      grade7: skills.filter((s) => s.grade === 7).length,
+      grade6: chapters.filter((c) => c.grade === 6).length,
+      grade7: chapters.filter((c) => c.grade === 7).length,
     };
   }, [data]);
 
-  const handleFilterChange = (newParams: Partial<SkillSearchParams>) => {
+  const handleFilterChange = (newParams: Partial<ChapterSearchParams>) => {
     setSearchParams((prev) => ({ ...prev, ...newParams, page: 0 }));
   };
 
@@ -54,25 +52,37 @@ export default function SkillList() {
     setSearchParams((prev) => ({ ...prev, pageSize, page: 0 }));
   };
 
-  const handleViewDetail = (skill: Skill) => {
-    setSelectedSkill(skill);
+  const handleViewDetail = (chapter: Chapter) => {
+    setSelectedChapter(chapter);
     setIsDetailModalOpen(true);
   };
 
-  const handleViewRelatedQuestions = (skill: Skill) => {
-    // Navigate to questions page with skill filter
-    router.push(`/content/questions?skillId=${skill.id}`);
+  const handleEdit = (chapter: Chapter) => {
+    setChapterToUpdate(chapter);
+    setIsUpdateModalOpen(true);
   };
 
-  const handleEdit = (skill: Skill) => {
-    setSkillToUpdate(skill);
-    setIsUpdateModalOpen(true);
+  const handleDelete = async (chapter: Chapter) => {
+    if (confirm(`Bạn có chắc chắn muốn xóa chương "${chapter.name}"?`)) {
+      try {
+        const { deleteChapter } = await import('@/lib/api/chapter.service');
+        const response = await deleteChapter(chapter.id);
+        if (response.errorCode === '0000') {
+          alert('Xóa chương thành công');
+          refetch();
+        } else {
+          alert(response.errorDetail || 'Xóa chương thất bại');
+        }
+      } catch (error) {
+        alert('Hệ thống không có phản hồi.');
+      }
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quản lý Kỹ năng</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quản lý Chương</h1>
         <button
           onClick={() => setIsCreateModalOpen(true)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -98,7 +108,7 @@ export default function SkillList() {
       </div>
 
       {/* Filters */}
-      <SkillFilters searchParams={searchParams} onFilterChange={handleFilterChange} />
+      <ChapterFilters searchParams={searchParams} onFilterChange={handleFilterChange} />
 
       {/* Loading State */}
       {loading && (
@@ -116,11 +126,11 @@ export default function SkillList() {
 
       {/* Table */}
       {!loading && !error && data && (
-        <SkillListTable
-          skills={data.content}
+        <ChapterListTable
+          chapters={data.content}
           onViewDetail={handleViewDetail}
           onEdit={handleEdit}
-          onViewRelatedQuestions={handleViewRelatedQuestions}
+          onDelete={handleDelete}
           pagination={{
             page: searchParams.page || 0,
             pageSize: searchParams.pageSize || 10,
@@ -133,31 +143,31 @@ export default function SkillList() {
       )}
 
       {/* Detail Modal */}
-      <SkillDetailModal
+      <ChapterDetailModal
         isOpen={isDetailModalOpen}
         onClose={() => {
           setIsDetailModalOpen(false);
-          setSelectedSkill(null);
+          setSelectedChapter(null);
         }}
-        skill={selectedSkill}
+        chapter={selectedChapter}
       />
 
       {/* Create Modal */}
-      <SkillCreateModal
+      <ChapterCreateModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={refetch}
       />
 
       {/* Update Modal */}
-      <SkillUpdateModal
+      <ChapterUpdateModal
         isOpen={isUpdateModalOpen}
         onClose={() => {
           setIsUpdateModalOpen(false);
-          setSkillToUpdate(null);
+          setChapterToUpdate(null);
         }}
+        chapter={chapterToUpdate}
         onSuccess={refetch}
-        skill={skillToUpdate}
       />
     </div>
   );

@@ -9,19 +9,25 @@ export interface Skill {
   id: string;
   code: string;
   grade: number;
-  chapter: string;
+  chapterId: string;
+  chapterName?: string;
+  chapter?: Chapter;
   name: string;
+  description?: string;
   prerequisiteIds?: string[];
+  prerequisiteNames?: string[];
   prerequisites?: Skill[];
   createdAt: string;
   updatedAt?: string;
 }
 
+import { Chapter } from './chapter';
+
 // Search Params
 export interface SkillSearchParams {
   searchText?: string;
   grade?: 6 | 7;
-  chapter?: string;
+  chapterId?: string;
   page?: number;
   pageSize?: number;
   sortBy?: string;
@@ -32,8 +38,18 @@ export interface SkillSearchParams {
 export interface CreateSkillRequest {
   code: string;
   grade: 6 | 7;
-  chapter: string;
+  chapterId: string;
   name: string;
+  description?: string;
+  prerequisiteIds?: string[];
+}
+
+export interface UpdateSkillRequest {
+  code?: string;
+  grade?: 6 | 7;
+  chapterId?: string;
+  name?: string;
+  description?: string;
   prerequisiteIds?: string[];
 }
 

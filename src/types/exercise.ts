@@ -3,6 +3,7 @@
  */
 
 import { ResponseObject, PageResponse } from './common';
+import { Chapter } from './chapter';
 
 // Enums
 export enum ReviewStatus {
@@ -52,7 +53,9 @@ export interface Exercise {
   id: string;
   skillId: string;
   grade: number; // 6 or 7
-  chapter?: string;
+  chapterId?: string;
+  chapterName?: string;
+  chapter?: Chapter;
   problemType?: string;
   problemText: string;
   problemLatex?: string;
@@ -85,7 +88,9 @@ export interface Exercise {
 export interface CreateExerciseRequest {
   skillId: string;
   grade: number; // 6 or 7
-  chapter?: string;
+  chapterId?: string;
+  chapterName?: string;
+  chapter?: Chapter;
   problemType?: string;
   problemText: string;
   problemLatex?: string;
@@ -105,7 +110,9 @@ export interface CreateExerciseRequest {
 export interface UpdateExerciseRequest {
   skillId?: string;
   grade?: number; // 6 or 7
-  chapter?: string;
+  chapterId?: string;
+  chapterName?: string;
+  chapter?: Chapter;
   problemType?: string;
   problemText?: string;
   problemLatex?: string;
@@ -132,9 +139,9 @@ export interface ReviewExerciseRequest {
 export interface ExerciseSearchParams {
   skillId?: string;
   grade?: number;
+  chapterId?: string;
   reviewStatus?: ReviewStatus;
   difficultyLevel?: number;
-  searchText?: string;
   page?: number;
   pageSize?: number;
 }

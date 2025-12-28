@@ -14,6 +14,8 @@ import { CreateExerciseRequest, SolutionStepRequest, CommonMistakeRequest } from
 import { useSkills } from '@/lib/hooks/useSkills';
 import { useGrades } from '@/lib/hooks/useGrades';
 import { Skill } from '@/types/skill';
+import { getChaptersByGrade } from '@/lib/api/chapter.service';
+import { Chapter } from '@/types/chapter';
 import SolutionStepsEditor from './SolutionStepsEditor';
 import { uploadImage } from '@/lib/api/image.service';
 import { useDropzone } from 'react-dropzone';
@@ -24,7 +26,7 @@ import { getExerciseDataFromJson } from '@/lib/utils/navigation';
 const exerciseSchema = z.object({
   skillId: z.string().min(1, 'Kỹ năng là bắt buộc'),
   grade: z.number().min(6).max(7),
-  chapter: z.string().optional(),
+  chapterId: z.string().optional(),
   problemType: z.string().optional(),
   problemText: z.string().min(1, 'Nội dung bài toán là bắt buộc'),
   problemLatex: z.string().optional(),
@@ -49,6 +51,8 @@ export default function ExerciseCreateForm() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadingDots, setLoadingDots] = useState('.');
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [chaptersLoading, setChaptersLoading] = useState(false);
 
   // Animation for loading dots
   useEffect(() => {
@@ -82,6 +86,28 @@ export default function ExerciseCreateForm() {
 
   const selectedGrade = watch('grade');
 
+  // Fetch chapters by grade when grade is selected
+  useEffect(() => {
+    const fetchChapters = async () => {
+      if (selectedGrade) {
+        setChaptersLoading(true);
+        try {
+          const response = await getChaptersByGrade(selectedGrade as 6 | 7);
+          if (response.errorCode === '0000' && response.data) {
+            setChapters(response.data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch chapters:', error);
+        } finally {
+          setChaptersLoading(false);
+        }
+      } else {
+        setChapters([]);
+      }
+    };
+    fetchChapters();
+  }, [selectedGrade]);
+
   const { data: skillsData } = useSkills({
     grade: selectedGrade as 6 | 7 | undefined,
     pageSize: 1000,
@@ -111,6 +137,7 @@ export default function ExerciseCreateForm() {
 
     if (prevGradeRef.current !== undefined && prevGradeRef.current !== selectedGrade) {
       setValue('skillId', '');
+      setValue('chapterId', '');
     }
     prevGradeRef.current = selectedGrade;
   }, [selectedGrade, setValue]);
@@ -165,9 +192,7 @@ export default function ExerciseCreateForm() {
       if (jsonData.timeEstimateSec) {
         setValue('timeEstimateSec', jsonData.timeEstimateSec);
       }
-      if (jsonData.chapter) {
-        setValue('chapter', jsonData.chapter);
-      }
+      // Note: chapterId from JSON will be set if available, but we don't parse chapter text
       if (jsonData.problemType) {
         setValue('problemType', jsonData.problemType);
       }
@@ -318,6 +343,24 @@ export default function ExerciseCreateForm() {
                     {gradesData?.map((grade) => (
                       <option key={grade} value={grade}>
                         Lớp {grade}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Chương
+                  </label>
+                  <select
+                    {...register('chapterId')}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    disabled={!selectedGrade || chaptersLoading}
+                  >
+                    <option value="">{!selectedGrade ? 'Chọn lớp trước' : chaptersLoading ? 'Đang tải...' : 'Chọn chương'}</option>
+                    {chapters.map((chapter) => (
+                      <option key={chapter.id} value={chapter.id}>
+                        {chapter.code} - {chapter.name}
                       </option>
                     ))}
                   </select>

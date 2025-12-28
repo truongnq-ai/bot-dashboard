@@ -2,24 +2,24 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Modal } from '@/components/ui/modal';
-import { CreateSkillRequest } from '@/types/skill';
-import { createSkill } from '@/lib/api/skill.service';
+import { UpdateSkillRequest, Skill } from '@/types/skill';
+import { updateSkill } from '@/lib/api/skill.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { useSkills } from '@/lib/hooks/useSkills';
-import { useChapters } from '@/lib/hooks/useChapters';
 import { getChaptersByGrade } from '@/lib/api/chapter.service';
 import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
 
-interface SkillCreateModalProps {
+interface SkillUpdateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  skill: Skill | null;
 }
 
-export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCreateModalProps) {
-  const [formData, setFormData] = useState<CreateSkillRequest>({
+export default function SkillUpdateModal({ isOpen, onClose, onSuccess, skill }: SkillUpdateModalProps) {
+  const [formData, setFormData] = useState<UpdateSkillRequest>({
     code: '',
-    grade: 6,
+    grade: undefined,
     chapterId: '',
     name: '',
     description: '',
@@ -38,19 +38,38 @@ export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCr
   // Fetch all skills for prerequisite selection
   const { data: allSkillsData } = useSkills(prerequisiteSearchParams);
 
-  // Fetch chapters by grade
+  // Load skill data when modal opens
+  useEffect(() => {
+    if (skill && isOpen) {
+      setFormData({
+        code: skill.code,
+        grade: skill.grade as 6 | 7,
+        chapterId: skill.chapterId,
+        name: skill.name,
+        description: skill.description || '',
+        prerequisiteIds: skill.prerequisiteIds || [],
+      });
+      setSelectedPrerequisites(skill.prerequisiteIds || []);
+    }
+  }, [skill, isOpen]);
+
+  // Fetch chapters by grade when grade is selected
   useEffect(() => {
     const fetchChapters = async () => {
-      setChaptersLoading(true);
-      try {
-        const response = await getChaptersByGrade(formData.grade);
-        if (response.errorCode === '0000' && response.data) {
-          setChapters(response.data.map(c => ({ id: c.id, name: c.name, code: c.code })));
+      if (formData.grade) {
+        setChaptersLoading(true);
+        try {
+          const response = await getChaptersByGrade(formData.grade);
+          if (response.errorCode === '0000' && response.data) {
+            setChapters(response.data.map(c => ({ id: c.id, name: c.name, code: c.code })));
+          }
+        } catch (error) {
+          console.error('Failed to fetch chapters:', error);
+        } finally {
+          setChaptersLoading(false);
         }
-      } catch (error) {
-        console.error('Failed to fetch chapters:', error);
-      } finally {
-        setChaptersLoading(false);
+      } else {
+        setChapters([]);
       }
     };
     fetchChapters();
@@ -76,24 +95,28 @@ export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCr
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.code.trim()) {
-      newErrors.code = 'Mã kỹ năng là bắt buộc';
-    } else if (formData.code.length > 50) {
-      newErrors.code = 'Mã kỹ năng không được vượt quá 50 ký tự';
+    if (formData.code !== undefined && formData.code !== null) {
+      if (formData.code.trim().length > 50) {
+        newErrors.code = 'Mã kỹ năng không được vượt quá 50 ký tự';
+      }
     }
 
-    if (!formData.grade || (formData.grade !== 6 && formData.grade !== 7)) {
-      newErrors.grade = 'Lớp phải là 6 hoặc 7';
+    if (formData.grade !== undefined && formData.grade !== null) {
+      if (formData.grade !== 6 && formData.grade !== 7) {
+        newErrors.grade = 'Lớp phải là 6 hoặc 7';
+      }
     }
 
-    if (!formData.chapterId) {
-      newErrors.chapterId = 'Chương là bắt buộc';
+    if (formData.name !== undefined && formData.name !== null) {
+      if (formData.name.trim().length > 255) {
+        newErrors.name = 'Tên kỹ năng không được vượt quá 255 ký tự';
+      }
     }
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Tên kỹ năng là bắt buộc';
-    } else if (formData.name.length > 255) {
-      newErrors.name = 'Tên kỹ năng không được vượt quá 255 ký tự';
+    if (formData.description !== undefined && formData.description !== null) {
+      if (formData.description.length > 1000) {
+        newErrors.description = 'Mô tả không được vượt quá 1000 ký tự';
+      }
     }
 
     setErrors(newErrors);
@@ -103,33 +126,29 @@ export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!skill) {
+      showError('Không tìm thấy kỹ năng để cập nhật');
+      return;
+    }
+
     if (!validate()) {
       return;
     }
 
     try {
       setLoading(true);
-      const requestData: CreateSkillRequest = {
+      const requestData: UpdateSkillRequest = {
         ...formData,
         prerequisiteIds: selectedPrerequisites.length > 0 ? selectedPrerequisites : undefined,
       };
-      const response = await createSkill(requestData);
+      const response = await updateSkill(skill.id, requestData);
       if (response.errorCode === '0000') {
-        showSuccess('Tạo kỹ năng thành công');
+        showSuccess('Cập nhật kỹ năng thành công');
         onSuccess?.();
         onClose();
-        setFormData({
-          code: '',
-          grade: 6,
-          chapterId: '',
-          name: '',
-          description: '',
-          prerequisiteIds: [],
-        });
-        setSelectedPrerequisites([]);
         setErrors({});
       } else {
-        showError(response.errorDetail || 'Tạo kỹ năng thất bại');
+        showError(response.errorDetail || 'Cập nhật kỹ năng thất bại');
       }
     } catch (error) {
       showError('Hệ thống không có phản hồi.');
@@ -148,18 +167,20 @@ export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCr
 
   // Filter skills with same grade for prerequisite selection
   const availablePrerequisites = allSkillsData?.content.filter(
-    (skill) => skill.grade === formData.grade
+    (s) => s.grade === formData.grade && s.id !== skill?.id
   ) || [];
+
+  if (!skill) return null;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-4 sm:p-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tạo kỹ năng mới</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Chỉnh sửa kỹ năng</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Mã kỹ năng <span className="text-red-500">*</span>
+              Mã kỹ năng
             </label>
             <input
               type="text"
@@ -167,7 +188,7 @@ export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCr
                 errors.code ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="Ví dụ: 6.1.1"
-              value={formData.code}
+              value={formData.code || ''}
               onChange={(e) => setFormData({ ...formData, code: e.target.value })}
             />
             {errors.code && <p className="mt-1 text-sm text-red-500">{errors.code}</p>}
@@ -175,20 +196,21 @@ export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCr
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Lớp <span className="text-red-500">*</span>
+              Lớp
             </label>
             <select
               className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
                 errors.grade ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
-              value={formData.grade}
+              value={formData.grade || ''}
               onChange={(e) => {
-                const grade = parseInt(e.target.value) as 6 | 7;
+                const grade = e.target.value ? (parseInt(e.target.value) as 6 | 7) : undefined;
                 setFormData({ ...formData, grade, chapterId: '' });
                 // Reset prerequisites when grade changes
                 setSelectedPrerequisites([]);
               }}
             >
+              <option value="">Giữ nguyên</option>
               <option value={6}>Lớp 6</option>
               <option value={7}>Lớp 7</option>
             </select>
@@ -197,17 +219,17 @@ export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCr
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Chương <span className="text-red-500">*</span>
+              Chương
             </label>
             <select
               className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
                 errors.chapterId ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
-              value={formData.chapterId}
-              onChange={(e) => setFormData({ ...formData, chapterId: e.target.value })}
-              disabled={chaptersLoading}
+              value={formData.chapterId || ''}
+              onChange={(e) => setFormData({ ...formData, chapterId: e.target.value || undefined })}
+              disabled={!formData.grade || chaptersLoading}
             >
-              <option value="">{chaptersLoading ? 'Đang tải...' : 'Chọn chương'}</option>
+              <option value="">{!formData.grade ? 'Chọn lớp trước' : chaptersLoading ? 'Đang tải...' : 'Giữ nguyên'}</option>
               {chapters.map((chapter) => (
                 <option key={chapter.id} value={chapter.id}>
                   {chapter.code} - {chapter.name}
@@ -219,7 +241,7 @@ export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCr
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Tên kỹ năng <span className="text-red-500">*</span>
+              Tên kỹ năng
             </label>
             <input
               type="text"
@@ -227,8 +249,8 @@ export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCr
                 errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="Ví dụ: Rút gọn phân số"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.name || ''}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value || undefined })}
             />
             {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
           </div>
@@ -238,12 +260,15 @@ export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCr
               Mô tả
             </label>
             <textarea
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                errors.description ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
               placeholder="Mô tả chi tiết về kỹ năng này (tùy chọn)"
               rows={3}
               value={formData.description || ''}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value || undefined })}
             />
+            {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
           </div>
 
           <div>
@@ -253,22 +278,22 @@ export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCr
             <div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white dark:bg-gray-700">
               {availablePrerequisites.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
-                  Chưa có kỹ năng nào trong lớp {formData.grade}
+                  {formData.grade ? `Chưa có kỹ năng nào trong lớp ${formData.grade}` : 'Chọn lớp để xem kỹ năng tiên quyết'}
                 </p>
               ) : (
-                availablePrerequisites.map((skill) => (
+                availablePrerequisites.map((s) => (
                   <label
-                    key={skill.id}
+                    key={s.id}
                     className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-600 rounded cursor-pointer"
                   >
                     <input
                       type="checkbox"
-                      checked={selectedPrerequisites.includes(skill.id)}
-                      onChange={() => handlePrerequisiteToggle(skill.id)}
+                      checked={selectedPrerequisites.includes(s.id)}
+                      onChange={() => handlePrerequisiteToggle(s.id)}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {skill.code} - {skill.name}
+                      {s.code} - {s.name}
                     </span>
                   </label>
                 ))
@@ -316,7 +341,7 @@ export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCr
                   ></path>
                 </svg>
               )}
-              {loading ? `Đang tạo${loadingDots}` : 'Tạo mới'}
+              {loading ? `Đang cập nhật${loadingDots}` : 'Cập nhật'}
             </button>
           </div>
         </form>

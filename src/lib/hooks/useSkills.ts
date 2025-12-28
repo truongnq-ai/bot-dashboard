@@ -27,7 +27,7 @@ export function useSkills(searchParams: SkillSearchParams = {}) {
       searchParams.pageSize,
       searchParams.searchText,
       searchParams.grade,
-      searchParams.chapter,
+      searchParams.chapterId,
       searchParams.sortBy,
       searchParams.sortDirection,
     ]

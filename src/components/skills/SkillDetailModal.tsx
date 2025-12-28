@@ -94,7 +94,16 @@ export default function SkillDetailModal({ isOpen, onClose, skill }: SkillDetail
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Chương
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">{skill.chapter}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{skill.chapterName || '-'}</p>
+            </div>
+
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Mô tả
+              </label>
+              <p className="text-sm text-gray-900 dark:text-white">
+                {skill.description || '-'}
+              </p>
             </div>
 
             <div className="col-span-2">
@@ -102,6 +111,7 @@ export default function SkillDetailModal({ isOpen, onClose, skill }: SkillDetail
                 Kỹ năng tiên quyết
               </label>
               <SkillPrerequisitesBadge
+                prerequisiteNames={skill.prerequisiteNames}
                 prerequisites={skill.prerequisiteIds || []}
                 maxDisplay={10}
               />

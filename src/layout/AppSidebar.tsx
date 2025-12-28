@@ -48,6 +48,7 @@ const navItems: NavItem[] = [
     icon: <PageIcon />,
     name: "Nội dung",
     subItems: [
+      { name: "Chương", path: "/content/chapters", pro: false },
       { name: "Kỹ năng", path: "/content/skills", pro: false },
       { name: "Câu hỏi", path: "/content/questions", pro: false },
       { name: "Bài tập", path: "/content/exercises", pro: false },
