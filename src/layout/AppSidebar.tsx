@@ -5,86 +5,19 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
-  BoxCubeIcon,
-  BoltIcon,
   ChevronDownIcon,
-  GridIcon,
   HorizontaLDots,
-  PageIcon,
-  PlugInIcon,
-  UserCircleIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
+import {
+  PHASE1_MAIN_MENU_ITEMS,
+  PHASE1_OTHERS_MENU_ITEMS,
+  type NavItem,
+} from "@/lib/config/menu.config";
 
-type NavItem = {
-  name: string;
-  icon: React.ReactNode;
-  path?: string;
-  subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
-};
-
-const navItems: NavItem[] = [
-  {
-    icon: <GridIcon />,
-    name: "Bảng điều khiển",
-    path: "/dashboard",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "Hồ sơ người dùng",
-    path: "/profile",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "Người dùng",
-    subItems: [
-      { name: "Trial", path: "/users/trial", pro: false },
-      { name: "Học sinh", path: "/users/students", pro: false },
-      { name: "Phụ huynh", path: "/users/parents", pro: false },
-      { name: "Quản trị viên", path: "/users/admins", pro: false },
-    ],
-  },
-  {
-    icon: <PageIcon />,
-    name: "Nội dung",
-    subItems: [
-      { name: "Chương", path: "/content/chapters", pro: false },
-      { name: "Kỹ năng", path: "/content/skills", pro: false },
-      { name: "Câu hỏi", path: "/content/questions", pro: false },
-      { name: "Bài tập", path: "/content/exercises", pro: false },
-    ],
-  },
-  {
-    icon: <BoltIcon />,
-    name: "Chất lượng AI",
-    subItems: [
-      { name: "Prompt", path: "/content/prompt-templates", pro: false },
-      { name: "Đánh giá giải pháp", path: "/ai-quality/solutions", pro: false },
-      { name: "Chỉ số độ chính xác", path: "/ai-quality/accuracy", pro: false },
-      { name: "Phân tích lỗi", path: "/ai-quality/errors", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "Hệ thống",
-    subItems: [
-      { name: "Chỉ số", path: "/system/metrics", pro: false },
-      { name: "Nhật ký", path: "/system/logs", pro: false },
-      { name: "Sức khỏe", path: "/system/health", pro: false },
-    ],
-  },
-];
-
-const othersItems: NavItem[] = [
-  {
-    icon: <PlugInIcon />,
-    name: "Xác thực",
-    subItems: [
-      { name: "Đăng nhập", path: "/login", pro: false },
-      { name: "Đặt lại mật khẩu", path: "/reset-password", pro: false },
-    ],
-  },
-];
+// Use Phase 1 menu configuration
+const navItems: NavItem[] = PHASE1_MAIN_MENU_ITEMS;
+const othersItems: NavItem[] = PHASE1_OTHERS_MENU_ITEMS;
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();

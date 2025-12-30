@@ -14,6 +14,7 @@ import { truncateText } from '@/lib/utils/formatters';
 import { reviewExercise } from '@/lib/api/exercise.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import MathText from '@/components/common/MathText';
+import { isPhase1FeatureEnabled } from '@/lib/config/phase1-features.config';
 
 interface ExercisePreviewModalProps {
   isOpen: boolean;
@@ -63,6 +64,12 @@ export default function ExercisePreviewModal({
   };
 
   const handleBulkApprove = async () => {
+    // Review workflow disabled for Phase 1
+    if (!isPhase1FeatureEnabled('EXERCISE_REVIEW')) {
+      showError('Tính năng duyệt bài tập không khả dụng trong Phase 1');
+      return;
+    }
+
     if (selectedIds.size === 0) return;
 
     const ids = Array.from(selectedIds);
@@ -88,6 +95,12 @@ export default function ExercisePreviewModal({
   };
 
   const handleBulkReject = async () => {
+    // Review workflow disabled for Phase 1
+    if (!isPhase1FeatureEnabled('EXERCISE_REVIEW')) {
+      showError('Tính năng từ chối bài tập không khả dụng trong Phase 1');
+      return;
+    }
+
     if (selectedIds.size === 0) return;
 
     const ids = Array.from(selectedIds);
@@ -218,22 +231,29 @@ export default function ExercisePreviewModal({
                 </span>
               )}
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleBulkApprove}
-                disabled={selectedIds.size === 0 || processingIds.size > 0}
-                className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Duyệt đã chọn
-              </button>
-              <button
-                onClick={handleBulkReject}
-                disabled={selectedIds.size === 0 || processingIds.size > 0}
-                className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Từ chối đã chọn
-              </button>
-            </div>
+            {/* Review actions disabled for Phase 1 */}
+            {isPhase1FeatureEnabled('EXERCISE_REVIEW') ? (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleBulkApprove}
+                  disabled={selectedIds.size === 0 || processingIds.size > 0}
+                  className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Duyệt đã chọn
+                </button>
+                <button
+                  onClick={handleBulkReject}
+                  disabled={selectedIds.size === 0 || processingIds.size > 0}
+                  className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Từ chối đã chọn
+                </button>
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Tính năng duyệt bài tập không khả dụng trong Phase 1
+              </div>
+            )}
           </div>
         )}
 

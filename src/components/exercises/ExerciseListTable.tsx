@@ -70,15 +70,7 @@ export default function ExerciseListTable({
       },
     ];
 
-    // Only show review action when status is PENDING
-    if (exercise.reviewStatus === ReviewStatus.PENDING) {
-      actions.push({
-        id: 'review',
-        label: 'Duyệt',
-        type: 'warning',
-        onClick: () => router.push(`/content/exercises/${exercise.id}/review`),
-      });
-    }
+    // Review action removed for Phase 1 - review workflow is not in Phase 1 scope
 
     actions.push({
       id: 'delete',

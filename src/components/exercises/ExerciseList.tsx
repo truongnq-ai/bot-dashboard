@@ -16,6 +16,7 @@ import { useGrades } from '@/lib/hooks/useGrades';
 import { Skill } from '@/types/skill';
 import { getChaptersByGrade } from '@/lib/api/chapter.service';
 import { Chapter } from '@/types/chapter';
+import { isPhase1FeatureEnabled } from '@/lib/config/phase1-features.config';
 
 export default function ExerciseList() {
   const router = useRouter();
@@ -148,18 +149,15 @@ export default function ExerciseList() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Bài tập</h1>
         <div className="flex gap-2">
-          <button
-            onClick={() => setIsGenerateModalOpen(true)}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            Tạo với AI
-          </button>
-          <a
-            href="/content/exercises/create-from-json"
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            Tạo từ Json
-          </a>
+          {/* AI Generation disabled for Phase 1 */}
+          {isPhase1FeatureEnabled('AI_GENERATION') ? (
+            <button
+              onClick={() => setIsGenerateModalOpen(true)}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Tạo với AI
+            </button>
+          ) : null}
           <a
             href="/content/exercises/create"
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -170,11 +168,13 @@ export default function ExerciseList() {
       </div>
 
       {/* Modals */}
-      <ExerciseGenerateModal
-        isOpen={isGenerateModalOpen}
-        onClose={() => setIsGenerateModalOpen(false)}
-        onSuccess={(exercises, metadata) => handleGenerateSuccess(exercises, metadata)}
-      />
+      {isPhase1FeatureEnabled('AI_GENERATION') && (
+        <ExerciseGenerateModal
+          isOpen={isGenerateModalOpen}
+          onClose={() => setIsGenerateModalOpen(false)}
+          onSuccess={(exercises, metadata) => handleGenerateSuccess(exercises, metadata)}
+        />
+      )}
       <ExercisePreviewModal
         isOpen={isPreviewModalOpen}
         exercises={generatedExercises}

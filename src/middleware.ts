@@ -2,11 +2,13 @@
  * Next.js Middleware
  * 
  * Protects routes and checks authentication.
+ * Also enforces Phase 1 scope - blocks routes outside Phase 1 allowed scope.
  */
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { decodeJWT, isTokenExpired } from './lib/utils/jwt';
+import { isPhase1AllowedRoute } from './lib/config/phase1-routes.config';
 
 // Routes that require authentication
 const protectedRoutes = ['/dashboard', '/content', '/users', '/ai-quality', '/system', '/profile'];
@@ -40,6 +42,12 @@ export function middleware(request: NextRequest) {
       const url = new URL('/login', request.url);
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
+    }
+
+    // Phase 1 scope check: After authentication passes, check if route is in Phase 1 allowed scope
+    if (!isPhase1AllowedRoute(pathname)) {
+      // Route is protected but not in Phase 1 scope - redirect to dashboard
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
 

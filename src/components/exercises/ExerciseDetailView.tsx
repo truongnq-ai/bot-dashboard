@@ -58,14 +58,7 @@ export default function ExerciseDetailView({ id, aiMetadata }: ExerciseDetailVie
           >
             Sửa
           </Link>
-          {exercise.reviewStatus === ReviewStatus.PENDING && (
-            <Link
-              href={`/content/exercises/${exercise.id}/review`}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-            >
-              Duyệt
-            </Link>
-          )}
+          {/* Review action removed for Phase 1 - review workflow is not in Phase 1 scope */}
           <button
             onClick={() => router.back()}
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"

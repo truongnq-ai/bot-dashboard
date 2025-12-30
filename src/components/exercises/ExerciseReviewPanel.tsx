@@ -14,6 +14,7 @@ import { formatDateTime } from '@/lib/utils/formatters';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import MathText from '@/components/common/MathText';
 import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
+import { isPhase1FeatureEnabled } from '@/lib/config/phase1-features.config';
 
 interface ExerciseReviewPanelProps {
   id: string;
@@ -54,6 +55,12 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
   }, [exercise, exerciseLoading, router]);
 
   const handleSubmit = async (status: ReviewStatus) => {
+    // Review workflow disabled for Phase 1
+    if (!isPhase1FeatureEnabled('EXERCISE_REVIEW')) {
+      showError('Tính năng duyệt bài tập không khả dụng trong Phase 1');
+      return;
+    }
+
     // Validation
     if (status === ReviewStatus.REJECTED && !reviewNotes.trim()) {
       showError('Cần nhập ghi chú khi từ chối bài tập');
@@ -233,12 +240,20 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
 
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Hành động duyệt</h2>
-            <div className="space-y-3">
-              <button
-                onClick={() => handleSubmit(ReviewStatus.APPROVED)}
-                disabled={submittingStatus !== null || qualityScore < 0.7}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
+            {/* Review actions disabled for Phase 1 */}
+            {!isPhase1FeatureEnabled('EXERCISE_REVIEW') ? (
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+                  Tính năng duyệt bài tập không khả dụng trong Phase 1
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <button
+                  onClick={() => handleSubmit(ReviewStatus.APPROVED)}
+                  disabled={submittingStatus !== null || qualityScore < 0.7}
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
                 {submittingStatus === ReviewStatus.APPROVED && (
                   <svg
                     className="animate-spin h-4 w-4 text-white"
@@ -321,7 +336,8 @@ export default function ExerciseReviewPanel({ id }: ExerciseReviewPanelProps) {
                 )}
                 {submittingStatus === ReviewStatus.NEEDS_REVISION ? `Đang yêu cầu chỉnh sửa${loadingDots}` : 'Yêu cầu chỉnh sửa'}
               </button>
-            </div>
+              </div>
+            )}
           </div>
 
           {reviewHistory && reviewHistory.length > 0 && (

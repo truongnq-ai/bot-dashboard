@@ -10,6 +10,7 @@ import { QuestionSearchParams, QuestionStatus } from '@/types/question';
 import QuestionListTable from './QuestionListTable';
 import GenerateQuestionsModal from './GenerateQuestionsModal';
 import { useSkills } from '@/lib/hooks/useSkills';
+import { isPhase1FeatureEnabled } from '@/lib/config/phase1-features.config';
 
 export default function QuestionList() {
   const [searchParams, setSearchParams] = useState<QuestionSearchParams>({
@@ -64,21 +65,27 @@ export default function QuestionList() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Câu hỏi</h1>
-        <button
-          onClick={() => setIsGenerateModalOpen(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Sinh câu hỏi
-        </button>
+        {/* AI Generation disabled for Phase 1 */}
+        {isPhase1FeatureEnabled('AI_GENERATION') && (
+          <button
+            onClick={() => setIsGenerateModalOpen(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Sinh câu hỏi
+          </button>
+        )}
       </div>
 
-      <GenerateQuestionsModal
-        isOpen={isGenerateModalOpen}
-        onClose={() => setIsGenerateModalOpen(false)}
-        onSuccess={() => {
-          refetch();
-        }}
-      />
+      {/* AI Generation disabled for Phase 1 */}
+      {isPhase1FeatureEnabled('AI_GENERATION') && (
+        <GenerateQuestionsModal
+          isOpen={isGenerateModalOpen}
+          onClose={() => setIsGenerateModalOpen(false)}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+      )}
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

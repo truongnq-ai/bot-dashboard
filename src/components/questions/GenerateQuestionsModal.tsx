@@ -13,6 +13,7 @@ import { useExercises } from '@/lib/hooks/useExercises';
 import { ReviewStatus } from '@/types/exercise';
 import { handleApiError, handleApiSuccess } from '@/lib/utils/errorHandler';
 import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
+import { isPhase1FeatureEnabled } from '@/lib/config/phase1-features.config';
 
 interface GenerateQuestionsModalProps {
   isOpen: boolean;
@@ -128,6 +129,12 @@ export default function GenerateQuestionsModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // AI Generation disabled for Phase 1
+    if (!isPhase1FeatureEnabled('AI_GENERATION')) {
+      handleApiError(new Error('Tính năng sinh câu hỏi với AI không khả dụng trong Phase 1'));
+      return;
+    }
 
     if (!validate()) {
       return;

@@ -13,6 +13,7 @@ import { Skill } from '@/types/skill';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
 import { setPromptContext } from '@/lib/utils/navigation';
+import { isPhase1FeatureEnabled } from '@/lib/config/phase1-features.config';
 
 interface ExerciseGenerateModalProps {
   isOpen: boolean;
@@ -200,6 +201,12 @@ export default function ExerciseGenerateModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // AI Generation disabled for Phase 1
+    if (!isPhase1FeatureEnabled('AI_GENERATION')) {
+      showError('Tính năng tạo bài tập với AI không khả dụng trong Phase 1');
+      return;
+    }
 
     if (!validate()) {
       return;

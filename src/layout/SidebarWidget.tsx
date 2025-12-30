@@ -48,26 +48,7 @@ export default function SidebarWidget({
       <p className="mb-4 text-gray-500 text-theme-sm dark:text-gray-400">
         All systems operational
       </p>
-      <Link
-        href="/system/health"
-        className="flex items-center justify-center gap-2 p-3 font-medium text-white rounded-lg bg-brand-500 text-theme-sm hover:bg-brand-600 transition-colors"
-      >
-        <svg
-          className="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        View Health
-      </Link>
+      {/* System health link removed for Phase 1 - system routes are not in Phase 1 scope */}
       {canToggle && (
         <button
           onClick={toggleMode}
