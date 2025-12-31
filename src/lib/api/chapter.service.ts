@@ -15,6 +15,7 @@ import {
   ChapterSkillsResponse,
   AddChapterSkillRequest,
 } from '@/types/chapter';
+import { Skill } from '@/types/skill';
 import { ResponseObject, PageResponse } from '@/types/common';
 
 /**
@@ -155,6 +156,23 @@ export async function removeSkillFromChapter(
 ): Promise<ResponseObject<void>> {
   const response = await apiClient.delete<ResponseObject<void>>(
     API_ENDPOINTS.CHAPTERS_REMOVE_SKILL(chapterId, skillId)
+  );
+
+  return {
+    errorCode: response.data.errorCode,
+    errorDetail: response.data.errorDetail,
+    data: response.data.data,
+  };
+}
+
+/**
+ * Get available skills for chapter (skills not yet in chapter)
+ */
+export async function getAvailableSkillsForChapter(
+  chapterId: string
+): Promise<ResponseObject<Skill[]>> {
+  const response = await apiClient.get<ResponseObject<Skill[]>>(
+    API_ENDPOINTS.CHAPTERS_GET_AVAILABLE_SKILLS(chapterId)
   );
 
   return {

@@ -3,9 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { Chapter, ChapterSkillDetail, AddChapterSkillRequest } from '@/types/chapter';
-import { getChapterSkills, addSkillToChapter, removeSkillFromChapter } from '@/lib/api/chapter.service';
-import { getSkills } from '@/lib/api/skill.service';
 import { Skill } from '@/types/skill';
+import { getChapterSkills, addSkillToChapter, removeSkillFromChapter, getAvailableSkillsForChapter } from '@/lib/api/chapter.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import ConfirmModal from '@/components/common/ConfirmModal';
 
@@ -66,25 +65,20 @@ export default function ChapterSkillsModal({ isOpen, onClose, chapter }: Chapter
     if (!chapter) return;
 
     try {
-      // Fetch all skills (no pagination for simplicity, or use large pageSize)
-      const response = await getSkills({
-        page: 0,
-        pageSize: 1000,
-        grade: chapter.grade, // Filter by chapter grade
-      });
-      if (response.errorCode === '0000' && response.data?.content) {
-        setAllSkills(response.data.content);
+      // Fetch available skills (skills not yet in chapter) using new API
+      const response = await getAvailableSkillsForChapter(chapter.id);
+      if (response.errorCode === '0000' && response.data) {
+        setAllSkills(response.data);
       }
     } catch (error) {
-      console.error('Failed to fetch all skills:', error);
+      console.error('Failed to fetch available skills:', error);
     }
   };
 
-  // Filter skills: only show skills that are NOT already in the chapter
+  // Backend already filters, so availableSkills is just allSkills
   const availableSkills = useMemo(() => {
-    const chapterSkillIds = new Set(chapterSkills.map((cs) => cs.skillId));
-    return allSkills.filter((skill) => !chapterSkillIds.has(skill.id));
-  }, [allSkills, chapterSkills]);
+    return allSkills;
+  }, [allSkills]);
 
   const handleAddSkill = async () => {
     if (!chapter || !formData.skillId) {
@@ -151,92 +145,100 @@ export default function ChapterSkillsModal({ isOpen, onClose, chapter }: Chapter
           </h2>
 
           {/* Add Skill Section */}
-          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thêm kỹ năng</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Kỹ năng
-                </label>
-                <select
-                  value={formData.skillId}
-                  onChange={(e) => setFormData({ ...formData, skillId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={adding || availableSkills.length === 0}
-                >
-                  <option value="">-- Chọn kỹ năng --</option>
-                  {availableSkills.map((skill) => (
-                    <option key={skill.id} value={skill.id}>
-                      {skill.code} - {skill.name}
-                    </option>
-                  ))}
-                </select>
-                {availableSkills.length === 0 && (
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Tất cả kỹ năng đã được thêm vào chương
-                  </p>
-                )}
+            
+            {availableSkills.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Tất cả kỹ năng đã được thêm vào chương này
+                </p>
               </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Kỹ năng <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={formData.skillId}
+                      onChange={(e) => setFormData({ ...formData, skillId: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                               bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                               focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                               disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={adding}
+                    >
+                      <option value="">-- Chọn kỹ năng --</option>
+                      {availableSkills.map((skill) => (
+                        <option key={skill.id} value={skill.id}>
+                          {skill.code} - {skill.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Loại kỹ năng
-                </label>
-                <select
-                  value={formData.skillType}
-                  onChange={(e) =>
-                    setFormData({ ...formData, skillType: e.target.value as 'REQUIRED' | 'OPTIONAL' })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={adding}
-                >
-                  <option value="REQUIRED">Bắt buộc</option>
-                  <option value="OPTIONAL">Tùy chọn</option>
-                </select>
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Loại kỹ năng <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={formData.skillType}
+                      onChange={(e) =>
+                        setFormData({ ...formData, skillType: e.target.value as 'REQUIRED' | 'OPTIONAL' })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                               bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                               focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                               disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={adding}
+                    >
+                      <option value="REQUIRED">Bắt buộc</option>
+                      <option value="OPTIONAL">Tùy chọn</option>
+                    </select>
+                  </div>
+                </div>
 
-              <div className="flex items-end">
-                <button
-                  onClick={handleAddSkill}
-                  disabled={adding || !formData.skillId || availableSkills.length === 0}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg
-                           hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
-                           transition-colors flex items-center justify-center gap-2"
-                >
-                  {adding ? (
-                    <>
-                      <svg
-                        className="animate-spin h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Đang thêm...
-                    </>
-                  ) : (
-                    'Thêm'
-                  )}
-                </button>
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleAddSkill}
+                    disabled={adding || !formData.skillId}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium
+                             hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
+                             transition-colors flex items-center justify-center gap-2 min-w-[120px]"
+                  >
+                    {adding ? (
+                      <>
+                        <svg
+                          className="animate-spin h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Đang thêm...
+                      </>
+                    ) : (
+                      'Thêm kỹ năng'
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Skills List */}

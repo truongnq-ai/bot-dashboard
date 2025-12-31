@@ -33,6 +33,7 @@ export const API_ENDPOINTS = {
   CHAPTERS_DELETE: (id: string) => `${API_VERSION}/admin/chapters/${id}`,
   CHAPTERS_BY_GRADE: (grade: number) => `${API_VERSION}/admin/chapters/by-grade/${grade}`,
   CHAPTERS_GET_SKILLS: (chapterId: string) => `${API_VERSION}/admin/chapters/${chapterId}/skills`,
+  CHAPTERS_GET_AVAILABLE_SKILLS: (chapterId: string) => `${API_VERSION}/admin/chapters/${chapterId}/available-skills`,
   CHAPTERS_ADD_SKILL: (chapterId: string) => `${API_VERSION}/admin/chapters/${chapterId}/skills`,
   CHAPTERS_REMOVE_SKILL: (chapterId: string, skillId: string) => `${API_VERSION}/admin/chapters/${chapterId}/skills/${skillId}`,
 
