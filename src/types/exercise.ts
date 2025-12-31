@@ -87,25 +87,29 @@ export interface Exercise {
 
 // Request DTOs
 export interface CreateExerciseRequest {
-  skillId: string;
-  grade: number; // 6 or 7
-  chapterId?: string;
-  chapterName?: string;
-  chapter?: Chapter;
-  problemType?: string;
-  problemText: string;
-  problemLatex?: string;
-  problemImageUrl?: string;
-  difficultyLevel?: number; // 1-5
-  bloomTaxonomyLevel?: BloomTaxonomyLevel;
-  solutionSteps: SolutionStepRequest[];
-  finalAnswer?: string;
-  commonMistakes?: CommonMistakeRequest[];
+  chapterId: string; // UUID, required
+  skillId: string; // UUID, required
+  contentText: string; // Required (mapped from problemText)
+  contentLatex?: string; // Optional (mapped from problemLatex)
+  difficulty: number; // 1-5, required (mapped from difficultyLevel)
+  createdBy: string; // Required, e.g., 'ADMIN'
+  status: string; // Required, e.g., 'DRAFT'
   learningObjective?: string;
-  prerequisiteSkillIds?: string[];
-  timeEstimateSec?: number;
+  commonMistakes?: CommonMistakeRequest[];
   hints?: string[];
-  tags?: string[];
+}
+
+// Solution is created separately after exercise creation
+export interface CreateExerciseSolutionRequest {
+  solutionSteps: string; // JSON string of SolutionStepRequest[]
+  finalAnswer?: string;
+  explanation?: string;
+  createdBy: string; // Required, e.g., 'ADMIN'
+}
+
+// JSON Import Request
+export interface ImportExerciseJsonRequest {
+  rawExerciseJson: string; // JSON string containing exercise data
 }
 
 export interface UpdateExerciseRequest {
@@ -181,28 +185,23 @@ export interface ExerciseReviewLog {
 
 // AI Generation Request/Response
 export interface GenerateExercisesRequest {
-  skillId: string;
-  grade: number; // 6 or 7
-  difficultyLevel?: number; // 1-5, optional (AI can suggest)
-  count: number; // 1-20
-  promptTemplateId?: string; // Optional, uses default if not provided
-  nonce?: string; // UUID for cache key variation, prevents duplicate exercises
-  generationIndex?: number; // 0-based index for sequential generation (for prompt variation)
+  chapterCode: string; // Chapter code (String), not UUID
+  skillCode: string; // Skill code (String), not UUID
+  difficultyLevel: number; // 1-5, required
+  exerciseCount?: number; // 1-10, optional, defaults to 1
 }
 
 export interface GenerateExercisesResponse {
-  exercises: Exercise[];
+  exercise: Exercise; // Single exercise (backend returns one at a time)
   providerUsed?: string; // gemini, huggingface, openai
   overallConfidence?: number; // 0.0-1.0
-  totalGenerated?: number;
-  totalValid?: number;
 }
 
 // Prompt Generation Request/Response
 export interface GeneratePromptRequest {
-  skillId: string;
-  grade: number; // 6 or 7
-  difficultyLevel?: number; // 1-5, optional
+  chapterCode: string; // Chapter code (String), not UUID
+  skillCode: string; // Skill code (String), not UUID
+  difficultyLevel: number; // 1-5, required
 }
 
 export interface GeneratePromptResponse {
@@ -234,4 +233,18 @@ export interface ValidateLaTeXResponse {
   errors: LaTeXError[];
   autoFixableCount: number;
   autoFixes: Record<string, string>;
+}
+
+// Exercise Created By enum (matches backend)
+export enum ExerciseCreatedBy {
+  ADMIN = 'ADMIN',
+  AI = 'AI',
+  TEACHER = 'TEACHER',
+}
+
+// Exercise Status enum (matches backend)
+export enum ExerciseStatus {
+  DRAFT = 'DRAFT',
+  REVIEWED = 'REVIEWED',
+  APPROVED = 'APPROVED',
 }

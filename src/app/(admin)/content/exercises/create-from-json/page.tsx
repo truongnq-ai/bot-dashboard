@@ -6,34 +6,58 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { CreateExerciseRequest } from '@/types/exercise';
-import { validateExerciseJson } from '@/lib/utils/json-validator';
-import { setExerciseDataFromJson, getPromptContext, clearPromptContext } from '@/lib/utils/navigation';
+import { ImportExerciseJsonRequest } from '@/types/exercise';
+import { importExerciseFromJson } from '@/lib/api/exercise.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { useSkills } from '@/lib/hooks/useSkills';
 import { useGrades } from '@/lib/hooks/useGrades';
+import { getChaptersByGrade } from '@/lib/api/chapter.service';
 import { Skill } from '@/types/skill';
+import { Chapter } from '@/types/chapter';
 
 export default function CreateFromJsonPage() {
   const router = useRouter();
   const [jsonInput, setJsonInput] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isValidated, setIsValidated] = useState(false);
-  const [validatedExercise, setValidatedExercise] = useState<CreateExerciseRequest | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   
-  // Skill and Grade selection state
+  // Chapter, Skill, and Difficulty selection state
   const [selectedGrade, setSelectedGrade] = useState<number>(6);
-  const [selectedSkillId, setSelectedSkillId] = useState<string>('');
-  const [selectedDifficultyLevel, setSelectedDifficultyLevel] = useState<number | undefined>(undefined);
+  const [selectedChapterCode, setSelectedChapterCode] = useState<string>('');
+  const [selectedSkillCode, setSelectedSkillCode] = useState<string>('');
+  const [selectedDifficultyLevel, setSelectedDifficultyLevel] = useState<number>(3);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [chaptersLoading, setChaptersLoading] = useState(false);
 
-  const { data: gradesData } = useGrades();
+  const { data: gradesData, loading: gradesLoading } = useGrades();
   const { data: skillsData } = useSkills({
     grade: selectedGrade as 6 | 7 | undefined,
     pageSize: 1000,
     sortBy: 'code',
     sortDirection: 'asc',
   });
+
+  // Fetch chapters by grade
+  useEffect(() => {
+    const fetchChapters = async () => {
+      if (selectedGrade) {
+        setChaptersLoading(true);
+        try {
+          const response = await getChaptersByGrade(selectedGrade as 6 | 7);
+          if (response.errorCode === '0000' && response.data) {
+            setChapters(response.data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch chapters:', error);
+        } finally {
+          setChaptersLoading(false);
+        }
+      }
+    };
+    fetchChapters();
+  }, [selectedGrade]);
 
   // Sort skills by code alphabetically
   const sortedSkills = useMemo(() => {
@@ -43,26 +67,11 @@ export default function CreateFromJsonPage() {
     });
   }, [skillsData]);
 
-  // Check sessionStorage for prompt context on mount
+  // Reset chapterCode and skillCode when grade changes
   useEffect(() => {
-    const promptContext = getPromptContext();
-    if (promptContext) {
-      setSelectedGrade(promptContext.grade);
-      setSelectedSkillId(promptContext.skillId);
-      setSelectedDifficultyLevel(promptContext.difficultyLevel);
-      showSuccess('Đã tải thông tin từ prompt (có thể chỉnh sửa)');
-    }
-  }, []);
-
-  // Reset skillId when grade changes
-  useEffect(() => {
-    if (selectedGrade) {
-      const selectedSkill = sortedSkills.find((s) => s.id === selectedSkillId);
-      if (selectedSkill && selectedSkill.grade !== selectedGrade) {
-        setSelectedSkillId('');
-      }
-    }
-  }, [selectedGrade, selectedSkillId, sortedSkills]);
+    setSelectedChapterCode('');
+    setSelectedSkillCode('');
+  }, [selectedGrade]);
 
   const handleValidate = () => {
     if (!jsonInput.trim()) {
@@ -71,64 +80,102 @@ export default function CreateFromJsonPage() {
       return;
     }
 
-    const result = validateExerciseJson(jsonInput);
+    try {
+      const parsed = JSON.parse(jsonInput);
+      
+      // Check if it has exercises array
+      if (!parsed.exercises || !Array.isArray(parsed.exercises) || parsed.exercises.length === 0) {
+        setValidationErrors(['JSON phải có mảng "exercises" chứa ít nhất 1 bài tập']);
+        setIsValidated(false);
+        return;
+      }
 
-    if (result.valid && result.exercise) {
+      // Check if exercise has required fields
+      const exercise = parsed.exercises[0];
+      if (!exercise.problemText || !exercise.solutionSteps) {
+        setValidationErrors(['Bài tập phải có "problemText" và "solutionSteps"']);
+        setIsValidated(false);
+        return;
+      }
+
       setValidationErrors([]);
       setIsValidated(true);
-      setValidatedExercise(result.exercise);
       showSuccess('JSON hợp lệ! Bạn có thể tạo bài tập.');
-    } else {
-      setValidationErrors(result.errors);
+    } catch (error) {
+      setValidationErrors(['JSON không hợp lệ: ' + (error instanceof Error ? error.message : 'Lỗi không xác định')]);
       setIsValidated(false);
-      setValidatedExercise(null);
     }
   };
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!selectedSkillId) {
-      errors.skillId = 'Vui lòng chọn kỹ năng';
+    if (!selectedChapterCode) {
+      errors.chapterCode = 'Vui lòng chọn chương';
+    }
+
+    if (!selectedSkillCode) {
+      errors.skillCode = 'Vui lòng chọn kỹ năng';
     }
 
     if (!selectedGrade || (selectedGrade !== 6 && selectedGrade !== 7)) {
       errors.grade = 'Lớp phải là 6 hoặc 7';
     }
 
+    if (!selectedDifficultyLevel || selectedDifficultyLevel < 1 || selectedDifficultyLevel > 5) {
+      errors.difficultyLevel = 'Độ khó phải từ 1 đến 5';
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handleCreateExercise = () => {
+  const handleCreateExercise = async () => {
     // Validate JSON first
-    if (!isValidated || !validatedExercise) {
+    if (!isValidated) {
       handleValidate();
-      if (!isValidated || !validatedExercise) {
+      if (!isValidated) {
         return;
       }
     }
 
-    // Validate Skill + Grade
+    // Validate Chapter, Skill, and Difficulty
     if (!validateForm()) {
-      showError('Vui lòng chọn đầy đủ thông tin Kỹ năng và Lớp');
+      showError('Vui lòng chọn đầy đủ thông tin Chương, Kỹ năng và Độ khó');
       return;
     }
 
-    // Merge exercise data with selected skillId and grade
-    const exerciseWithContext: CreateExerciseRequest = {
-      ...validatedExercise,
-      skillId: selectedSkillId,
-      grade: selectedGrade,
-      difficultyLevel: selectedDifficultyLevel || validatedExercise.difficultyLevel,
-    };
+    setSubmitting(true);
 
-    // Clear prompt context after use
-    clearPromptContext();
+    try {
+      // Parse JSON and inject metadata at root level
+      const parsedJson = JSON.parse(jsonInput);
+      
+      // Inject chapterCode, skillCode, difficultyLevel at root level
+      const jsonWithMetadata = {
+        ...parsedJson,
+        chapterCode: selectedChapterCode,
+        skillCode: selectedSkillCode,
+        difficultyLevel: selectedDifficultyLevel,
+      };
 
-    // Save to sessionStorage and navigate
-    setExerciseDataFromJson(exerciseWithContext);
-    router.push('/content/exercises/create');
+      // Convert back to JSON string
+      const jsonString = JSON.stringify(jsonWithMetadata);
+
+      // Call import API directly
+      const request: ImportExerciseJsonRequest = {
+        rawExerciseJson: jsonString,
+      };
+
+      await importExerciseFromJson(request);
+      showSuccess('Tạo bài tập từ JSON thành công');
+      router.push('/content/exercises');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Lỗi không xác định';
+      showError('Tạo bài tập thất bại: ' + errorMessage);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -194,7 +241,7 @@ export default function CreateFromJsonPage() {
             </div>
           )}
 
-          {/* Skill and Grade Selection Form */}
+          {/* Chapter, Skill, and Difficulty Selection Form */}
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
               Thông tin bài tập
@@ -209,7 +256,8 @@ export default function CreateFromJsonPage() {
                   onChange={(e) => {
                     const newGrade = parseInt(e.target.value);
                     setSelectedGrade(newGrade);
-                    setSelectedSkillId(''); // Reset skill when grade changes
+                    setSelectedChapterCode('');
+                    setSelectedSkillCode('');
                     setFormErrors({});
                   }}
                   className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
@@ -217,12 +265,22 @@ export default function CreateFromJsonPage() {
                       ? 'border-red-500'
                       : 'border-gray-300 dark:border-gray-600'
                   }`}
+                  disabled={gradesLoading}
                 >
-                  {gradesData?.map((grade) => (
-                    <option key={grade} value={grade}>
-                      Lớp {grade}
-                    </option>
-                  ))}
+                  {gradesLoading ? (
+                    <option value="">Đang tải...</option>
+                  ) : gradesData && gradesData.length > 0 ? (
+                    gradesData.map((grade) => (
+                      <option key={grade} value={grade}>
+                        Lớp {grade}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value={6}>Lớp 6</option>
+                      <option value={7}>Lớp 7</option>
+                    </>
+                  )}
                 </select>
                 {formErrors.grade && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.grade}</p>
@@ -231,36 +289,92 @@ export default function CreateFromJsonPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Kỹ năng <span className="text-red-500">*</span>
+                  Chương <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={selectedSkillId}
+                  value={selectedChapterCode}
                   onChange={(e) => {
-                    setSelectedSkillId(e.target.value);
+                    setSelectedChapterCode(e.target.value);
+                    setSelectedSkillCode('');
                     setFormErrors({});
                   }}
                   className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                    formErrors.skillId
+                    formErrors.chapterCode
                       ? 'border-red-500'
                       : 'border-gray-300 dark:border-gray-600'
                   }`}
+                  disabled={!selectedGrade || chaptersLoading}
                 >
-                  <option value="">Chọn kỹ năng</option>
+                  <option value="">{!selectedGrade ? 'Chọn lớp trước' : chaptersLoading ? 'Đang tải...' : 'Chọn chương'}</option>
+                  {chapters.map((chapter) => (
+                    <option key={chapter.id} value={chapter.code}>
+                      {chapter.code} - {chapter.name}
+                    </option>
+                  ))}
+                </select>
+                {formErrors.chapterCode && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.chapterCode}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Kỹ năng <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedSkillCode}
+                  onChange={(e) => {
+                    setSelectedSkillCode(e.target.value);
+                    setFormErrors({});
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                    formErrors.skillCode
+                      ? 'border-red-500'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                  disabled={!selectedChapterCode}
+                >
+                  <option value="">{!selectedChapterCode ? 'Chọn chương trước' : 'Chọn kỹ năng'}</option>
                   {sortedSkills.map((skill: Skill) => (
-                    <option key={skill.id} value={skill.id}>
+                    <option key={skill.id} value={skill.code}>
                       {skill.code} - {skill.name}
                     </option>
                   ))}
                 </select>
-                {formErrors.skillId && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.skillId}</p>
+                {formErrors.skillCode && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.skillCode}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Độ khó <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedDifficultyLevel}
+                  onChange={(e) => {
+                    setSelectedDifficultyLevel(parseInt(e.target.value));
+                    setFormErrors({});
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                    formErrors.difficultyLevel
+                      ? 'border-red-500'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                >
+                  <option value={1}>1 - Rất dễ</option>
+                  <option value={2}>2 - Dễ</option>
+                  <option value={3}>3 - Trung bình</option>
+                  <option value={4}>4 - Khó</option>
+                  <option value={5}>5 - Rất khó</option>
+                </select>
+                {formErrors.difficultyLevel && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.difficultyLevel}</p>
                 )}
               </div>
             </div>
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              {selectedSkillId
-                ? 'Thông tin đã được tự động điền từ prompt (có thể chỉnh sửa)'
-                : 'Vui lòng chọn kỹ năng phù hợp với bài tập'}
+              Vui lòng chọn đầy đủ thông tin để tạo bài tập từ JSON
             </p>
           </div>
 
@@ -276,10 +390,10 @@ export default function CreateFromJsonPage() {
             <button
               type="button"
               onClick={handleCreateExercise}
-              disabled={!isValidated || validationErrors.length > 0 || !selectedSkillId}
+              disabled={!isValidated || validationErrors.length > 0 || !selectedChapterCode || !selectedSkillCode || submitting}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Tạo bài tập
+              {submitting ? 'Đang tạo...' : 'Tạo bài tập'}
             </button>
           </div>
         </div>

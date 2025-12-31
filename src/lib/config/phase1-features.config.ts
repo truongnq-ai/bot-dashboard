@@ -12,8 +12,8 @@
  * Code remains but actions are disabled (no-op or read-only).
  */
 export const PHASE1_FEATURES = {
-  // AI Generation - Disabled for Phase 1 (AI orchestration not in scope)
-  AI_GENERATION: false,
+  // AI Generation - Enabled for Phase 1 (user confirmed to keep)
+  AI_GENERATION: true,
   
   // Exercise Review Workflow - Disabled for Phase 1
   EXERCISE_REVIEW: false,

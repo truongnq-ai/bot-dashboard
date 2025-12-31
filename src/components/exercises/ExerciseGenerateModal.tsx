@@ -8,8 +8,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { GenerateExercisesRequest, Exercise } from '@/types/exercise';
 import { generateExercises, generatePrompt } from '@/lib/api/exercise.service';
-import { useSkills } from '@/lib/hooks/useSkills';
 import { Skill } from '@/types/skill';
+import { getChaptersByGrade } from '@/lib/api/chapter.service';
+import { getSkillsByChapter } from '@/lib/api/skill.service';
+import { Chapter } from '@/types/chapter';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
 import { setPromptContext } from '@/lib/utils/navigation';
@@ -47,12 +49,17 @@ export default function ExerciseGenerateModal({
   initialGrade,
 }: ExerciseGenerateModalProps) {
   const [formData, setFormData] = useState<GenerateExercisesRequest>({
-    skillId: initialSkillId || '',
-    grade: initialGrade || 6,
-    difficultyLevel: undefined,
-    count: 5,
-    promptTemplateId: undefined,
+    chapterCode: '',
+    skillCode: '',
+    difficultyLevel: 3,
+    exerciseCount: 1,
   });
+  
+  const [grade, setGrade] = useState<number>(initialGrade || 6);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [chaptersLoading, setChaptersLoading] = useState(false);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [skillsLoading, setSkillsLoading] = useState(false);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -72,30 +79,66 @@ export default function ExerciseGenerateModal({
     totalValid?: number;
   } | null>(null);
 
-  const { data: skillsData } = useSkills({
-    grade: formData.grade as 6 | 7,
-    pageSize: 1000,
-    sortBy: 'code',
-    sortDirection: 'asc',
-  });
+  // Fetch chapters by grade
+  useEffect(() => {
+    const fetchChapters = async () => {
+      if (grade) {
+        setChaptersLoading(true);
+        try {
+          const response = await getChaptersByGrade(grade as 6 | 7);
+          if (response.errorCode === '0000' && response.data) {
+            setChapters(response.data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch chapters:', error);
+        } finally {
+          setChaptersLoading(false);
+        }
+      }
+    };
+    fetchChapters();
+  }, [grade]);
+
+  // Get selected chapter
+  const selectedChapter = chapters.find((c) => c.code === formData.chapterCode);
+
+  // Fetch skills by chapter
+  useEffect(() => {
+    const fetchSkills = async () => {
+      if (selectedChapter?.id) {
+        setSkillsLoading(true);
+        try {
+          const response = await getSkillsByChapter(selectedChapter.id);
+          if (response.errorCode === '0000' && response.data) {
+            setSkills(response.data);
+          } else {
+            setSkills([]);
+          }
+        } catch (error) {
+          console.error('Failed to fetch skills:', error);
+          setSkills([]);
+        } finally {
+          setSkillsLoading(false);
+        }
+      } else {
+        setSkills([]);
+      }
+    };
+    fetchSkills();
+  }, [selectedChapter?.id]);
 
   // Sort skills by code alphabetically
   const sortedSkills = useMemo(() => {
-    if (!skillsData?.content) return [];
-    return [...skillsData.content].sort((a, b) => {
+    if (!skills || skills.length === 0) return [];
+    return [...skills].sort((a, b) => {
       return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
     });
-  }, [skillsData]);
+  }, [skills]);
 
-  // Reset skillId when grade changes
+  // Reset chapterCode and skillCode when grade changes
   useEffect(() => {
-    if (formData.skillId) {
-      const selectedSkill = sortedSkills.find((s) => s.id === formData.skillId);
-      if (selectedSkill && selectedSkill.grade !== formData.grade) {
-        setFormData((prev) => ({ ...prev, skillId: '' }));
-      }
-    }
-  }, [formData.grade, formData.skillId, sortedSkills]);
+    setFormData((prev) => ({ ...prev, chapterCode: '', skillCode: '' }));
+  }, [grade]);
 
   // Animation for loading dots
   useEffect(() => {
@@ -134,19 +177,19 @@ export default function ExerciseGenerateModal({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.skillId) {
-      newErrors.skillId = 'Vui lòng chọn kỹ năng';
+    if (!formData.chapterCode) {
+      newErrors.chapterCode = 'Vui lòng chọn chương';
     }
 
-    if (!formData.grade || (formData.grade !== 6 && formData.grade !== 7)) {
+    if (!formData.skillCode) {
+      newErrors.skillCode = 'Vui lòng chọn kỹ năng';
+    }
+
+    if (!grade || (grade !== 6 && grade !== 7)) {
       newErrors.grade = 'Lớp phải là 6 hoặc 7';
     }
 
-    if (!formData.count || formData.count < 1 || formData.count > 20) {
-      newErrors.count = 'Số lượng phải từ 1 đến 20';
-    }
-
-    if (formData.difficultyLevel && (formData.difficultyLevel < 1 || formData.difficultyLevel > 5)) {
+    if (!formData.difficultyLevel || formData.difficultyLevel < 1 || formData.difficultyLevel > 5) {
       newErrors.difficultyLevel = 'Độ khó phải từ 1 đến 5';
     }
 
@@ -158,23 +201,17 @@ export default function ExerciseGenerateModal({
   const generateWithRetry = async (
     request: GenerateExercisesRequest,
     maxRetries: number = 2,
-    onRetry?: (attempt: number) => void,
-    generationIndex?: number
+    onRetry?: (attempt: number) => void
   ): Promise<{ exercise: Exercise | null; metadata?: { providerUsed?: string; overallConfidence?: number } }> => {
-    // Generate unique nonce for this generation attempt
-    const nonce = crypto.randomUUID();
-    
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const response = await generateExercises({ 
           ...request, 
-          count: 1,
-          nonce,
-          generationIndex,
+          exerciseCount: 1,
         });
-        if (response.data?.exercises?.[0]) {
+        if (response.data?.exercise) {
           return {
-            exercise: response.data.exercises[0],
+            exercise: response.data.exercise,
             metadata: {
               providerUsed: response.data.providerUsed,
               overallConfidence: response.data.overallConfidence,
@@ -212,21 +249,21 @@ export default function ExerciseGenerateModal({
       return;
     }
 
-    // Backward compatible: if count === 1, use original logic
-    if (formData.count === 1) {
+    // Backward compatible: if exerciseCount === 1, use original logic
+    if (formData.exerciseCount === 1) {
       setLoading(true);
       setErrors({});
 
       try {
         const response = await generateExercises(formData);
         
-        if (response.data && response.data.exercises) {
-          showSuccess(`Đã tạo thành công ${response.data.exercises.length} bài tập`);
-          onSuccess(response.data.exercises, {
+        if (response.data && response.data.exercise) {
+          showSuccess('Đã tạo thành công bài tập');
+          onSuccess([response.data.exercise], {
             providerUsed: response.data.providerUsed,
             overallConfidence: response.data.overallConfidence,
-            totalGenerated: response.data.totalGenerated,
-            totalValid: response.data.totalValid,
+            totalGenerated: 1,
+            totalValid: 1,
           });
           onClose();
         } else {
@@ -242,14 +279,14 @@ export default function ExerciseGenerateModal({
       return;
     }
 
-    // Sequential generation for count > 1
+    // Sequential generation for exerciseCount > 1
     setIsGenerating(true);
     setErrors({});
     setSuccessfulExercises([]);
     setGenerationMetadata(null);
 
     // Initialize status tracking
-    const totalCount = formData.count;
+    const totalCount = formData.exerciseCount || 1;
     const initialStatuses: ExerciseGenerationStatus[] = Array.from({ length: totalCount }, (_, i) => ({
       index: i + 1,
       status: 'pending',
@@ -273,7 +310,7 @@ export default function ExerciseGenerateModal({
       });
 
       let retryCount = 0;
-      const result = await generateWithRetry(
+        const result = await generateWithRetry(
         formData,
         2,
         (attempt) => {
@@ -284,8 +321,7 @@ export default function ExerciseGenerateModal({
             updated[i] = { ...updated[i], retryCount: attempt };
             return updated;
           });
-        },
-        i // generationIndex: 0-based index
+        }
       );
       
       if (result.exercise) {
@@ -363,13 +399,18 @@ export default function ExerciseGenerateModal({
 
   const handleCopyPrompt = async () => {
     // Validate required fields for prompt generation
-    if (!formData.skillId) {
+    if (!formData.chapterCode) {
+      showError('Vui lòng chọn chương');
+      return;
+    }
+
+    if (!formData.skillCode) {
       showError('Vui lòng chọn kỹ năng');
       return;
     }
 
-    if (!formData.grade || (formData.grade !== 6 && formData.grade !== 7)) {
-      showError('Vui lòng chọn lớp (6 hoặc 7)');
+    if (!formData.difficultyLevel || formData.difficultyLevel < 1 || formData.difficultyLevel > 5) {
+      showError('Vui lòng chọn độ khó (1-5)');
       return;
     }
 
@@ -378,19 +419,12 @@ export default function ExerciseGenerateModal({
 
     try {
       const response = await generatePrompt({
-        skillId: formData.skillId,
-        grade: formData.grade,
+        chapterCode: formData.chapterCode,
+        skillCode: formData.skillCode,
         difficultyLevel: formData.difficultyLevel,
       });
 
       if (response.data && response.data.prompt) {
-        // Save prompt context (skillId, grade, difficultyLevel) to sessionStorage
-        setPromptContext({
-          skillId: formData.skillId,
-          grade: formData.grade,
-          difficultyLevel: formData.difficultyLevel,
-        });
-
         // Copy to clipboard
         await navigator.clipboard.writeText(response.data.prompt);
         showSuccess('Đã copy prompt vào clipboard');
@@ -408,12 +442,12 @@ export default function ExerciseGenerateModal({
   const handleClose = () => {
     if (!loading && !copyingPrompt && !isGenerating) {
       setFormData({
-        skillId: initialSkillId || '',
-        grade: initialGrade || 6,
-        difficultyLevel: undefined,
-        count: 5,
-        promptTemplateId: undefined,
+        chapterCode: '',
+        skillCode: '',
+        difficultyLevel: 3,
+        exerciseCount: 1,
       });
+      setGrade(initialGrade || 6);
       setErrors({});
       setShowAdvanced(false);
       setIsGenerating(false);
@@ -559,10 +593,11 @@ export default function ExerciseGenerateModal({
                   ? 'border-red-500'
                   : 'border-gray-300 dark:border-gray-600'
               }`}
-              value={formData.grade}
+              value={grade}
               onChange={(e) => {
                 const newGrade = parseInt(e.target.value);
-                setFormData({ ...formData, grade: newGrade, skillId: '' }); // Reset skill when grade changes
+                setGrade(newGrade);
+                setFormData({ ...formData, chapterCode: '', skillCode: '' }); // Reset chapter and skill when grade changes
               }}
               disabled={loading || copyingPrompt || isGenerating}
             >
@@ -574,6 +609,33 @@ export default function ExerciseGenerateModal({
             )}
           </div>
 
+          {/* Chapter Selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Chương <span className="text-red-500">*</span>
+            </label>
+            <select
+              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                errors.chapterCode
+                  ? 'border-red-500'
+                  : 'border-gray-300 dark:border-gray-600'
+              }`}
+              value={formData.chapterCode}
+              onChange={(e) => setFormData({ ...formData, chapterCode: e.target.value, skillCode: '' })}
+              disabled={loading || copyingPrompt || isGenerating || chaptersLoading || !grade}
+            >
+              <option value="">{!grade ? 'Chọn lớp trước' : chaptersLoading ? 'Đang tải...' : 'Chọn chương'}</option>
+              {chapters.map((chapter) => (
+                <option key={chapter.id} value={chapter.code}>
+                  {chapter.code} - {chapter.name}
+                </option>
+              ))}
+            </select>
+            {errors.chapterCode && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.chapterCode}</p>
+            )}
+          </div>
+
           {/* Skill Selector */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -581,30 +643,30 @@ export default function ExerciseGenerateModal({
             </label>
             <select
               className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                errors.skillId
+                errors.skillCode
                   ? 'border-red-500'
                   : 'border-gray-300 dark:border-gray-600'
               }`}
-              value={formData.skillId}
-              onChange={(e) => setFormData({ ...formData, skillId: e.target.value })}
-              disabled={loading || copyingPrompt || isGenerating}
+              value={formData.skillCode}
+              onChange={(e) => setFormData({ ...formData, skillCode: e.target.value })}
+              disabled={loading || copyingPrompt || isGenerating || !formData.chapterCode}
             >
-              <option value="">Chọn kỹ năng</option>
+              <option value="">{!formData.chapterCode ? 'Chọn chương trước' : 'Chọn kỹ năng'}</option>
               {sortedSkills.map((skill: Skill) => (
-                <option key={skill.id} value={skill.id}>
+                <option key={skill.id} value={skill.code}>
                   {skill.code} - {skill.name}
                 </option>
               ))}
             </select>
-            {errors.skillId && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.skillId}</p>
+            {errors.skillCode && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.skillCode}</p>
             )}
           </div>
 
           {/* Difficulty Level */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Độ khó
+              Độ khó <span className="text-red-500">*</span>
             </label>
             <select
               className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
@@ -616,12 +678,12 @@ export default function ExerciseGenerateModal({
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  difficultyLevel: e.target.value ? parseInt(e.target.value) : undefined,
+                  difficultyLevel: parseInt(e.target.value),
                 })
               }
               disabled={loading || copyingPrompt || isGenerating}
             >
-              <option value="">AI tự đề xuất</option>
+              <option value="">Chọn độ khó</option>
               <option value={1}>1 - Rất dễ</option>
               <option value={2}>2 - Dễ</option>
               <option value={3}>3 - Trung bình</option>
@@ -633,31 +695,31 @@ export default function ExerciseGenerateModal({
             )}
           </div>
 
-          {/* Count */}
+          {/* Exercise Count */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Số lượng bài tập <span className="text-red-500">*</span>
+              Số lượng bài tập
             </label>
             <input
               type="number"
               min="1"
-              max="20"
+              max="10"
               className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                errors.count
+                errors.exerciseCount
                   ? 'border-red-500'
                   : 'border-gray-300 dark:border-gray-600'
               }`}
-              value={formData.count}
+              value={formData.exerciseCount || 1}
               onChange={(e) =>
-                setFormData({ ...formData, count: parseInt(e.target.value) || 1 })
+                setFormData({ ...formData, exerciseCount: parseInt(e.target.value) || 1 })
               }
               disabled={loading || copyingPrompt || isGenerating}
             />
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Số lượng từ 1 đến 20 bài tập
+              Số lượng từ 1 đến 10 bài tập (mặc định: 1)
             </p>
-            {errors.count && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.count}</p>
+            {errors.exerciseCount && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.exerciseCount}</p>
             )}
           </div>
 

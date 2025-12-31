@@ -14,6 +14,7 @@ const PHASE1_ALLOWED_ROUTES = [
   '/content/questions',
   '/content/exercises',
   '/content/exercises/create',
+  '/content/exercises/create-from-json',
   '/users/students',
   '/users/parents',
   '/users/admins',
@@ -37,10 +38,6 @@ export function isPhase1AllowedRoute(pathname: string): boolean {
   }
   
   // Explicitly block known non-Phase 1 routes that might match patterns
-  // This prevents routes like /content/exercises/create-from-json from matching the [id] pattern
-  if (pathname === '/content/exercises/create-from-json') {
-    return false;
-  }
   
   // Block /review routes (e.g., /content/exercises/123/review)
   if (pathname.endsWith('/review')) {
@@ -65,8 +62,6 @@ export function isPhase1AllowedRoute(pathname: string): boolean {
  * Get list of blocked route prefixes (for reference)
  */
 export const PHASE1_BLOCKED_PREFIXES = [
-  '/content/exercises/create-from-json',
-  '/content/exercises/',
   '/content/prompt-templates',
   '/ai-quality',
   '/system',

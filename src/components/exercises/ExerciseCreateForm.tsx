@@ -9,8 +9,8 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createExercise } from '@/lib/api/exercise.service';
-import { CreateExerciseRequest, SolutionStepRequest, CommonMistakeRequest } from '@/types/exercise';
+import { createExercise, createExerciseSolution } from '@/lib/api/exercise.service';
+import { CreateExerciseRequest, CreateExerciseSolutionRequest, SolutionStepRequest, CommonMistakeRequest, ExerciseStatus, ExerciseCreatedBy } from '@/types/exercise';
 import { useSkills } from '@/lib/hooks/useSkills';
 import { useGrades } from '@/lib/hooks/useGrades';
 import { Skill } from '@/types/skill';
@@ -26,15 +26,13 @@ import { getExerciseDataFromJson } from '@/lib/utils/navigation';
 const exerciseSchema = z.object({
   skillId: z.string().min(1, 'Kỹ năng là bắt buộc'),
   grade: z.number().min(6).max(7),
-  chapterId: z.string().optional(),
-  problemType: z.string().optional(),
+  chapterId: z.string().min(1, 'Chương là bắt buộc'),
   problemText: z.string().min(1, 'Nội dung bài toán là bắt buộc'),
   problemLatex: z.string().optional(),
   problemImageUrl: z.string().optional(),
-  difficultyLevel: z.number().min(1).max(5).optional(),
+  difficultyLevel: z.number().min(1).max(5),
   finalAnswer: z.string().optional(),
   learningObjective: z.string().optional(),
-  timeEstimateSec: z.number().positive().optional(),
 });
 
 type ExerciseFormData = z.infer<typeof exerciseSchema>;
@@ -266,16 +264,36 @@ export default function ExerciseCreateForm() {
     setSubmitting(true);
 
     try {
-      const request: CreateExerciseRequest = {
-        ...data,
-        problemImageUrl: imageUrl || undefined,
-        solutionSteps,
+      // Create exercise with mapped fields
+      const exerciseRequest: CreateExerciseRequest = {
+        chapterId: data.chapterId!,
+        skillId: data.skillId,
+        contentText: data.problemText, // Map problemText → contentText
+        contentLatex: data.problemLatex || undefined, // Map problemLatex → contentLatex
+        difficulty: data.difficultyLevel!, // Map difficultyLevel → difficulty
+        createdBy: ExerciseCreatedBy.ADMIN,
+        status: ExerciseStatus.DRAFT,
         learningObjective: data.learningObjective || undefined,
         commonMistakes: commonMistakes.length > 0 ? commonMistakes : undefined,
         hints: hints.length > 0 ? hints : undefined,
       };
 
-      await createExercise(request);
+      const exerciseResponse = await createExercise(exerciseRequest);
+      
+      if (!exerciseResponse.data?.id) {
+        throw new Error('Failed to get exercise ID from response');
+      }
+
+      // Create solution separately with serialized solutionSteps
+      const solutionRequest: CreateExerciseSolutionRequest = {
+        solutionSteps: JSON.stringify(solutionSteps), // Serialize array to JSON string
+        finalAnswer: data.finalAnswer || undefined,
+        explanation: undefined, // Not used in Phase 1
+        createdBy: ExerciseCreatedBy.ADMIN,
+      };
+
+      await createExerciseSolution(exerciseResponse.data.id, solutionRequest);
+      
       showSuccess('Tạo bài tập thành công');
       router.push('/content/exercises');
     } catch (error) {
@@ -351,7 +369,7 @@ export default function ExerciseCreateForm() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Chương
+                    Chương *
                   </label>
                   <select
                     {...register('chapterId')}
@@ -365,6 +383,9 @@ export default function ExerciseCreateForm() {
                       </option>
                     ))}
                   </select>
+                  {errors.chapterId && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.chapterId.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -391,7 +412,7 @@ export default function ExerciseCreateForm() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Độ khó
+                      Độ khó *
                     </label>
                     <select
                       {...register('difficultyLevel', { valueAsNumber: true })}
@@ -404,6 +425,9 @@ export default function ExerciseCreateForm() {
                       <option value={4}>4 - Khó</option>
                       <option value={5}>5 - Rất khó</option>
                     </select>
+                    {errors.difficultyLevel && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.difficultyLevel.message}</p>
+                    )}
                   </div>
                 </div>
 

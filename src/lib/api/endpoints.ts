@@ -21,7 +21,7 @@ export const API_ENDPOINTS = {
   EXERCISES_STATS: (id: string) => `${API_VERSION}/admin/exercises/${id}/stats`,
   EXERCISES_REVIEW: (id: string) => `${API_VERSION}/admin/exercises/${id}/review`,
   EXERCISES_REVIEW_HISTORY: (id: string) => `${API_VERSION}/admin/exercises/${id}/review-history`,
-  EXERCISES_GENERATE: `${API_VERSION}/admin/exercises/generate`,
+  EXERCISES_GENERATE: `${API_VERSION}/admin/exercises/ai-generate`,
   EXERCISES_GENERATE_PROMPT: `${API_VERSION}/admin/exercises/generate-prompt`,
   EXERCISES_VALIDATE_LATEX: (id: string) => `${API_VERSION}/admin/exercises/${id}/validate-latex`,
 
@@ -43,6 +43,7 @@ export const API_ENDPOINTS = {
   SKILLS_GET: (id: string) => `${API_VERSION}/admin/skills/${id}`,
   SKILLS_UPDATE: (id: string) => `${API_VERSION}/admin/skills/${id}`,
   SKILLS_DELETE: (id: string) => `${API_VERSION}/admin/skills/${id}`,
+  SKILLS_GET_BY_CHAPTER: (chapterId: string) => `${API_VERSION}/admin/skills/by-chapter/${chapterId}`,
   SKILLS_GET_PREREQUISITES: (skillId: string) => `${API_VERSION}/admin/skills/${skillId}/prerequisites`,
   SKILLS_GET_AVAILABLE_PREREQUISITES: (skillId: string) => `${API_VERSION}/admin/skills/${skillId}/available-prerequisites`,
   SKILLS_ADD_PREREQUISITE: (skillId: string) => `${API_VERSION}/admin/skills/${skillId}/prerequisites`,

@@ -7,6 +7,7 @@ import { API_ENDPOINTS } from './endpoints';
 import {
   Exercise,
   CreateExerciseRequest,
+  CreateExerciseSolutionRequest,
   UpdateExerciseRequest,
   ReviewExerciseRequest,
   ExerciseSearchParams,
@@ -19,6 +20,7 @@ import {
   GenerateExercisesResponse,
   GeneratePromptRequest,
   GeneratePromptResponse,
+  ImportExerciseJsonRequest,
   ValidateLaTeXRequest,
   ValidateLaTeXResponse,
   ReviewStatus,
@@ -286,6 +288,47 @@ export async function validateLaTeX(
   
   if (response.data.errorCode !== '0000') {
     throw new Error(response.data.errorDetail || 'Failed to validate LaTeX');
+  }
+  
+  return response.data;
+}
+
+/**
+ * Import exercise from JSON
+ */
+export async function importExerciseFromJson(
+  data: ImportExerciseJsonRequest
+): Promise<ResponseObject<Exercise>> {
+  const response = await apiClient.post<ExerciseResponse>(
+    `${API_ENDPOINTS.EXERCISES_LIST}/import-json`,
+    data
+  );
+  
+  if (response.data.errorCode !== '0000') {
+    throw new Error(response.data.errorDetail || 'Failed to import exercise from JSON');
+  }
+  
+  return {
+    errorCode: response.data.errorCode,
+    errorDetail: response.data.errorDetail,
+    data: response.data.data,
+  };
+}
+
+/**
+ * Create exercise solution
+ */
+export async function createExerciseSolution(
+  exerciseId: string,
+  data: CreateExerciseSolutionRequest
+): Promise<ResponseObject<any>> {
+  const response = await apiClient.post<ResponseObject<any>>(
+    `${API_ENDPOINTS.EXERCISES_GET(exerciseId)}/solutions`,
+    data
+  );
+  
+  if (response.data.errorCode !== '0000') {
+    throw new Error(response.data.errorDetail || 'Failed to create exercise solution');
   }
   
   return response.data;

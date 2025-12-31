@@ -180,9 +180,11 @@ export default function ExerciseList() {
               Tạo với AI
             </DropdownItem>
             <DropdownItem
-              tag="a"
-              href="/content/exercises/create-from-json"
-              onItemClick={() => setIsCreateDropdownOpen(false)}
+              tag="button"
+              onItemClick={() => {
+                setIsCreateDropdownOpen(false);
+                router.push('/content/exercises/create-from-json');
+              }}
               baseClassName="relative flex items-center gap-2 w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50/30 dark:hover:bg-green-900/10 transition-colors border-b-2 border-green-200/30 dark:border-green-800/30 hover:border-green-300/60 dark:hover:border-green-700/50"
             >
               <FileIcon className="w-4 h-4 text-green-500/80 dark:text-green-400/80" />

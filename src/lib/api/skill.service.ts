@@ -101,6 +101,21 @@ export async function getSkillById(id: string): Promise<ResponseObject<Skill>> {
 }
 
 /**
+ * Get skills by chapter ID
+ */
+export async function getSkillsByChapter(chapterId: string): Promise<ResponseObject<Skill[]>> {
+  const response = await apiClient.get<ResponseObject<Skill[]>>(
+    API_ENDPOINTS.SKILLS_GET_BY_CHAPTER(chapterId)
+  );
+
+  return {
+    errorCode: response.data.errorCode,
+    errorDetail: response.data.errorDetail,
+    data: response.data.data,
+  };
+}
+
+/**
  * Create new skill
  */
 export async function createSkill(data: CreateSkillRequest): Promise<ResponseObject<Skill>> {
