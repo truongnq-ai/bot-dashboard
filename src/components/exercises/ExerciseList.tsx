@@ -16,7 +16,7 @@ import { Chapter, ChapterSkillDetail } from '@/types/chapter';
 import { isPhase1FeatureEnabled } from '@/lib/config/phase1-features.config';
 import { Dropdown } from '@/components/ui/dropdown/Dropdown';
 import { DropdownItem } from '@/components/ui/dropdown/DropdownItem';
-import { ChevronDownIcon } from '@/icons';
+import { ChevronDownIcon, PlusIcon, PencilIcon, BoltIcon, FileIcon } from '@/icons';
 
 export default function ExerciseList() {
   const router = useRouter();
@@ -151,36 +151,41 @@ export default function ExerciseList() {
             onClick={() => setIsCreateDropdownOpen(!isCreateDropdownOpen)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors dropdown-toggle"
           >
+            <PlusIcon className="w-4 h-4" />
             Tạo bài tập
             <ChevronDownIcon className={`w-4 h-4 transition-transform ${isCreateDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
           <Dropdown
             isOpen={isCreateDropdownOpen}
             onClose={() => setIsCreateDropdownOpen(false)}
-            className="absolute right-0 mt-2 w-48"
+            className="absolute right-0 mt-2 w-56"
           >
             <DropdownItem
               tag="a"
               href="/content/exercises/create"
               onItemClick={() => setIsCreateDropdownOpen(false)}
+              baseClassName="relative flex items-center gap-2 w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors border-b-2 border-blue-200/30 dark:border-blue-800/30 hover:border-blue-300/60 dark:hover:border-blue-700/50"
             >
+              <PencilIcon className="w-4 h-4 text-blue-500/80 dark:text-blue-400/80" />
               Tạo thủ công
             </DropdownItem>
-            {isPhase1FeatureEnabled('AI_GENERATION') && (
-              <DropdownItem
-                onItemClick={() => {
-                  setIsCreateDropdownOpen(false);
-                  setIsGenerateModalOpen(true);
-                }}
-              >
-                Tạo với AI
-              </DropdownItem>
-            )}
+            <DropdownItem
+              onItemClick={() => {
+                setIsCreateDropdownOpen(false);
+                setIsGenerateModalOpen(true);
+              }}
+              baseClassName="relative flex items-center gap-2 w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-amber-50/30 dark:hover:bg-amber-900/10 transition-colors border-b-2 border-amber-200/30 dark:border-amber-800/30 hover:border-amber-300/60 dark:hover:border-amber-700/50"
+            >
+              <BoltIcon className="w-4 h-4 text-amber-500/80 dark:text-amber-400/80" />
+              Tạo với AI
+            </DropdownItem>
             <DropdownItem
               tag="a"
               href="/content/exercises/create-from-json"
               onItemClick={() => setIsCreateDropdownOpen(false)}
+              baseClassName="relative flex items-center gap-2 w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50/30 dark:hover:bg-green-900/10 transition-colors border-b-2 border-green-200/30 dark:border-green-800/30 hover:border-green-300/60 dark:hover:border-green-700/50"
             >
+              <FileIcon className="w-4 h-4 text-green-500/80 dark:text-green-400/80" />
               Tạo từ JSON
             </DropdownItem>
           </Dropdown>
