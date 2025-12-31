@@ -18,7 +18,6 @@ export interface Chapter {
 // Search Params
 export interface ChapterSearchParams {
   grade?: 6 | 7;
-  name?: string;
   page?: number;
   pageSize?: number;
   sortBy?: string;
@@ -39,10 +38,26 @@ export interface UpdateChapterRequest {
   description?: string;
 }
 
+// Chapter Skill Types
+export interface ChapterSkillDetail {
+  skillId: string;
+  skillCode: string;
+  skillName: string;
+  skillDescription?: string;
+  skillType: 'REQUIRED' | 'OPTIONAL';
+}
+
+export interface AddChapterSkillRequest {
+  skillId: string;
+  skillType: 'REQUIRED' | 'OPTIONAL';
+}
+
 // Response DTOs
 export interface ChapterListResponse extends PageResponse<Chapter> {}
 
 export interface ChapterResponse extends ResponseObject<Chapter> {}
 
 export interface ChapterListResponseData extends ResponseObject<ChapterListResponse> {}
+
+export interface ChapterSkillsResponse extends ResponseObject<ChapterSkillDetail[]> {}
 

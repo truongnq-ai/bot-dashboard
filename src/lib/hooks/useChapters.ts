@@ -25,7 +25,6 @@ export function useChapters(searchParams: ChapterSearchParams = {}) {
     [
       searchParams.page,
       searchParams.pageSize,
-      searchParams.name,
       searchParams.grade,
       searchParams.sortBy,
       searchParams.sortDirection,

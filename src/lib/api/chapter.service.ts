@@ -2,7 +2,7 @@
  * Chapter API Service
  */
 
-import { apiClient } from './client';
+import apiClient from './client';
 import { API_ENDPOINTS } from './endpoints';
 import {
   Chapter,
@@ -11,6 +11,9 @@ import {
   UpdateChapterRequest,
   ChapterListResponse,
   ChapterResponse,
+  ChapterSkillDetail,
+  ChapterSkillsResponse,
+  AddChapterSkillRequest,
 } from '@/types/chapter';
 import { ResponseObject, PageResponse } from '@/types/common';
 
@@ -25,26 +28,16 @@ export async function getChapters(
   if (params.grade !== undefined) {
     queryParams.append('grade', params.grade.toString());
   }
-  if (params.name) {
-    queryParams.append('name', params.name);
-  }
   if (params.page !== undefined) {
     queryParams.append('page', params.page.toString());
   }
-  if (params.pageSize !== undefined) {
-    queryParams.append('pageSize', params.pageSize.toString());
-  }
-  if (params.sortBy) {
-    queryParams.append('sortBy', params.sortBy);
-  }
-  if (params.sortDirection) {
-    queryParams.append('sortDirection', params.sortDirection);
+  if (params.pageSize) {
+    queryParams.append('size', params.pageSize.toString());
   }
 
-  const queryString = queryParams.toString();
-  const url = queryString ? `${API_ENDPOINTS.CHAPTERS_LIST}?${queryString}` : API_ENDPOINTS.CHAPTERS_LIST;
-  
-  const response = await apiClient.get<ChapterListResponse>(url);
+  const response = await apiClient.get<ChapterListResponse>(
+    `${API_ENDPOINTS.CHAPTERS_LIST}?${queryParams.toString()}`
+  );
 
   return {
     errorCode: response.data.errorCode,
@@ -113,6 +106,56 @@ export async function deleteChapter(id: string): Promise<ResponseObject<void>> {
  */
 export async function getChaptersByGrade(grade: 6 | 7): Promise<ResponseObject<Chapter[]>> {
   const response = await apiClient.get<ResponseObject<Chapter[]>>(API_ENDPOINTS.CHAPTERS_BY_GRADE(grade));
+
+  return {
+    errorCode: response.data.errorCode,
+    errorDetail: response.data.errorDetail,
+    data: response.data.data,
+  };
+}
+
+/**
+ * Get skills for a chapter
+ */
+export async function getChapterSkills(chapterId: string): Promise<ResponseObject<ChapterSkillDetail[]>> {
+  const response = await apiClient.get<ChapterSkillsResponse>(API_ENDPOINTS.CHAPTERS_GET_SKILLS(chapterId));
+
+  return {
+    errorCode: response.data.errorCode,
+    errorDetail: response.data.errorDetail,
+    data: response.data.data,
+  };
+}
+
+/**
+ * Add skill to chapter
+ */
+export async function addSkillToChapter(
+  chapterId: string,
+  data: AddChapterSkillRequest
+): Promise<ResponseObject<void>> {
+  const response = await apiClient.post<ResponseObject<void>>(
+    API_ENDPOINTS.CHAPTERS_ADD_SKILL(chapterId),
+    data
+  );
+
+  return {
+    errorCode: response.data.errorCode,
+    errorDetail: response.data.errorDetail,
+    data: response.data.data,
+  };
+}
+
+/**
+ * Remove skill from chapter
+ */
+export async function removeSkillFromChapter(
+  chapterId: string,
+  skillId: string
+): Promise<ResponseObject<void>> {
+  const response = await apiClient.delete<ResponseObject<void>>(
+    API_ENDPOINTS.CHAPTERS_REMOVE_SKILL(chapterId, skillId)
+  );
 
   return {
     errorCode: response.data.errorCode,

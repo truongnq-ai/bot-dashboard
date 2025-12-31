@@ -52,11 +52,6 @@ export function isPhase1AllowedRoute(pathname: string): boolean {
     return false;
   }
   
-  // Block /users/trial
-  if (pathname === '/users/trial') {
-    return false;
-  }
-  
   // Block /content/prompt-templates
   if (pathname === '/content/prompt-templates') {
     return false;
@@ -70,7 +65,6 @@ export function isPhase1AllowedRoute(pathname: string): boolean {
  * Get list of blocked route prefixes (for reference)
  */
 export const PHASE1_BLOCKED_PREFIXES = [
-  '/users/trial',
   '/content/exercises/create-from-json',
   '/content/exercises/',
   '/content/prompt-templates',

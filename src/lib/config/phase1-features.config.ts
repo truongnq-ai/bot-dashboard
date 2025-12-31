@@ -18,9 +18,6 @@ export const PHASE1_FEATURES = {
   // Exercise Review Workflow - Disabled for Phase 1
   EXERCISE_REVIEW: false,
   
-  // Trial Management - Disabled for Phase 1
-  TRIAL_MANAGEMENT: false,
-  
   // AI Quality / Scoring - Disabled for Phase 1
   AI_QUALITY_SCORING: false,
   

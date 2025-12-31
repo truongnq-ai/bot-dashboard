@@ -32,6 +32,9 @@ export const API_ENDPOINTS = {
   CHAPTERS_UPDATE: (id: string) => `${API_VERSION}/admin/chapters/${id}`,
   CHAPTERS_DELETE: (id: string) => `${API_VERSION}/admin/chapters/${id}`,
   CHAPTERS_BY_GRADE: (grade: number) => `${API_VERSION}/admin/chapters/by-grade/${grade}`,
+  CHAPTERS_GET_SKILLS: (chapterId: string) => `${API_VERSION}/admin/chapters/${chapterId}/skills`,
+  CHAPTERS_ADD_SKILL: (chapterId: string) => `${API_VERSION}/admin/chapters/${chapterId}/skills`,
+  CHAPTERS_REMOVE_SKILL: (chapterId: string, skillId: string) => `${API_VERSION}/admin/chapters/${chapterId}/skills/${skillId}`,
 
   // Skills
   SKILLS_LIST: `${API_VERSION}/admin/skills`,
@@ -53,11 +56,6 @@ export const API_ENDPOINTS = {
   // Parents
   PARENTS_LIST: `${API_VERSION}/admin/users`,
   PARENTS_GET: (id: string) => `${API_VERSION}/admin/users/${id}`,
-
-  // Trials
-  TRIALS_LIST: `${API_VERSION}/admin/users/trials`,
-  TRIALS_GET: (id: string) => `${API_VERSION}/admin/users/trials/${id}`,
-  TRIALS_UPDATE_STATUS: (id: string) => `${API_VERSION}/admin/users/trials/${id}/status`,
 
   // Devices
   DEVICES_BY_USER: (userId: string) => `${API_VERSION}/admin/devices/user/${userId}`,

@@ -1,17 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Chapter } from '@/types/chapter';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import ActionsDropdown from '@/components/common/ActionsDropdown';
 import { ActionItem } from '@/types/common';
 import { formatDate } from '@/lib/utils/formatters';
+import ChapterSkillsModal from './ChapterSkillsModal';
 
 interface ChapterListTableProps {
   chapters: Chapter[];
   onViewDetail?: (chapter: Chapter) => void;
   onEdit?: (chapter: Chapter) => void;
-  onDelete?: (chapter: Chapter) => void;
   pagination?: {
     page: number;
     pageSize: number;
@@ -26,9 +26,23 @@ export default function ChapterListTable({
   chapters,
   onViewDetail,
   onEdit,
-  onDelete,
   pagination,
 }: ChapterListTableProps) {
+  const [skillsModal, setSkillsModal] = useState<{
+    isOpen: boolean;
+    chapter: Chapter | null;
+  }>({
+    isOpen: false,
+    chapter: null,
+  });
+
+  const handleViewSkills = (chapter: Chapter) => {
+    setSkillsModal({
+      isOpen: true,
+      chapter,
+    });
+  };
+
   const getActions = (chapter: Chapter): ActionItem[] => {
     const actions: ActionItem[] = [];
 
@@ -50,14 +64,12 @@ export default function ChapterListTable({
       });
     }
 
-    if (onDelete) {
-      actions.push({
-        id: 'delete',
-        label: 'Xóa',
-        type: 'danger',
-        onClick: () => onDelete(chapter),
-      });
-    }
+    actions.push({
+      id: 'skills',
+      label: 'Danh sách kỹ năng',
+      type: 'info',
+      onClick: () => handleViewSkills(chapter),
+    });
 
     return actions;
   };
@@ -158,6 +170,13 @@ export default function ChapterListTable({
           </div>
         </div>
       )}
+
+      {/* Chapter Skills Modal */}
+      <ChapterSkillsModal
+        isOpen={skillsModal.isOpen}
+        onClose={() => setSkillsModal({ isOpen: false, chapter: null })}
+        chapter={skillsModal.chapter}
+      />
     </div>
   );
 }
