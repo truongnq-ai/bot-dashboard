@@ -270,6 +270,7 @@ export default function ExerciseCreateForm() {
         ...data,
         problemImageUrl: imageUrl || undefined,
         solutionSteps,
+        learningObjective: data.learningObjective || undefined,
         commonMistakes: commonMistakes.length > 0 ? commonMistakes : undefined,
         hints: hints.length > 0 ? hints : undefined,
       };

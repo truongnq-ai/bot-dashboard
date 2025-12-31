@@ -234,6 +234,39 @@ export default function ExerciseDetailView({ id, aiMetadata }: ExerciseDetailVie
               </div>
             )}
 
+            {exercise.learningObjective && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Mục tiêu học tập
+                </label>
+                <div className="mt-1 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
+                    {exercise.learningObjective}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {exercise.hints && exercise.hints.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Gợi ý
+                </label>
+                <div className="mt-1 space-y-2">
+                  {exercise.hints.map((hint, index) => (
+                    <div key={index} className="p-3 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                      <div className="flex items-start gap-2">
+                        <span className="text-blue-600 dark:text-blue-400 font-medium">Gợi ý {index + 1}:</span>
+                        <p className="text-gray-900 dark:text-white flex-1">
+                          <MathText text={hint} />
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Ngày tạo</label>
