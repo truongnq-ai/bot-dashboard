@@ -31,9 +31,9 @@ export function useExercises(searchParams: ExerciseSearchParams = {}) {
     [
       searchParams.skillId,
       searchParams.grade,
+      searchParams.chapterId,
       searchParams.reviewStatus,
       searchParams.difficultyLevel,
-      searchParams.searchText,
       searchParams.page,
       searchParams.pageSize,
     ]

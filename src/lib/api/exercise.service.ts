@@ -21,8 +21,10 @@ import {
   GeneratePromptResponse,
   ValidateLaTeXRequest,
   ValidateLaTeXResponse,
+  ReviewStatus,
 } from '../../types/exercise';
 import { ResponseObject, PageResponse } from '../../types/common';
+import { mapExerciseStatusToReviewStatus } from '../utils/exercise-status-mapper';
 
 /**
  * Get exercises list with filters and pagination
@@ -35,10 +37,21 @@ export async function getExercises(
   if (params.skillId) queryParams.append('skillId', params.skillId);
   if (params.grade) queryParams.append('grade', params.grade.toString());
   if (params.chapterId) queryParams.append('chapterId', params.chapterId);
-  if (params.reviewStatus) queryParams.append('reviewStatus', params.reviewStatus);
-  if (params.difficultyLevel) queryParams.append('difficultyLevel', params.difficultyLevel.toString());
-  if (params.page) queryParams.append('page', params.page.toString());
-  if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
+  // Map ReviewStatus to ExerciseStatus for backend
+  // Frontend filter can send DRAFT, REVIEWED, or APPROVED as string
+  if (params.reviewStatus) {
+    const statusStr = params.reviewStatus.toString();
+    if (statusStr === 'APPROVED' || statusStr === ReviewStatus.APPROVED) {
+      queryParams.append('status', 'APPROVED');
+    } else if (statusStr === 'DRAFT') {
+      queryParams.append('status', 'DRAFT');
+    } else if (statusStr === 'REVIEWED') {
+      queryParams.append('status', 'REVIEWED');
+    }
+  }
+  if (params.difficultyLevel) queryParams.append('difficulty', params.difficultyLevel.toString());
+  if (params.page !== undefined) queryParams.append('page', params.page.toString());
+  if (params.pageSize) queryParams.append('size', params.pageSize.toString());
   
   const response = await apiClient.get<ExerciseListResponseData>(
     `${API_ENDPOINTS.EXERCISES_LIST}?${queryParams.toString()}`
@@ -46,6 +59,19 @@ export async function getExercises(
   
   if (response.data.errorCode !== '0000') {
     throw new Error(response.data.errorDetail || 'Failed to fetch exercises');
+  }
+  
+  // Map ExerciseStatus from backend to ReviewStatus for frontend
+  if (response.data.data?.content) {
+    response.data.data.content = response.data.data.content.map((exercise: any) => {
+      // Map status from backend ExerciseStatus to frontend ReviewStatus
+      return {
+        ...exercise,
+        reviewStatus: mapExerciseStatusToReviewStatus(exercise.status),
+        // Ensure problemText is set (backend returns both contentText and problemText)
+        problemText: exercise.problemText || exercise.contentText,
+      };
+    });
   }
   
   return {

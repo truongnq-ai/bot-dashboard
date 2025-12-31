@@ -52,6 +52,7 @@ export interface CommonMistakeRequest {
 export interface Exercise {
   id: string;
   skillId: string;
+  skillName?: string;
   grade: number; // 6 or 7
   chapterId?: string;
   chapterName?: string;
@@ -140,7 +141,7 @@ export interface ExerciseSearchParams {
   skillId?: string;
   grade?: number;
   chapterId?: string;
-  reviewStatus?: ReviewStatus;
+  reviewStatus?: ReviewStatus | string; // Can be ReviewStatus enum or 'DRAFT' | 'REVIEWED' | 'APPROVED'
   difficultyLevel?: number;
   page?: number;
   pageSize?: number;

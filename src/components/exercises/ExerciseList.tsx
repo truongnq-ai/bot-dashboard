@@ -11,12 +11,12 @@ import { ExerciseSearchParams, ReviewStatus, Exercise } from '@/types/exercise';
 import ExerciseListTable from './ExerciseListTable';
 import ExerciseGenerateModal from './ExerciseGenerateModal';
 import ExercisePreviewModal from './ExercisePreviewModal';
-import { useSkills } from '@/lib/hooks/useSkills';
-import { useGrades } from '@/lib/hooks/useGrades';
-import { Skill } from '@/types/skill';
-import { getChaptersByGrade } from '@/lib/api/chapter.service';
-import { Chapter } from '@/types/chapter';
+import { getChaptersByGrade, getChapterSkills } from '@/lib/api/chapter.service';
+import { Chapter, ChapterSkillDetail } from '@/types/chapter';
 import { isPhase1FeatureEnabled } from '@/lib/config/phase1-features.config';
+import { Dropdown } from '@/components/ui/dropdown/Dropdown';
+import { DropdownItem } from '@/components/ui/dropdown/DropdownItem';
+import { ChevronDownIcon } from '@/icons';
 
 export default function ExerciseList() {
   const router = useRouter();
@@ -27,6 +27,7 @@ export default function ExerciseList() {
 
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isCreateDropdownOpen, setIsCreateDropdownOpen] = useState(false);
   const [generatedExercises, setGeneratedExercises] = useState<Exercise[]>([]);
   const [generationMetadata, setGenerationMetadata] = useState<{
     providerUsed?: string;
@@ -36,23 +37,10 @@ export default function ExerciseList() {
   }>();
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [chaptersLoading, setChaptersLoading] = useState(false);
+  const [chapterSkills, setChapterSkills] = useState<ChapterSkillDetail[]>([]);
+  const [chapterSkillsLoading, setChapterSkillsLoading] = useState(false);
 
   const { data, loading, error, refetch } = useExercises(searchParams);
-  const { data: skillsData } = useSkills({
-    grade: searchParams.grade as 6 | 7 | undefined,
-    pageSize: 1000,
-    sortBy: 'code',
-    sortDirection: 'asc',
-  });
-  const { data: gradesData } = useGrades();
-
-  // Sort skills by code alphabetically
-  const sortedSkills = useMemo(() => {
-    if (!skillsData?.content) return [];
-    return [...skillsData.content].sort((a, b) => {
-      return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
-    });
-  }, [skillsData]);
 
   // Fetch chapters by grade when grade is selected
   useEffect(() => {
@@ -76,36 +64,46 @@ export default function ExerciseList() {
     fetchChapters();
   }, [searchParams.grade]);
 
-  // Reset skillId and chapterId when grade changes and selected skill doesn't belong to new grade
+  // Reset chapterId and skillId when grade is cleared
   useEffect(() => {
-    if (searchParams.grade && searchParams.skillId) {
-      const selectedSkill = sortedSkills.find((s) => s.id === searchParams.skillId);
-      if (selectedSkill && selectedSkill.grade !== searchParams.grade) {
-        setSearchParams((prev) => ({ ...prev, skillId: undefined, chapterId: undefined, page: 0 }));
+    if (!searchParams.grade && (searchParams.chapterId || searchParams.skillId)) {
+      setSearchParams((prev) => ({ ...prev, chapterId: undefined, skillId: undefined, page: 0 }));
+    }
+  }, [searchParams.grade]);
+
+  // Fetch skills by chapter when chapter is selected
+  useEffect(() => {
+    const fetchChapterSkills = async () => {
+      if (searchParams.chapterId) {
+        setChapterSkillsLoading(true);
+        try {
+          const response = await getChapterSkills(searchParams.chapterId);
+          if (response.errorCode === '0000' && response.data) {
+            // Sort skills by code alphabetically
+            const sorted = [...response.data].sort((a, b) => {
+              return a.skillCode.localeCompare(b.skillCode, undefined, { numeric: true, sensitivity: 'base' });
+            });
+            setChapterSkills(sorted);
+          }
+        } catch (error) {
+          console.error('Failed to fetch chapter skills:', error);
+        } finally {
+          setChapterSkillsLoading(false);
+        }
+      } else {
+        setChapterSkills([]);
       }
-    }
-  }, [searchParams.grade, searchParams.skillId, sortedSkills]);
-
-  const statistics = useMemo(() => {
-    if (!data) {
-      return {
-        total: 0,
-        pending: 0,
-        approved: 0,
-        rejected: 0,
-      };
-    }
-
-    // Note: These would ideally come from a stats endpoint
-    // For now, we'll calculate from the current page data
-    const exercises = data.content || [];
-    return {
-      total: data.totalElements || 0,
-      pending: exercises.filter((e) => e.reviewStatus === ReviewStatus.PENDING).length,
-      approved: exercises.filter((e) => e.reviewStatus === ReviewStatus.APPROVED).length,
-      rejected: exercises.filter((e) => e.reviewStatus === ReviewStatus.REJECTED).length,
     };
-  }, [data]);
+    fetchChapterSkills();
+  }, [searchParams.chapterId]);
+
+  // Reset skillId when chapter is cleared
+  useEffect(() => {
+    if (!searchParams.chapterId && searchParams.skillId) {
+      setSearchParams((prev) => ({ ...prev, skillId: undefined, page: 0 }));
+    }
+  }, [searchParams.chapterId]);
+
 
   const handleFilterChange = (newParams: Partial<ExerciseSearchParams>) => {
     setSearchParams((prev) => ({ ...prev, ...newParams, page: 0 }));
@@ -148,22 +146,44 @@ export default function ExerciseList() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Bài tập</h1>
-        <div className="flex gap-2">
-          {/* AI Generation disabled for Phase 1 */}
-          {isPhase1FeatureEnabled('AI_GENERATION') ? (
-            <button
-              onClick={() => setIsGenerateModalOpen(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              Tạo với AI
-            </button>
-          ) : null}
-          <a
-            href="/content/exercises/create"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        <div className="relative">
+          <button
+            onClick={() => setIsCreateDropdownOpen(!isCreateDropdownOpen)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors dropdown-toggle"
           >
             Tạo bài tập
-          </a>
+            <ChevronDownIcon className={`w-4 h-4 transition-transform ${isCreateDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+          <Dropdown
+            isOpen={isCreateDropdownOpen}
+            onClose={() => setIsCreateDropdownOpen(false)}
+            className="absolute right-0 mt-2 w-48"
+          >
+            <DropdownItem
+              tag="a"
+              href="/content/exercises/create"
+              onItemClick={() => setIsCreateDropdownOpen(false)}
+            >
+              Tạo thủ công
+            </DropdownItem>
+            {isPhase1FeatureEnabled('AI_GENERATION') && (
+              <DropdownItem
+                onItemClick={() => {
+                  setIsCreateDropdownOpen(false);
+                  setIsGenerateModalOpen(true);
+                }}
+              >
+                Tạo với AI
+              </DropdownItem>
+            )}
+            <DropdownItem
+              tag="a"
+              href="/content/exercises/create-from-json"
+              onItemClick={() => setIsCreateDropdownOpen(false)}
+            >
+              Tạo từ JSON
+            </DropdownItem>
+          </Dropdown>
         </div>
       </div>
 
@@ -185,26 +205,6 @@ export default function ExerciseList() {
         onBulkReject={handleBulkReject}
       />
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Tổng</div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{statistics.total}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Chờ duyệt</div>
-          <div className="text-2xl font-bold text-yellow-600">{statistics.pending}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Đã duyệt</div>
-          <div className="text-2xl font-bold text-green-600">{statistics.approved}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Đã từ chối</div>
-          <div className="text-2xl font-bold text-red-600">{statistics.rejected}</div>
-        </div>
-      </div>
-
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -225,11 +225,8 @@ export default function ExerciseList() {
               }}
             >
               <option value="">Tất cả lớp</option>
-              {gradesData?.map((grade) => (
-                <option key={grade} value={grade}>
-                  Lớp {grade}
-                </option>
-              ))}
+              <option value="6">Lớp 6</option>
+              <option value="7">Lớp 7</option>
             </select>
           </div>
 
@@ -260,11 +257,18 @@ export default function ExerciseList() {
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               value={searchParams.skillId || ''}
               onChange={(e) => handleFilterChange({ skillId: e.target.value || undefined })}
+              disabled={!searchParams.chapterId || chapterSkillsLoading}
             >
-              <option value="">Tất cả kỹ năng</option>
-              {sortedSkills.map((skill: Skill) => (
-                <option key={skill.id} value={skill.id}>
-                  {skill.code} - {skill.name}
+              <option value="">
+                {!searchParams.chapterId 
+                  ? 'Chọn chương trước' 
+                  : chapterSkillsLoading 
+                    ? 'Đang tải...' 
+                    : 'Tất cả kỹ năng'}
+              </option>
+              {chapterSkills.map((chapterSkill) => (
+                <option key={chapterSkill.skillId} value={chapterSkill.skillId}>
+                  {chapterSkill.skillCode} - {chapterSkill.skillName}
                 </option>
               ))}
             </select>
@@ -278,14 +282,13 @@ export default function ExerciseList() {
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               value={searchParams.reviewStatus || ''}
               onChange={(e) =>
-                handleFilterChange({ reviewStatus: (e.target.value as ReviewStatus) || undefined })
+                handleFilterChange({ reviewStatus: e.target.value || undefined })
               }
             >
               <option value="">Tất cả trạng thái</option>
-              <option value={ReviewStatus.PENDING}>Chờ duyệt</option>
-              <option value={ReviewStatus.APPROVED}>Đã duyệt</option>
-              <option value={ReviewStatus.REJECTED}>Đã từ chối</option>
-              <option value={ReviewStatus.NEEDS_REVISION}>Cần chỉnh sửa</option>
+              <option value="DRAFT">DRAFT (Chờ duyệt)</option>
+              <option value="REVIEWED">REVIEWED (Chờ duyệt)</option>
+              <option value="APPROVED">APPROVED (Đã duyệt)</option>
             </select>
           </div>
         </div>
