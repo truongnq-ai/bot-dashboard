@@ -28,3 +28,9 @@ export interface PageResponse<T> {
   hasPrevious?: boolean;
 }
 
+export interface ResetPasswordResponse {
+  id: string;
+  username: string;
+  newPassword: string;
+}
+

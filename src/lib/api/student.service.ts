@@ -7,7 +7,6 @@ import { API_ENDPOINTS } from './endpoints';
 import {
   Student,
   StudentSearchParams,
-  UpdateStudentStatusRequest,
   StudentListResponse,
   StudentResponse,
 } from '../../types/student';
@@ -21,15 +20,9 @@ export async function getStudents(
 ): Promise<ResponseObject<PageResponse<Student>>> {
   const queryParams = new URLSearchParams();
 
-  if (params.searchText) queryParams.append('searchText', params.searchText);
-  if (params.status) queryParams.append('status', params.status);
-  if (params.studentStatus) queryParams.append('studentStatus', params.studentStatus);
-  if (params.grade !== undefined) queryParams.append('grade', params.grade.toString());
-  if (params.parentId) queryParams.append('parentId', params.parentId);
+  queryParams.append('role', 'STUDENT');
   if (params.page !== undefined) queryParams.append('page', params.page.toString());
-  if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
-  if (params.sortBy) queryParams.append('sortBy', params.sortBy);
-  if (params.sortDirection) queryParams.append('sortDirection', params.sortDirection);
+  if (params.pageSize) queryParams.append('size', params.pageSize.toString());
 
   const response = await apiClient.get<StudentListResponse>(
     `${API_ENDPOINTS.STUDENTS_LIST}?${queryParams.toString()}`
@@ -55,21 +48,4 @@ export async function getStudentById(id: string): Promise<ResponseObject<Student
   };
 }
 
-/**
- * Update student status
- */
-export async function updateStudentStatus(
-  id: string,
-  status: UpdateStudentStatusRequest['status']
-): Promise<ResponseObject<Student>> {
-  const response = await apiClient.put<StudentResponse>(API_ENDPOINTS.STUDENTS_UPDATE_STATUS(id), {
-    status,
-  });
-
-  return {
-    errorCode: response.data.errorCode,
-    errorDetail: response.data.errorDetail,
-    data: response.data.data,
-  };
-}
 

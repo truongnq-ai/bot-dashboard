@@ -9,34 +9,16 @@ export interface Student {
   userId: string;
   username: string;
   name: string;
-  email?: string;
-  phoneNumber?: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'LOCKED';
-  phoneVerified?: boolean;
-  emailVerified?: boolean;
+  role?: string;
   grade?: number;
-  studentStatus?: 'PENDING' | 'ACTIVE' | 'INACTIVE';
-  parentId?: string;
   parentName?: string;
-  avatarUrl?: string;
-  lastLoginAt?: string;
   createdAt: string;
 }
 
 export interface StudentSearchParams {
-  searchText?: string;
-  status?: 'ACTIVE' | 'INACTIVE' | 'LOCKED';
-  studentStatus?: 'PENDING' | 'ACTIVE' | 'INACTIVE';
-  grade?: number;
-  parentId?: string;
+  role?: string;
   page?: number;
   pageSize?: number;
-  sortBy?: string;
-  sortDirection?: 'asc' | 'desc';
-}
-
-export interface UpdateStudentStatusRequest {
-  status: 'ACTIVE' | 'INACTIVE' | 'LOCKED';
 }
 
 export type StudentListResponse = ResponseObject<PageResponse<Student>>;

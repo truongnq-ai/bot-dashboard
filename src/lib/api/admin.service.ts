@@ -8,11 +8,10 @@ import {
   Admin,
   AdminSearchParams,
   AdminRegistrationRequest,
-  UpdateAdminStatusRequest,
   AdminListResponse,
   AdminResponse,
 } from '../../types/admin';
-import { ResponseObject, PageResponse } from '../../types/common';
+import { ResponseObject, PageResponse, ResetPasswordResponse } from '../../types/common';
 
 /**
  * Get admins list with filters and pagination
@@ -22,13 +21,9 @@ export async function getAdmins(
 ): Promise<ResponseObject<PageResponse<Admin>>> {
   const queryParams = new URLSearchParams();
 
-  if (params.searchText) queryParams.append('searchText', params.searchText);
-  if (params.status) queryParams.append('status', params.status);
   if (params.role) queryParams.append('role', params.role);
   if (params.page !== undefined) queryParams.append('page', params.page.toString());
-  if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
-  if (params.sortBy) queryParams.append('sortBy', params.sortBy);
-  if (params.sortDirection) queryParams.append('sortDirection', params.sortDirection);
+  if (params.pageSize) queryParams.append('size', params.pageSize.toString());
 
   const response = await apiClient.get<AdminListResponse>(
     `${API_ENDPOINTS.ADMINS_LIST}?${queryParams.toString()}`
@@ -70,15 +65,14 @@ export async function createAdmin(
 }
 
 /**
- * Update admin status
+ * Reset user password
  */
-export async function updateAdminStatus(
-  id: string,
-  status: UpdateAdminStatusRequest['status']
-): Promise<ResponseObject<Admin>> {
-  const response = await apiClient.put<AdminResponse>(API_ENDPOINTS.ADMINS_UPDATE_STATUS(id), {
-    status,
-  });
+export async function resetUserPassword(
+  id: string
+): Promise<ResponseObject<ResetPasswordResponse>> {
+  const response = await apiClient.post<ResponseObject<ResetPasswordResponse>>(
+    API_ENDPOINTS.USERS_RESET_PASSWORD(id)
+  );
 
   return {
     errorCode: response.data.errorCode,
@@ -86,4 +80,5 @@ export async function updateAdminStatus(
     data: response.data.data,
   };
 }
+
 

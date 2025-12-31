@@ -16,12 +16,11 @@ interface AdminCreateModalProps {
 export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCreateModalProps) {
   const [formData, setFormData] = useState<AdminRegistrationRequest>({
     username: '',
-    email: '',
     password: '',
-    confirmPassword: '',
     name: '',
-    department: '',
+    role: 'ADMIN',
   });
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadingDots, setLoadingDots] = useState('.');
@@ -52,19 +51,13 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
       newErrors.username = 'Tên đăng nhập chỉ được chứa chữ cái và số';
     }
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email là bắt buộc';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Email không hợp lệ';
-    }
-
     if (!formData.password) {
       newErrors.password = 'Mật khẩu là bắt buộc';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.password !== confirmPassword) {
       newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
     }
 
@@ -92,12 +85,11 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
         onClose();
         setFormData({
           username: '',
-          email: '',
           password: '',
-          confirmPassword: '',
           name: '',
-          department: '',
+          role: 'ADMIN',
         });
+        setConfirmPassword('');
         setErrors({});
       } else {
         showError(response.errorDetail || 'Tạo tài khoản admin thất bại');
@@ -132,21 +124,6 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="email"
-              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-              }`}
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-            {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Mật khẩu <span className="text-red-500">*</span>
             </label>
             <input
@@ -169,8 +146,8 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
               className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
                 errors.confirmPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
-              value={formData.confirmPassword}
-              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
             />
             {errors.confirmPassword && (
               <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
@@ -194,14 +171,20 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Phòng ban
+              Vai trò <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              value={formData.department}
-              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-            />
+            <select
+              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                errors.role ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+            >
+              <option value="ADMIN">Admin</option>
+              <option value="PARENT">Phụ huynh</option>
+              <option value="STUDENT">Học sinh</option>
+            </select>
+            {errors.role && <p className="mt-1 text-sm text-red-500">{errors.role}</p>}
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

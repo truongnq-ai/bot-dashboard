@@ -25,11 +25,7 @@ export function useAdmins(searchParams: AdminSearchParams = {}) {
     [
       searchParams.page,
       searchParams.pageSize,
-      searchParams.searchText,
-      searchParams.status,
       searchParams.role,
-      searchParams.sortBy,
-      searchParams.sortDirection,
     ]
   );
   

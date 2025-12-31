@@ -3,7 +3,6 @@
 import React from 'react';
 import { Modal } from '@/components/ui/modal';
 import { Parent } from '@/types/parent';
-import ParentStatusBadge from './ParentStatusBadge';
 import { formatDateTime } from '@/lib/utils/formatters';
 
 interface ParentDetailModalProps {
@@ -31,13 +30,6 @@ export default function ParentDetailModal({ isOpen, onClose, parent }: ParentDet
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                User ID
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white">{parent.userId}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Username
               </label>
               <p className="text-sm text-gray-900 dark:text-white font-medium">{parent.username}</p>
@@ -52,53 +44,9 @@ export default function ParentDetailModal({ isOpen, onClose, parent }: ParentDet
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email
+                Vai trò
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">{parent.email || '-'}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Số điện thoại
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white">{parent.phoneNumber || '-'}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Số học sinh liên kết
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white">
-                {parent.linkedStudentsCount || 0} học sinh
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Trạng thái tài khoản
-              </label>
-              <div className="mt-1">
-                <ParentStatusBadge status={parent.status} />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Xác thực
-              </label>
-              <div className="text-sm text-gray-900 dark:text-white">
-                <p>Điện thoại: {parent.phoneVerified ? '✓ Đã xác thực' : '✗ Chưa xác thực'}</p>
-                <p>Email: {parent.emailVerified ? '✓ Đã xác thực' : '✗ Chưa xác thực'}</p>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Lần đăng nhập cuối
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white">
-                {parent.lastLoginAt ? formatDateTime(parent.lastLoginAt) : 'Chưa đăng nhập'}
-              </p>
+              <p className="text-sm text-gray-900 dark:text-white">{parent.role || 'PARENT'}</p>
             </div>
 
             <div>

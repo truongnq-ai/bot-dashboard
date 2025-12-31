@@ -3,17 +3,17 @@
 import React, { useState } from 'react';
 import { Student } from '@/types/student';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import StudentStatusBadge from './StudentStatusBadge';
 import ActionsDropdown from '@/components/common/ActionsDropdown';
 import { ActionItem } from '@/types/common';
 import { formatDate, truncateText } from '@/lib/utils/formatters';
-import { updateStudentStatus } from '@/lib/api/student.service';
-import { showError, showSuccess } from '@/lib/utils/toast';
 import DeviceListModal from '@/components/devices/DeviceListModal';
+import { resetUserPassword } from '@/lib/api/admin.service';
+import { showError, showSuccess } from '@/lib/utils/toast';
+import AlertModal from '@/components/common/AlertModal';
+import ConfirmModal from '@/components/common/ConfirmModal';
 
 interface StudentListTableProps {
   students: Student[];
-  onStatusChange?: () => void;
   onViewDetail?: (student: Student) => void;
   pagination?: {
     page: number;
@@ -27,38 +27,74 @@ interface StudentListTableProps {
 
 export default function StudentListTable({
   students,
-  onStatusChange,
   onViewDetail,
   pagination,
 }: StudentListTableProps) {
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deviceModalOpen, setDeviceModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string | null>(null);
+  const [resettingId, setResettingId] = useState<string | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    student: Student | null;
+  }>({
+    isOpen: false,
+    student: null,
+  });
+  const [resetPasswordModal, setResetPasswordModal] = useState<{
+    isOpen: boolean;
+    username: string;
+    password: string;
+  }>({
+    isOpen: false,
+    username: '',
+    password: '',
+  });
+  const [copied, setCopied] = useState(false);
 
-  const handleStatusChange = async (student: Student, newStatus: 'ACTIVE' | 'INACTIVE' | 'LOCKED') => {
-    if (!confirm(`Bạn có chắc muốn thay đổi trạng thái của ${student.username} thành ${newStatus === 'ACTIVE' ? 'Hoạt động' : newStatus === 'INACTIVE' ? 'Không hoạt động' : 'Đã khóa'}?`)) {
-      return;
+  const handleCopy = async (password: string) => {
+    try {
+      await navigator.clipboard.writeText(password);
+      setCopied(true);
+      showSuccess('Đã copy mật khẩu vào clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      showError('Không thể copy mật khẩu. Vui lòng copy thủ công.');
     }
+  };
+
+  const handleResetPasswordClick = (student: Student) => {
+    setConfirmModal({
+      isOpen: true,
+      student,
+    });
+  };
+
+  const handleConfirmResetPassword = async () => {
+    if (!confirmModal.student) return;
 
     try {
-      setUpdatingId(student.userId);
-      const response = await updateStudentStatus(student.userId, newStatus);
-      if (response.errorCode === '0000') {
-        showSuccess('Cập nhật trạng thái thành công');
-        onStatusChange?.();
+      setResettingId(confirmModal.student.id || confirmModal.student.userId);
+      const response = await resetUserPassword(confirmModal.student.id || confirmModal.student.userId);
+      if (response.errorCode === '0000' && response.data) {
+        setResetPasswordModal({
+          isOpen: true,
+          username: response.data.username,
+          password: response.data.newPassword,
+        });
       } else {
-        showError(response.errorDetail || 'Cập nhật trạng thái thất bại');
+        showError(response.errorDetail || 'Reset mật khẩu thất bại');
       }
     } catch (error) {
       showError('Hệ thống không có phản hồi.');
     } finally {
-      setUpdatingId(null);
+      setResettingId(null);
+      setConfirmModal({ isOpen: false, student: null });
     }
   };
 
   const getActions = (student: Student): ActionItem[] => {
-    const actions: ActionItem[] = [
+    return [
       {
         id: 'view',
         label: 'Xem chi tiết',
@@ -75,42 +111,14 @@ export default function StudentListTable({
           setDeviceModalOpen(true);
         },
       },
+      {
+        id: 'reset-password',
+        label: 'Reset mật khẩu',
+        type: 'warning',
+        onClick: () => handleResetPasswordClick(student),
+        disabled: resettingId === (student.id || student.userId),
+      },
     ];
-
-    if (student.status === 'ACTIVE') {
-      actions.push({
-        id: 'deactivate',
-        label: 'Vô hiệu hóa',
-        type: 'danger',
-        onClick: () => handleStatusChange(student, 'INACTIVE'),
-        disabled: updatingId === student.userId,
-      });
-      actions.push({
-        id: 'lock',
-        label: 'Khóa',
-        type: 'danger',
-        onClick: () => handleStatusChange(student, 'LOCKED'),
-        disabled: updatingId === student.userId,
-      });
-    } else if (student.status === 'INACTIVE') {
-      actions.push({
-        id: 'activate',
-        label: 'Kích hoạt',
-        type: 'success',
-        onClick: () => handleStatusChange(student, 'ACTIVE'),
-        disabled: updatingId === student.userId,
-      });
-    } else if (student.status === 'LOCKED') {
-      actions.push({
-        id: 'activate',
-        label: 'Mở khóa',
-        type: 'success',
-        onClick: () => handleStatusChange(student, 'ACTIVE'),
-        disabled: updatingId === student.userId,
-      });
-    }
-
-    return actions;
   };
 
   return (
@@ -128,19 +136,7 @@ export default function StudentListTable({
                     Username
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Tên
-                  </TableCell>
-                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Lớp
-                  </TableCell>
-                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Phụ huynh
-                  </TableCell>
-                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Trạng thái
-                  </TableCell>
-                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Lần đăng nhập cuối
+                    Role
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Ngày tạo
@@ -153,8 +149,8 @@ export default function StudentListTable({
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {students.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
-                      Không tìm thấy học sinh nào
+                    <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                      Không tìm thấy người dùng nào
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -167,19 +163,9 @@ export default function StudentListTable({
                         {student.username}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {student.name || '-'}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {student.grade ? `Lớp ${student.grade}` : '-'}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {student.parentName || '-'}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-start">
-                        <StudentStatusBadge status={student.status} />
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                        {student.lastLoginAt ? formatDate(student.lastLoginAt) : 'Chưa đăng nhập'}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                          {student.role || 'STUDENT'}
+                        </span>
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                         {formatDate(student.createdAt)}
@@ -235,6 +221,52 @@ export default function StudentListTable({
           setSelectedUserId(null);
           setSelectedUserName(null);
         }}
+      />
+
+      {/* Confirm Reset Password Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, student: null })}
+        onConfirm={handleConfirmResetPassword}
+        variant="warning"
+        title="Xác nhận reset mật khẩu"
+        message={`Bạn có chắc muốn reset mật khẩu cho ${confirmModal.student?.username}?`}
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        isLoading={resettingId === (confirmModal.student?.id || confirmModal.student?.userId)}
+      />
+
+      {/* Reset Password Result Modal */}
+      <AlertModal
+        isOpen={resetPasswordModal.isOpen}
+        onClose={() => {
+          setResetPasswordModal({ isOpen: false, username: '', password: '' });
+          setCopied(false);
+        }}
+        variant="info"
+        title="Reset mật khẩu thành công"
+        content={
+          <div>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+              Mật khẩu mới cho tài khoản <strong>{resetPasswordModal.username}</strong> là:
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-lg font-mono font-bold text-gray-900 dark:text-white">
+                {resetPasswordModal.password}
+              </code>
+              <button
+                onClick={() => handleCopy(resetPasswordModal.password)}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  copied
+                    ? 'bg-green-600 text-white'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {copied ? '✓ Đã copy' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        }
       />
     </div>
   );

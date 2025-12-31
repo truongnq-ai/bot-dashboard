@@ -3,16 +3,16 @@
 import React, { useState } from 'react';
 import { Parent } from '@/types/parent';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import ParentStatusBadge from './ParentStatusBadge';
 import ActionsDropdown from '@/components/common/ActionsDropdown';
 import { ActionItem } from '@/types/common';
 import { formatDate, truncateText } from '@/lib/utils/formatters';
-import { updateParentStatus } from '@/lib/api/parent.service';
+import { resetUserPassword } from '@/lib/api/admin.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
+import AlertModal from '@/components/common/AlertModal';
+import ConfirmModal from '@/components/common/ConfirmModal';
 
 interface ParentListTableProps {
   parents: Parent[];
-  onStatusChange?: () => void;
   onViewDetail?: (parent: Parent) => void;
   pagination?: {
     page: number;
@@ -26,77 +26,85 @@ interface ParentListTableProps {
 
 export default function ParentListTable({
   parents,
-  onStatusChange,
   onViewDetail,
   pagination,
 }: ParentListTableProps) {
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [resettingId, setResettingId] = useState<string | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    parent: Parent | null;
+  }>({
+    isOpen: false,
+    parent: null,
+  });
+  const [resetPasswordModal, setResetPasswordModal] = useState<{
+    isOpen: boolean;
+    username: string;
+    password: string;
+  }>({
+    isOpen: false,
+    username: '',
+    password: '',
+  });
+  const [copied, setCopied] = useState(false);
 
-  const handleStatusChange = async (parent: Parent, newStatus: 'ACTIVE' | 'INACTIVE' | 'LOCKED') => {
-    if (!confirm(`Bạn có chắc muốn thay đổi trạng thái của ${parent.username} thành ${newStatus === 'ACTIVE' ? 'Hoạt động' : newStatus === 'INACTIVE' ? 'Không hoạt động' : 'Đã khóa'}?`)) {
-      return;
+  const handleCopy = async (password: string) => {
+    try {
+      await navigator.clipboard.writeText(password);
+      setCopied(true);
+      showSuccess('Đã copy mật khẩu vào clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      showError('Không thể copy mật khẩu. Vui lòng copy thủ công.');
     }
+  };
+
+  const handleResetPasswordClick = (parent: Parent) => {
+    setConfirmModal({
+      isOpen: true,
+      parent,
+    });
+  };
+
+  const handleConfirmResetPassword = async () => {
+    if (!confirmModal.parent) return;
 
     try {
-      setUpdatingId(parent.userId);
-      const response = await updateParentStatus(parent.userId, newStatus);
-      if (response.errorCode === '0000') {
-        showSuccess('Cập nhật trạng thái thành công');
-        onStatusChange?.();
+      setResettingId(confirmModal.parent.id || confirmModal.parent.userId);
+      const response = await resetUserPassword(confirmModal.parent.id || confirmModal.parent.userId);
+      if (response.errorCode === '0000' && response.data) {
+        setResetPasswordModal({
+          isOpen: true,
+          username: response.data.username,
+          password: response.data.newPassword,
+        });
       } else {
-        showError(response.errorDetail || 'Cập nhật trạng thái thất bại');
+        showError(response.errorDetail || 'Reset mật khẩu thất bại');
       }
     } catch (error) {
       showError('Hệ thống không có phản hồi.');
     } finally {
-      setUpdatingId(null);
+      setResettingId(null);
+      setConfirmModal({ isOpen: false, parent: null });
     }
   };
 
   const getActions = (parent: Parent): ActionItem[] => {
-    const actions: ActionItem[] = [
+    return [
       {
         id: 'view',
         label: 'Xem chi tiết',
         type: 'success',
         onClick: () => onViewDetail?.(parent),
       },
+      {
+        id: 'reset-password',
+        label: 'Reset mật khẩu',
+        type: 'warning',
+        onClick: () => handleResetPasswordClick(parent),
+        disabled: resettingId === (parent.id || parent.userId),
+      },
     ];
-
-    if (parent.status === 'ACTIVE') {
-      actions.push({
-        id: 'deactivate',
-        label: 'Vô hiệu hóa',
-        type: 'danger',
-        onClick: () => handleStatusChange(parent, 'INACTIVE'),
-        disabled: updatingId === parent.userId,
-      });
-      actions.push({
-        id: 'lock',
-        label: 'Khóa',
-        type: 'danger',
-        onClick: () => handleStatusChange(parent, 'LOCKED'),
-        disabled: updatingId === parent.userId,
-      });
-    } else if (parent.status === 'INACTIVE') {
-      actions.push({
-        id: 'activate',
-        label: 'Kích hoạt',
-        type: 'success',
-        onClick: () => handleStatusChange(parent, 'ACTIVE'),
-        disabled: updatingId === parent.userId,
-      });
-    } else if (parent.status === 'LOCKED') {
-      actions.push({
-        id: 'activate',
-        label: 'Mở khóa',
-        type: 'success',
-        onClick: () => handleStatusChange(parent, 'ACTIVE'),
-        disabled: updatingId === parent.userId,
-      });
-    }
-
-    return actions;
   };
 
   return (
@@ -114,19 +122,7 @@ export default function ParentListTable({
                     Username
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Tên
-                  </TableCell>
-                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Email
-                  </TableCell>
-                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Số học sinh
-                  </TableCell>
-                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Trạng thái
-                  </TableCell>
-                  <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                    Lần đăng nhập cuối
+                    Role
                   </TableCell>
                   <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Ngày tạo
@@ -139,8 +135,8 @@ export default function ParentListTable({
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {parents.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
-                      Không tìm thấy phụ huynh nào
+                    <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                      Không tìm thấy người dùng nào
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -153,21 +149,9 @@ export default function ParentListTable({
                         {parent.username}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {parent.name || '-'}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {parent.email || '-'}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                          {parent.linkedStudentsCount || 0} học sinh
+                          {parent.role || 'PARENT'}
                         </span>
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-start">
-                        <ParentStatusBadge status={parent.status} />
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                        {parent.lastLoginAt ? formatDate(parent.lastLoginAt) : 'Chưa đăng nhập'}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                         {formatDate(parent.createdAt)}
@@ -213,6 +197,52 @@ export default function ParentListTable({
           </div>
         </div>
       )}
+
+      {/* Confirm Reset Password Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, parent: null })}
+        onConfirm={handleConfirmResetPassword}
+        variant="warning"
+        title="Xác nhận reset mật khẩu"
+        message={`Bạn có chắc muốn reset mật khẩu cho ${confirmModal.parent?.username}?`}
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        isLoading={resettingId === (confirmModal.parent?.id || confirmModal.parent?.userId)}
+      />
+
+      {/* Reset Password Result Modal */}
+      <AlertModal
+        isOpen={resetPasswordModal.isOpen}
+        onClose={() => {
+          setResetPasswordModal({ isOpen: false, username: '', password: '' });
+          setCopied(false);
+        }}
+        variant="info"
+        title="Reset mật khẩu thành công"
+        content={
+          <div>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+              Mật khẩu mới cho tài khoản <strong>{resetPasswordModal.username}</strong> là:
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-lg font-mono font-bold text-gray-900 dark:text-white">
+                {resetPasswordModal.password}
+              </code>
+              <button
+                onClick={() => handleCopy(resetPasswordModal.password)}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  copied
+                    ? 'bg-green-600 text-white'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {copied ? '✓ Đã copy' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        }
+      />
     </div>
   );
 }

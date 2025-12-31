@@ -3,7 +3,6 @@
 import React from 'react';
 import { Modal } from '@/components/ui/modal';
 import { Admin } from '@/types/admin';
-import AdminStatusBadge from './AdminStatusBadge';
 import { formatDateTime } from '@/lib/utils/formatters';
 
 interface AdminDetailModalProps {
@@ -31,23 +30,9 @@ export default function AdminDetailModal({ isOpen, onClose, admin }: AdminDetail
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                User ID
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white">{admin.userId}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Username
               </label>
               <p className="text-sm text-gray-900 dark:text-white font-medium">{admin.username}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white">{admin.email}</p>
             </div>
 
             <div>
@@ -59,41 +44,9 @@ export default function AdminDetailModal({ isOpen, onClose, admin }: AdminDetail
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Phòng ban
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white">{admin.department || '-'}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Vai trò
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">{admin.role || 'ROLE_ADMIN'}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Trạng thái
-              </label>
-              <AdminStatusBadge status={admin.status} />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email đã xác thực
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white">
-                {admin.emailVerified ? 'Có' : 'Chưa'}
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Lần đăng nhập cuối
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white">
-                {admin.lastLoginAt ? formatDateTime(admin.lastLoginAt) : 'Chưa đăng nhập'}
-              </p>
+              <p className="text-sm text-gray-900 dark:text-white">{admin.role || 'ADMIN'}</p>
             </div>
 
             <div>

@@ -41,20 +41,18 @@ export const API_ENDPOINTS = {
   SKILLS_DELETE: (id: string) => `${API_VERSION}/admin/skills/${id}`,
 
   // Admins
-  ADMINS_LIST: `${API_VERSION}/admin/users/admins`,
-  ADMINS_GET: (id: string) => `${API_VERSION}/admin/users/admins/${id}`,
-  ADMINS_CREATE: `${API_VERSION}/admin/create`,
-  ADMINS_UPDATE_STATUS: (id: string) => `${API_VERSION}/admin/users/admins/${id}/status`,
+  ADMINS_LIST: `${API_VERSION}/admin/users`,
+  ADMINS_GET: (id: string) => `${API_VERSION}/admin/users/${id}`,
+  ADMINS_CREATE: `${API_VERSION}/admin/users`,
+  USERS_RESET_PASSWORD: (id: string) => `${API_VERSION}/admin/users/${id}/reset-password`,
 
   // Students
-  STUDENTS_LIST: `${API_VERSION}/admin/users/students`,
-  STUDENTS_GET: (id: string) => `${API_VERSION}/admin/users/students/${id}`,
-  STUDENTS_UPDATE_STATUS: (id: string) => `${API_VERSION}/admin/users/students/${id}/status`,
+  STUDENTS_LIST: `${API_VERSION}/admin/users`,
+  STUDENTS_GET: (id: string) => `${API_VERSION}/admin/users/${id}`,
 
   // Parents
-  PARENTS_LIST: `${API_VERSION}/admin/users/parents`,
-  PARENTS_GET: (id: string) => `${API_VERSION}/admin/users/parents/${id}`,
-  PARENTS_UPDATE_STATUS: (id: string) => `${API_VERSION}/admin/users/parents/${id}/status`,
+  PARENTS_LIST: `${API_VERSION}/admin/users`,
+  PARENTS_GET: (id: string) => `${API_VERSION}/admin/users/${id}`,
 
   // Trials
   TRIALS_LIST: `${API_VERSION}/admin/users/trials`,

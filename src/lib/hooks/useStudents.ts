@@ -25,13 +25,7 @@ export function useStudents(searchParams: StudentSearchParams = {}) {
     [
       searchParams.page,
       searchParams.pageSize,
-      searchParams.searchText,
-      searchParams.status,
-      searchParams.studentStatus,
-      searchParams.grade,
-      searchParams.parentId,
-      searchParams.sortBy,
-      searchParams.sortDirection,
+      searchParams.role,
     ]
   );
   

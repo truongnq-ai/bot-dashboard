@@ -9,28 +9,15 @@ export interface Parent {
   userId: string;
   username: string;
   name: string;
-  email?: string;
-  phoneNumber?: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'LOCKED';
-  phoneVerified?: boolean;
-  emailVerified?: boolean;
+  role?: string;
   linkedStudentsCount?: number;
-  lastLoginAt?: string;
   createdAt: string;
 }
 
 export interface ParentSearchParams {
-  searchText?: string;
-  status?: 'ACTIVE' | 'INACTIVE' | 'LOCKED';
-  phoneVerified?: boolean;
+  role?: string;
   page?: number;
   pageSize?: number;
-  sortBy?: string;
-  sortDirection?: 'asc' | 'desc';
-}
-
-export interface UpdateParentStatusRequest {
-  status: 'ACTIVE' | 'INACTIVE' | 'LOCKED';
 }
 
 export type ParentListResponse = ResponseObject<PageResponse<Parent>>;

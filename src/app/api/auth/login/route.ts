@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     // Call Core Service login endpoint
     const apiUrl = getApiBaseUrl();
-    const response = await fetch(`${apiUrl}/api/v1/admin/login`, {
+    const response = await fetch(`${apiUrl}/api/v1/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useAdmins } from '@/lib/hooks/useAdmins';
 import { AdminSearchParams, Admin } from '@/types/admin';
 import AdminListTable from './AdminListTable';
@@ -19,23 +19,6 @@ export default function AdminList() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const { data, loading, error, refetch } = useAdmins(searchParams);
-
-  const statistics = useMemo(() => {
-    if (!data) {
-      return {
-        total: 0,
-        active: 0,
-        inactive: 0,
-      };
-    }
-
-    const admins = data.content || [];
-    return {
-      total: data.totalElements || 0,
-      active: admins.filter((a) => a.status === 'ACTIVE').length,
-      inactive: admins.filter((a) => a.status === 'INACTIVE').length,
-    };
-  }, [data]);
 
   const handleFilterChange = (newParams: Partial<AdminSearchParams>) => {
     setSearchParams((prev) => ({ ...prev, ...newParams, page: 0 }));
@@ -66,22 +49,6 @@ export default function AdminList() {
         </button>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Tổng số</div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{statistics.total}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Hoạt động</div>
-          <div className="text-2xl font-bold text-green-600">{statistics.active}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Không hoạt động</div>
-          <div className="text-2xl font-bold text-gray-600">{statistics.inactive}</div>
-        </div>
-      </div>
-
       {/* Filters */}
       <AdminFilters searchParams={searchParams} onFilterChange={handleFilterChange} />
 
@@ -103,7 +70,6 @@ export default function AdminList() {
       {!loading && !error && data && (
         <AdminListTable
           admins={data.content}
-          onStatusChange={refetch}
           onViewDetail={handleViewDetail}
           pagination={{
             page: searchParams.page || 0,

@@ -25,11 +25,7 @@ export function useParents(searchParams: ParentSearchParams = {}) {
     [
       searchParams.page,
       searchParams.pageSize,
-      searchParams.searchText,
-      searchParams.status,
-      searchParams.phoneVerified,
-      searchParams.sortBy,
-      searchParams.sortDirection,
+      searchParams.role,
     ]
   );
   
