@@ -25,7 +25,6 @@ import { Chapter } from './chapter';
 
 // Search Params
 export interface SkillSearchParams {
-  searchText?: string;
   grade?: 6 | 7;
   chapterId?: string;
   page?: number;
@@ -59,3 +58,16 @@ export interface SkillListResponse extends PageResponse<Skill> {}
 export interface SkillResponse extends ResponseObject<Skill> {}
 
 export interface SkillListResponseData extends ResponseObject<SkillListResponse> {}
+
+// Prerequisite Detail
+export interface SkillPrerequisiteDetail {
+  skillId: string;
+  skillCode: string;
+  skillName: string;
+  skillDescription?: string;
+}
+
+// Prerequisite Request
+export interface AddSkillPrerequisiteRequest {
+  prerequisiteSkillId: string;
+}

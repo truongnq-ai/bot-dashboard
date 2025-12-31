@@ -43,6 +43,10 @@ export const API_ENDPOINTS = {
   SKILLS_GET: (id: string) => `${API_VERSION}/admin/skills/${id}`,
   SKILLS_UPDATE: (id: string) => `${API_VERSION}/admin/skills/${id}`,
   SKILLS_DELETE: (id: string) => `${API_VERSION}/admin/skills/${id}`,
+  SKILLS_GET_PREREQUISITES: (skillId: string) => `${API_VERSION}/admin/skills/${skillId}/prerequisites`,
+  SKILLS_GET_AVAILABLE_PREREQUISITES: (skillId: string) => `${API_VERSION}/admin/skills/${skillId}/available-prerequisites`,
+  SKILLS_ADD_PREREQUISITE: (skillId: string) => `${API_VERSION}/admin/skills/${skillId}/prerequisites`,
+  SKILLS_REMOVE_PREREQUISITE: (skillId: string, prerequisiteSkillId: string) => `${API_VERSION}/admin/skills/${skillId}/prerequisites/${prerequisiteSkillId}`,
 
   // Admins
   ADMINS_LIST: `${API_VERSION}/admin/users`,

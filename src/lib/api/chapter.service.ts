@@ -106,12 +106,15 @@ export async function deleteChapter(id: string): Promise<ResponseObject<void>> {
  * Get chapters by grade (for dropdown)
  */
 export async function getChaptersByGrade(grade: 6 | 7): Promise<ResponseObject<Chapter[]>> {
-  const response = await apiClient.get<ResponseObject<Chapter[]>>(API_ENDPOINTS.CHAPTERS_BY_GRADE(grade));
+  // Use the existing chapters list endpoint with grade filter and large page size
+  const response = await apiClient.get<ChapterListResponse>(
+    `${API_ENDPOINTS.CHAPTERS_LIST}?grade=${grade}&page=0&size=1000`
+  );
 
   return {
     errorCode: response.data.errorCode,
     errorDetail: response.data.errorDetail,
-    data: response.data.data,
+    data: response.data.data?.content || [],
   };
 }
 

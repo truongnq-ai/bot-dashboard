@@ -147,9 +147,9 @@ export default function SkillCreateModal({ isOpen, onClose, onSuccess }: SkillCr
   };
 
   // Filter skills with same grade for prerequisite selection
-  const availablePrerequisites = allSkillsData?.content.filter(
+  const availablePrerequisites = (allSkillsData?.content || []).filter(
     (skill) => skill.grade === formData.grade
-  ) || [];
+  );
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>

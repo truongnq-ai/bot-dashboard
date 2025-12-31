@@ -12,7 +12,7 @@ interface SkillListTableProps {
   skills: Skill[];
   onViewDetail?: (skill: Skill) => void;
   onEdit?: (skill: Skill) => void;
-  onViewRelatedQuestions?: (skill: Skill) => void;
+  onViewPrerequisites?: (skill: Skill) => void;
   pagination?: {
     page: number;
     pageSize: number;
@@ -24,10 +24,10 @@ interface SkillListTableProps {
 }
 
 export default function SkillListTable({
-  skills,
+  skills = [],
   onViewDetail,
   onEdit,
-  onViewRelatedQuestions,
+  onViewPrerequisites,
   pagination,
 }: SkillListTableProps) {
   const getActions = (skill: Skill): ActionItem[] => {
@@ -44,17 +44,17 @@ export default function SkillListTable({
       actions.push({
         id: 'edit',
         label: 'Chỉnh sửa',
-        type: 'warning',
+        type: 'info',
         onClick: () => onEdit(skill),
       });
     }
 
-    if (onViewRelatedQuestions) {
+    if (onViewPrerequisites) {
       actions.push({
-        id: 'questions',
-        label: 'Xem câu hỏi liên quan',
+        id: 'prerequisites',
+        label: 'Kỹ năng tiên quyết',
         type: 'info',
-        onClick: () => onViewRelatedQuestions(skill),
+        onClick: () => onViewPrerequisites(skill),
       });
     }
 

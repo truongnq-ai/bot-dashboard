@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 import { useSkills } from '@/lib/hooks/useSkills';
 import { SkillSearchParams, Skill } from '@/types/skill';
 import SkillListTable from './SkillListTable';
@@ -9,9 +8,9 @@ import SkillFilters from './SkillFilters';
 import SkillDetailModal from './SkillDetailModal';
 import SkillCreateModal from './SkillCreateModal';
 import SkillUpdateModal from './SkillUpdateModal';
+import SkillPrerequisitesModal from './SkillPrerequisitesModal';
 
 export default function SkillList() {
-  const router = useRouter();
   const [searchParams, setSearchParams] = useState<SkillSearchParams>({
     page: 0,
     pageSize: 10,
@@ -19,28 +18,13 @@ export default function SkillList() {
 
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [skillToUpdate, setSkillToUpdate] = useState<Skill | null>(null);
+  const [skillForPrerequisites, setSkillForPrerequisites] = useState<Skill | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isPrerequisitesModalOpen, setIsPrerequisitesModalOpen] = useState(false);
 
   const { data, loading, error, refetch } = useSkills(searchParams);
-
-  const statistics = useMemo(() => {
-    if (!data) {
-      return {
-        total: 0,
-        grade6: 0,
-        grade7: 0,
-      };
-    }
-
-    const skills = data.content || [];
-    return {
-      total: data.totalElements || 0,
-      grade6: skills.filter((s) => s.grade === 6).length,
-      grade7: skills.filter((s) => s.grade === 7).length,
-    };
-  }, [data]);
 
   const handleFilterChange = (newParams: Partial<SkillSearchParams>) => {
     setSearchParams((prev) => ({ ...prev, ...newParams, page: 0 }));
@@ -59,14 +43,15 @@ export default function SkillList() {
     setIsDetailModalOpen(true);
   };
 
-  const handleViewRelatedQuestions = (skill: Skill) => {
-    // Navigate to questions page with skill filter
-    router.push(`/content/questions?skillId=${skill.id}`);
-  };
 
   const handleEdit = (skill: Skill) => {
     setSkillToUpdate(skill);
     setIsUpdateModalOpen(true);
+  };
+
+  const handleViewPrerequisites = (skill: Skill) => {
+    setSkillForPrerequisites(skill);
+    setIsPrerequisitesModalOpen(true);
   };
 
   return (
@@ -79,22 +64,6 @@ export default function SkillList() {
         >
           + Thêm mới
         </button>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Tổng số</div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{statistics.total}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Lớp 6</div>
-          <div className="text-2xl font-bold text-blue-600">{statistics.grade6}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Lớp 7</div>
-          <div className="text-2xl font-bold text-green-600">{statistics.grade7}</div>
-        </div>
       </div>
 
       {/* Filters */}
@@ -117,10 +86,10 @@ export default function SkillList() {
       {/* Table */}
       {!loading && !error && data && (
         <SkillListTable
-          skills={data.content}
+          skills={data.content || []}
           onViewDetail={handleViewDetail}
           onEdit={handleEdit}
-          onViewRelatedQuestions={handleViewRelatedQuestions}
+          onViewPrerequisites={handleViewPrerequisites}
           pagination={{
             page: searchParams.page || 0,
             pageSize: searchParams.pageSize || 10,
@@ -158,6 +127,16 @@ export default function SkillList() {
         }}
         onSuccess={refetch}
         skill={skillToUpdate}
+      />
+
+      {/* Prerequisites Modal */}
+      <SkillPrerequisitesModal
+        isOpen={isPrerequisitesModalOpen}
+        onClose={() => {
+          setIsPrerequisitesModalOpen(false);
+          setSkillForPrerequisites(null);
+        }}
+        skill={skillForPrerequisites}
       />
     </div>
   );

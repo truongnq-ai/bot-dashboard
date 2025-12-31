@@ -166,9 +166,9 @@ export default function SkillUpdateModal({ isOpen, onClose, onSuccess, skill }: 
   };
 
   // Filter skills with same grade for prerequisite selection
-  const availablePrerequisites = allSkillsData?.content.filter(
+  const availablePrerequisites = (allSkillsData?.content || []).filter(
     (s) => s.grade === formData.grade && s.id !== skill?.id
-  ) || [];
+  );
 
   if (!skill) return null;
 
