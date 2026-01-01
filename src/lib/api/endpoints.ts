@@ -24,6 +24,7 @@ export const API_ENDPOINTS = {
   EXERCISES_GENERATE: `${API_VERSION}/admin/exercises/ai-generate`,
   EXERCISES_GENERATE_PROMPT: `${API_VERSION}/admin/exercises/generate-prompt`,
   EXERCISES_VALIDATE_LATEX: (id: string) => `${API_VERSION}/admin/exercises/${id}/validate-latex`,
+  EXERCISES_VALIDATE_JSON: `${API_VERSION}/admin/exercises/validate-json`,
 
   // Chapters
   CHAPTERS_LIST: `${API_VERSION}/admin/chapters`,

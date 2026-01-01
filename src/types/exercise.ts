@@ -112,6 +112,15 @@ export interface ImportExerciseJsonRequest {
   rawExerciseJson: string; // JSON string containing exercise data
 }
 
+export interface ValidateJsonRequest {
+  rawExerciseJson: string;
+}
+
+export interface ValidateJsonResponse {
+  isValid: boolean;
+  message: string;
+}
+
 export interface UpdateExerciseRequest {
   skillId?: string;
   grade?: number; // 6 or 7

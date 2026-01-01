@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ImportExerciseJsonRequest } from '@/types/exercise';
-import { importExerciseFromJson } from '@/lib/api/exercise.service';
+import { importExerciseFromJson, validateExerciseJson } from '@/lib/api/exercise.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { useSkills } from '@/lib/hooks/useSkills';
 import { useGrades } from '@/lib/hooks/useGrades';
@@ -21,6 +21,7 @@ export default function CreateFromJsonPage() {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isValidated, setIsValidated] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [validating, setValidating] = useState(false);
   
   // Chapter, Skill, and Difficulty selection state
   const [selectedGrade, setSelectedGrade] = useState<number>(6);
@@ -30,6 +31,7 @@ export default function CreateFromJsonPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [chaptersLoading, setChaptersLoading] = useState(false);
+  const [autoFillWarnings, setAutoFillWarnings] = useState<string[]>([]);
 
   const { data: gradesData, loading: gradesLoading } = useGrades();
   const { data: skillsData } = useSkills({
@@ -73,37 +75,214 @@ export default function CreateFromJsonPage() {
     setSelectedSkillCode('');
   }, [selectedGrade]);
 
-  const handleValidate = () => {
+  // Fix JSON escape errors (\{ and \} are invalid in JSON)
+  const fixJsonEscape = (jsonString: string): { fixed: string; warnings: string[] } => {
+    const warnings: string[] = [];
+    let fixed = jsonString;
+    
+    // Fix: \{ → \\{ (nếu trong string context, không phải đã escape)
+    // Pattern: match \{ or \} that are not already escaped (negative lookbehind)
+    const invalidEscapePattern = /(?<!\\)\\([{}])/g;
+    const matches = jsonString.match(invalidEscapePattern);
+    if (matches && matches.length > 0) {
+      warnings.push(`Đã tự động sửa ${matches.length} ký tự escape không hợp lệ (\\{ hoặc \\})`);
+      fixed = jsonString.replace(invalidEscapePattern, '\\\\$1');
+    }
+    
+    return { fixed, warnings };
+  };
+
+  // Auto-fill form from JSON
+  useEffect(() => {
+    if (!jsonInput.trim()) {
+      setAutoFillWarnings([]);
+      return;
+    }
+
+    let jsonToParse = jsonInput;
+    const warnings: string[] = [];
+
+    // Try parse JSON
+    try {
+      JSON.parse(jsonInput);
+    } catch (e) {
+      // If parse fails, try auto-fix
+      const { fixed, warnings: fixWarnings } = fixJsonEscape(jsonInput);
+      warnings.push(...fixWarnings);
+      
+      try {
+        JSON.parse(fixed);
+        jsonToParse = fixed;
+        // Update jsonInput with fixed JSON
+        setJsonInput(fixed);
+        warnings.push('JSON đã được tự động sửa. Vui lòng kiểm tra lại.');
+      } catch (e2) {
+        // Still invalid, can't auto-fill
+        setAutoFillWarnings([]);
+        return;
+      }
+    }
+
+    try {
+      const parsed = JSON.parse(jsonToParse);
+
+      // Extract và auto-fill chapterCode
+      if (parsed.chapterCode && typeof parsed.chapterCode === 'string') {
+        const jsonChapterCode = parsed.chapterCode.trim();
+        
+        // Check nếu user đã chọn khác
+        if (selectedChapterCode && selectedChapterCode !== jsonChapterCode) {
+          warnings.push(`JSON có chapterCode "${jsonChapterCode}" nhưng bạn đã chọn "${selectedChapterCode}". Giá trị trong form sẽ được sử dụng.`);
+        } else if (!selectedChapterCode || selectedChapterCode === '') {
+          // Chỉ auto-fill nếu form đang trống
+          setSelectedChapterCode(jsonChapterCode);
+          
+          // Validate async: check xem chapterCode có trong grade hiện tại không
+          if (selectedGrade && chapters.length > 0) {
+            const chapterExists = chapters.some(c => c.code === jsonChapterCode);
+            if (!chapterExists) {
+              warnings.push(`ChapterCode "${jsonChapterCode}" không tìm thấy trong lớp ${selectedGrade}. Vui lòng kiểm tra lại.`);
+            }
+          }
+        }
+      }
+
+      // Extract và auto-fill skillCode
+      if (parsed.skillCode && typeof parsed.skillCode === 'string') {
+        const jsonSkillCode = parsed.skillCode.trim();
+        
+        // Check nếu user đã chọn khác
+        if (selectedSkillCode && selectedSkillCode !== jsonSkillCode) {
+          warnings.push(`JSON có skillCode "${jsonSkillCode}" nhưng bạn đã chọn "${selectedSkillCode}". Giá trị trong form sẽ được sử dụng.`);
+        } else if (!selectedSkillCode || selectedSkillCode === '') {
+          // Chỉ auto-fill nếu form đang trống
+          setSelectedSkillCode(jsonSkillCode);
+          
+          // Validate async: check xem skillCode có trong grade hiện tại không
+          if (selectedGrade && sortedSkills.length > 0) {
+            const skillExists = sortedSkills.some(s => s.code === jsonSkillCode);
+            if (!skillExists) {
+              warnings.push(`SkillCode "${jsonSkillCode}" không tìm thấy trong lớp ${selectedGrade}. Vui lòng kiểm tra lại.`);
+            }
+          }
+        }
+      }
+
+      // Extract và auto-fill difficultyLevel
+      if (parsed.difficultyLevel && typeof parsed.difficultyLevel === 'number') {
+        const jsonDifficulty = parsed.difficultyLevel;
+        if (jsonDifficulty >= 1 && jsonDifficulty <= 5) {
+          // Chỉ update nếu khác với giá trị hiện tại
+          if (selectedDifficultyLevel !== jsonDifficulty) {
+            setSelectedDifficultyLevel(jsonDifficulty);
+          }
+        }
+      }
+
+      setAutoFillWarnings(warnings);
+    } catch (e) {
+      // Ignore parse errors, user will fix
+      setAutoFillWarnings([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jsonInput, selectedGrade, chapters, sortedSkills]);
+
+  const handleValidate = async () => {
     if (!jsonInput.trim()) {
       setValidationErrors(['Vui lòng nhập JSON']);
       setIsValidated(false);
       return;
     }
 
+    setValidationErrors([]);
+    setIsValidated(false);
+
+    // Tier 1: Frontend - Validate JSON format
+    let jsonToValidate = jsonInput;
+    const warnings: string[] = [];
+
     try {
-      const parsed = JSON.parse(jsonInput);
-      
-      // Check if it has exercises array
-      if (!parsed.exercises || !Array.isArray(parsed.exercises) || parsed.exercises.length === 0) {
-        setValidationErrors(['JSON phải có mảng "exercises" chứa ít nhất 1 bài tập']);
-        setIsValidated(false);
-        return;
-      }
-
-      // Check if exercise has required fields
-      const exercise = parsed.exercises[0];
-      if (!exercise.problemText || !exercise.solutionSteps) {
-        setValidationErrors(['Bài tập phải có "problemText" và "solutionSteps"']);
-        setIsValidated(false);
-        return;
-      }
-
-      setValidationErrors([]);
-      setIsValidated(true);
-      showSuccess('JSON hợp lệ! Bạn có thể tạo bài tập.');
+      JSON.parse(jsonInput);
     } catch (error) {
-      setValidationErrors(['JSON không hợp lệ: ' + (error instanceof Error ? error.message : 'Lỗi không xác định')]);
+      // Try auto-fix
+      const { fixed, warnings: fixWarnings } = fixJsonEscape(jsonInput);
+      warnings.push(...fixWarnings);
+      
+      try {
+        JSON.parse(fixed);
+        jsonToValidate = fixed;
+        // Update jsonInput with fixed JSON
+        setJsonInput(fixed);
+        warnings.push('JSON đã được tự động sửa. Vui lòng kiểm tra lại.');
+      } catch (e2) {
+        setValidationErrors(['JSON không hợp lệ: ' + (error instanceof Error ? error.message : 'Lỗi không xác định')]);
+        setIsValidated(false);
+        setAutoFillWarnings(warnings);
+        return;
+      }
+    }
+
+    // Parse và validate structure
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonToValidate);
+    } catch (e) {
+      setValidationErrors(['JSON không hợp lệ: ' + (e instanceof Error ? e.message : 'Lỗi không xác định')]);
       setIsValidated(false);
+      setAutoFillWarnings(warnings);
+      return;
+    }
+
+    // Check structure
+    if (!parsed.exercises || !Array.isArray(parsed.exercises) || parsed.exercises.length === 0) {
+      setValidationErrors(['JSON phải có mảng "exercises" chứa ít nhất 1 bài tập']);
+      setIsValidated(false);
+      setAutoFillWarnings(warnings);
+      return;
+    }
+
+    const exercise = parsed.exercises[0];
+    if (!exercise.problemText || !exercise.solutionSteps) {
+      setValidationErrors(['Bài tập phải có "problemText" và "solutionSteps"']);
+      setIsValidated(false);
+      setAutoFillWarnings(warnings);
+      return;
+    }
+
+    // Tier 2: Backend - Validate JSON schema + LaTeX
+    try {
+      setValidating(true);
+      
+      // Inject metadata for validation
+      const jsonWithMetadata = {
+        ...parsed,
+        chapterCode: selectedChapterCode || parsed.chapterCode || '',
+        skillCode: selectedSkillCode || parsed.skillCode || '',
+        difficultyLevel: selectedDifficultyLevel || parsed.difficultyLevel || 3,
+      };
+
+      const jsonString = JSON.stringify(jsonWithMetadata);
+      
+      // Call backend validate endpoint
+      const response = await validateExerciseJson({ rawExerciseJson: jsonString });
+      
+      if (response.errorCode === '0000') {
+        setValidationErrors([]);
+        setIsValidated(true);
+        setAutoFillWarnings(warnings);
+        showSuccess('JSON hợp lệ! Bạn có thể tạo bài tập.');
+      } else {
+        setValidationErrors([response.errorDetail || 'Validation failed']);
+        setIsValidated(false);
+        setAutoFillWarnings(warnings);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Lỗi không xác định';
+      setValidationErrors(['Validation thất bại: ' + errorMessage]);
+      setIsValidated(false);
+      setAutoFillWarnings(warnings);
+    } finally {
+      setValidating(false);
     }
   };
 
@@ -238,6 +417,22 @@ export default function CreateFromJsonPage() {
               <p className="text-sm text-green-800 dark:text-green-200">
                 ✓ JSON hợp lệ! Vui lòng chọn Kỹ năng và Lớp bên dưới.
               </p>
+            </div>
+          )}
+
+          {/* Auto-fill Warnings */}
+          {autoFillWarnings.length > 0 && (
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
+                ⚠️ Cảnh báo auto-fill:
+              </p>
+              <ul className="list-disc list-inside space-y-1">
+                {autoFillWarnings.map((warning, index) => (
+                  <li key={index} className="text-sm text-amber-700 dark:text-amber-300">
+                    {warning}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -383,9 +578,10 @@ export default function CreateFromJsonPage() {
             <button
               type="button"
               onClick={handleValidate}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              disabled={validating}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Kiểm tra
+              {validating ? 'Đang kiểm tra...' : 'Kiểm tra'}
             </button>
             <button
               type="button"

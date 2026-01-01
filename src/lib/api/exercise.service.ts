@@ -21,6 +21,8 @@ import {
   GeneratePromptRequest,
   GeneratePromptResponse,
   ImportExerciseJsonRequest,
+  ValidateJsonRequest,
+  ValidateJsonResponse,
   ValidateLaTeXRequest,
   ValidateLaTeXResponse,
   ReviewStatus,
@@ -313,6 +315,24 @@ export async function importExerciseFromJson(
     errorDetail: response.data.errorDetail,
     data: response.data.data,
   };
+}
+
+/**
+ * Validate exercise JSON
+ */
+export async function validateExerciseJson(
+  data: ValidateJsonRequest
+): Promise<ResponseObject<ValidateJsonResponse>> {
+  const response = await apiClient.post<ResponseObject<ValidateJsonResponse>>(
+    API_ENDPOINTS.EXERCISES_VALIDATE_JSON,
+    data
+  );
+  
+  if (response.data.errorCode !== '0000') {
+    throw new Error(response.data.errorDetail || 'Failed to validate JSON');
+  }
+  
+  return response.data;
 }
 
 /**
