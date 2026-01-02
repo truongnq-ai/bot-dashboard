@@ -17,6 +17,7 @@ import apiClient from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import MathText from '@/components/common/MathText';
+import ConfirmModal from '@/components/common/ConfirmModal';
 
 interface ExerciseListTableProps {
   exercises: Exercise[];
@@ -39,21 +40,37 @@ export default function ExerciseListTable({
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
+    isOpen: boolean;
+    exerciseId: string | null;
+  }>({
+    isOpen: false,
+    exerciseId: null,
+  });
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa bài tập này?')) {
-      return;
-    }
+  const handleDeleteClick = (id: string) => {
+    setDeleteConfirmModal({
+      isOpen: true,
+      exerciseId: id,
+    });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirmModal.exerciseId) return;
 
     try {
-      setDeletingId(id);
-      await deleteExercise(id);
+      setDeletingId(deleteConfirmModal.exerciseId);
+      await deleteExercise(deleteConfirmModal.exerciseId);
       showSuccess('Xóa bài tập thành công');
       onDelete?.();
     } catch (error) {
-      showError('Xóa bài tập thất bại: ' + (error instanceof Error ? error.message : 'Lỗi không xác định'));
+      showError('Xóa không thành công (Warning)');
     } finally {
       setDeletingId(null);
+      setDeleteConfirmModal({
+        isOpen: false,
+        exerciseId: null,
+      });
     }
   };
 
@@ -116,6 +133,18 @@ export default function ExerciseListTable({
         type: 'success',
         onClick: () => handleApprove(exercise.id),
         disabled: approvingId === exercise.id,
+      });
+    }
+
+    // Xóa action (chỉ khi status là DRAFT hoặc REVIEWED - PENDING)
+    const canDelete = exercise.reviewStatus === ReviewStatus.PENDING;
+    if (canDelete) {
+      actions.push({
+        id: 'delete',
+        label: deletingId === exercise.id ? 'Đang xóa...' : 'Xóa',
+        type: 'danger',
+        onClick: () => handleDeleteClick(exercise.id),
+        disabled: deletingId === exercise.id,
       });
     }
 
@@ -230,6 +259,19 @@ export default function ExerciseListTable({
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteConfirmModal.isOpen}
+        onClose={() => setDeleteConfirmModal({ isOpen: false, exerciseId: null })}
+        onConfirm={handleDeleteConfirm}
+        variant="danger"
+        title="Xác nhận xóa bài tập"
+        message="Bạn có chắc chắn muốn xóa bài tập này? Hành động này không thể hoàn tác."
+        confirmText="Xóa"
+        cancelText="Hủy"
+        isLoading={deletingId !== null}
+      />
     </div>
   );
 }

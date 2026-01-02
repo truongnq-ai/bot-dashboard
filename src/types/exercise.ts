@@ -121,6 +121,56 @@ export interface ValidateJsonResponse {
   message: string;
 }
 
+// Check JSON Request/Response
+export interface CheckJsonRequest {
+  rawExerciseJson: string;
+}
+
+export interface ValidationError {
+  errorCode: string;
+  location: string;
+  message: string;
+  suggestion: string;
+}
+
+export interface JsonValidationResult {
+  isValid: boolean;
+  errors: ValidationError[];
+}
+
+export interface LatexValidationResult {
+  isValid: boolean;
+  errors: ValidationError[];
+}
+
+export interface CheckJsonResponse {
+  isValid: boolean;
+  json: JsonValidationResult;
+  latexBasic: LatexValidationResult;
+  latexAdvanced: LatexValidationResult;
+  allErrorCodes: string[];
+}
+
+// Fix JSON Request/Response
+export interface FixJsonRequest {
+  rawExerciseJson: string;
+  errorCodes: string[];
+}
+
+export interface FixApplied {
+  location: string;
+  errorCode: string;
+  original: string;
+  fixed: string;
+  fixType: string; // "JSON", "LATEX_BASIC", "LATEX_ADVANCED"
+}
+
+export interface FixJsonResponse {
+  fixedJson: string;
+  fixesApplied: FixApplied[];
+  unfixableErrors: ValidationError[];
+}
+
 export interface UpdateExerciseRequest {
   skillId?: string;
   grade?: number; // 6 or 7
@@ -244,6 +294,77 @@ export interface ValidateLaTeXResponse {
   autoFixes: Record<string, string>;
 }
 
+// Check LaTeX Types (similar to CheckJsonRequest/Response but for exercise fields)
+export interface CheckLaTeXRequest {
+  problemText?: string;
+  problemLatex?: string;
+  solutionSteps?: SolutionStepRequest[];
+  finalAnswer?: string;
+  commonMistakes?: CommonMistakeRequest[];
+  hints?: string[];
+}
+
+export interface CheckLaTeXResponse {
+  isValid: boolean;
+  latexBasic: LatexValidationResult;
+  latexAdvanced: LatexValidationResult;
+  allErrorCodes: string[];
+}
+
+export interface LatexValidationResult {
+  isValid: boolean;
+  errors: ValidationError[];
+}
+
+export interface ValidationError {
+  errorCode: string;
+  location: string;
+  message: string;
+  suggestion?: string;
+}
+
+// Fix LaTeX Types
+export interface FixLaTeXRequest {
+  problemText?: string;
+  problemLatex?: string;
+  solutionSteps?: SolutionStepRequest[];
+  finalAnswer?: string;
+  commonMistakes?: CommonMistakeRequest[];
+  hints?: string[];
+  errorCodes: string[];
+}
+
+export interface FixLaTeXResponse {
+  problemText?: string;
+  problemLatex?: string;
+  solutionSteps?: SolutionStepResponse[];
+  finalAnswer?: string;
+  commonMistakes?: CommonMistakeResponse[];
+  hints?: string[];
+  fixesApplied: FixApplied[];
+  unfixableErrors: ValidationError[];
+}
+
+export interface SolutionStepResponse {
+  stepNumber?: number;
+  description?: string;
+  content?: string;
+  explanation?: string;
+}
+
+export interface CommonMistakeResponse {
+  mistake?: string;
+  explanation?: string;
+}
+
+export interface FixApplied {
+  location: string;
+  errorCode: string;
+  original: string;
+  fixed: string;
+  fixType: string;
+}
+
 // Exercise Created By enum (matches backend)
 export enum ExerciseCreatedBy {
   ADMIN = 'ADMIN',
@@ -256,4 +377,15 @@ export enum ExerciseStatus {
   DRAFT = 'DRAFT',
   REVIEWED = 'REVIEWED',
   APPROVED = 'APPROVED',
+}
+
+// Exercise Solution Response (from backend)
+export interface ExerciseSolutionResponse {
+  id: string;
+  exerciseId: string;
+  solutionSteps: string; // JSON string of SolutionStep[]
+  finalAnswer?: string;
+  explanation?: string;
+  createdBy: string;
+  createdAt: string;
 }

@@ -44,6 +44,82 @@ const UNSUPPORTED_COMMANDS: Record<string, string> = {
 };
 
 /**
+ * Extract plain text from HTML content.
+ * This is needed because TipTap editor stores content as HTML, but we need plain text for LaTeX validation.
+ * 
+ * Handles:
+ * - HTML entities: &amp; → &, &lt; → <, &gt; → >, &quot; → ", &#39; → '
+ * - HTML tags: Removes all HTML tags
+ * - Preserves backslashes and LaTeX content
+ * 
+ * Uses regex-based approach to work in both browser and SSR environments.
+ * 
+ * @param html HTML string (or plain text if not HTML)
+ * @returns Plain text extracted from HTML
+ */
+function extractPlainTextFromHTML(html: string): string {
+  if (!html || typeof html !== 'string') {
+    return html || '';
+  }
+
+  // Check if it's actually HTML (contains HTML tags)
+  const isHTML = /<[^>]+>/.test(html);
+  if (!isHTML) {
+    // Not HTML, return as is
+    return html;
+  }
+
+  // Use DOM API if available (browser environment)
+  if (typeof document !== 'undefined') {
+    try {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      const plainText = tempDiv.textContent || tempDiv.innerText || '';
+      return plainText;
+    } catch (e) {
+      // Fallback to regex if DOM API fails
+    }
+  }
+
+  // Fallback: Regex-based extraction (works in SSR)
+  // This approach preserves backslashes and LaTeX content
+  let plainText = html;
+
+  // First, decode HTML entities (must be done before removing tags)
+  // Common entities that might affect LaTeX
+  plainText = plainText
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#160;/g, ' ');
+
+  // Decode numeric entities (&#123; and &#x7B;)
+  plainText = plainText.replace(/&#(\d+);/g, (match, dec) => {
+    return String.fromCharCode(parseInt(dec, 10));
+  });
+  plainText = plainText.replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
+    return String.fromCharCode(parseInt(hex, 16));
+  });
+
+  // Remove HTML tags (but preserve text content including backslashes)
+  // Use a more careful approach: extract text between tags
+  plainText = plainText.replace(/<[^>]+>/g, '');
+
+  // Normalize whitespace (multiple spaces/newlines to single space)
+  // But preserve single spaces and newlines within LaTeX formulas
+  // Only normalize excessive whitespace (3+ spaces or newlines)
+  plainText = plainText.replace(/[ \t]+/g, ' '); // Multiple spaces/tabs to single space
+  plainText = plainText.replace(/\n{3,}/g, '\n\n'); // Multiple newlines to double newline
+  plainText = plainText.trim();
+
+  return plainText;
+}
+
+/**
  * Extract all LaTeX formulas from text
  */
 function extractLatexFormulas(text: string): Array<{ formula: string; startIndex: number; endIndex: number }> {
@@ -161,24 +237,28 @@ function validateLaTeXInField(
     return errors;
   }
 
-  // Extract LaTeX formulas
-  const formulas = extractLatexFormulas(text);
+  // Extract plain text from HTML if content is HTML (e.g., from TipTap editor)
+  // This is important because TipTap stores content as HTML, but we need plain text for LaTeX validation
+  const plainText = extractPlainTextFromHTML(text);
+
+  // Extract LaTeX formulas from plain text
+  const formulas = extractLatexFormulas(plainText);
 
   // Check for formulas without delimiters (potential LaTeX without $...$)
   // This is a heuristic: look for common LaTeX patterns without delimiters
   const potentialLatexPattern = /\\[a-zA-Z]+\{/g;
-  const allMatches = [...text.matchAll(potentialLatexPattern)];
+  const allMatches = [...plainText.matchAll(potentialLatexPattern)];
   
   for (const match of allMatches) {
     // Check if this is not already inside a $...$ block
-    const beforeMatch = text.substring(0, match.index);
+    const beforeMatch = plainText.substring(0, match.index || 0);
     const dollarCount = (beforeMatch.match(/\$/g) || []).length;
     
     if (dollarCount % 2 === 0) {
       // Not inside a $...$ block, might be missing delimiter
       const start = Math.max(0, (match.index || 0) - 20);
-      const end = Math.min(text.length, (match.index || 0) + 50);
-      const snippet = text.substring(start, end);
+      const end = Math.min(plainText.length, (match.index || 0) + 50);
+      const snippet = plainText.substring(start, end);
       
       errors.push({
         field: fieldName,

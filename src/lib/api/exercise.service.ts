@@ -25,7 +25,17 @@ import {
   ValidateJsonResponse,
   ValidateLaTeXRequest,
   ValidateLaTeXResponse,
+  CheckJsonRequest,
+  CheckJsonResponse,
+  FixJsonRequest,
+  FixJsonResponse,
+  CheckLaTeXRequest,
+  CheckLaTeXResponse,
+  FixLaTeXRequest,
+  FixLaTeXResponse,
   ReviewStatus,
+  ExerciseSolutionResponse,
+  SolutionStep,
 } from '../../types/exercise';
 import { ResponseObject, PageResponse } from '../../types/common';
 import { mapExerciseStatusToReviewStatus } from '../utils/exercise-status-mapper';
@@ -86,7 +96,22 @@ export async function getExercises(
 }
 
 /**
- * Get exercise by ID
+ * Get exercise solutions by exercise ID
+ */
+export async function getExerciseSolutions(exerciseId: string): Promise<ResponseObject<ExerciseSolutionResponse[]>> {
+  const response = await apiClient.get<ResponseObject<ExerciseSolutionResponse[]>>(
+    `${API_ENDPOINTS.EXERCISES_GET(exerciseId)}/solutions`
+  );
+  
+  if (response.data.errorCode !== '0000') {
+    throw new Error(response.data.errorDetail || 'Failed to fetch exercise solutions');
+  }
+  
+  return response.data;
+}
+
+/**
+ * Get exercise by ID (with solution steps and final answer)
  */
 export async function getExerciseById(id: string): Promise<ResponseObject<Exercise>> {
   const response = await apiClient.get<ExerciseResponse>(API_ENDPOINTS.EXERCISES_GET(id));
@@ -95,10 +120,39 @@ export async function getExerciseById(id: string): Promise<ResponseObject<Exerci
     throw new Error(response.data.errorDetail || 'Failed to fetch exercise');
   }
   
+  // Fetch solution steps separately
+  let solutionSteps: SolutionStep[] = [];
+  let finalAnswer: string | undefined = undefined;
+  
+  try {
+    const solutionsResponse = await getExerciseSolutions(id);
+    if (solutionsResponse.data && solutionsResponse.data.length > 0) {
+      const solution = solutionsResponse.data[0]; // Get first solution
+      
+      // Parse solutionSteps JSON string
+      if (solution.solutionSteps) {
+        try {
+          solutionSteps = JSON.parse(solution.solutionSteps) as SolutionStep[];
+        } catch (e) {
+          console.error('Failed to parse solutionSteps:', e);
+        }
+      }
+      
+      finalAnswer = solution.finalAnswer;
+    }
+  } catch (error) {
+    console.error('Failed to fetch solution steps:', error);
+    // Continue without solution steps - they might not exist yet
+  }
+  
   return {
     errorCode: response.data.errorCode,
     errorDetail: response.data.errorDetail,
-    data: response.data.data,
+    data: {
+      ...response.data.data,
+      solutionSteps,
+      finalAnswer,
+    },
   };
 }
 
@@ -330,6 +384,80 @@ export async function validateExerciseJson(
   
   if (response.data.errorCode !== '0000') {
     throw new Error(response.data.errorDetail || 'Failed to validate JSON');
+  }
+  
+  return response.data;
+}
+
+/**
+ * Check exercise JSON (comprehensive validation with error codes)
+ */
+export async function checkExerciseJson(
+  data: CheckJsonRequest
+): Promise<ResponseObject<CheckJsonResponse>> {
+  const response = await apiClient.post<ResponseObject<CheckJsonResponse>>(
+    API_ENDPOINTS.EXERCISES_CHECK_JSON,
+    data
+  );
+  
+  if (response.data.errorCode !== '0000') {
+    throw new Error(response.data.errorDetail || 'Failed to check JSON');
+  }
+  
+  return response.data;
+}
+
+/**
+ * Fix exercise JSON based on error codes
+ */
+export async function fixExerciseJson(
+  data: FixJsonRequest
+): Promise<ResponseObject<FixJsonResponse>> {
+  const response = await apiClient.post<ResponseObject<FixJsonResponse>>(
+    API_ENDPOINTS.EXERCISES_FIX_JSON,
+    data
+  );
+  
+  if (response.data.errorCode !== '0000') {
+    throw new Error(response.data.errorDetail || 'Failed to fix JSON');
+  }
+  
+  return response.data;
+}
+
+/**
+ * Check exercise LaTeX (comprehensive validation with error codes)
+ */
+export async function checkExerciseLaTeX(
+  id: string,
+  data: CheckLaTeXRequest
+): Promise<ResponseObject<CheckLaTeXResponse>> {
+  const response = await apiClient.post<ResponseObject<CheckLaTeXResponse>>(
+    API_ENDPOINTS.EXERCISES_CHECK_LATEX(id),
+    data
+  );
+  
+  if (response.data.errorCode !== '0000') {
+    throw new Error(response.data.errorDetail || 'Failed to check LaTeX');
+  }
+  
+  return response.data;
+}
+
+/**
+ * Fix exercise LaTeX based on error codes
+ */
+export async function fixExerciseLaTeX(
+  id: string,
+  data: FixLaTeXRequest
+): Promise<ResponseObject<FixLaTeXResponse>> {
+  const response = await apiClient.post<ResponseObject<FixLaTeXResponse>>(
+    API_ENDPOINTS.EXERCISES_FIX_LATEX(id),
+    data
+  );
+  
+  if (response.data.errorCode !== '0000') {
+    throw new Error(response.data.errorDetail || 'Failed to fix LaTeX');
   }
   
   return response.data;

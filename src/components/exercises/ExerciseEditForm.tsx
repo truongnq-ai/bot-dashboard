@@ -4,7 +4,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,12 +20,12 @@ import { ReviewStatus } from '@/types/exercise';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { Skill } from '@/types/skill';
 import { getChaptersByGrade } from '@/lib/api/chapter.service';
+import { getSkillsByChapter } from '@/lib/api/skill.service';
 import { Chapter } from '@/types/chapter';
 import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
-import { validateExerciseLaTeX, autoFixLaTeX, ValidationResult, LaTeXError, ExerciseFormDataForValidation } from '@/lib/utils/latex-validator';
 import LaTeXPreview from '@/components/common/LaTeXPreview';
-import { validateLaTeX } from '@/lib/api/exercise.service';
-import { ValidateLaTeXRequest } from '@/types/exercise';
+import { checkExerciseLaTeX, fixExerciseLaTeX } from '@/lib/api/exercise.service';
+import { CheckLaTeXRequest, CheckLaTeXResponse, FixLaTeXRequest, ValidationError, FixApplied } from '@/types/exercise';
 
 const exerciseSchema = z.object({
   skillId: z.string().optional().or(z.literal('')),
@@ -50,7 +50,6 @@ interface ExerciseEditFormProps {
 export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
   const router = useRouter();
   const { data: exercise, loading: exerciseLoading } = useExercise(id);
-  const { data: skillsData } = useSkills();
   const [solutionSteps, setSolutionSteps] = useState<SolutionStepRequest[]>([]);
   const [commonMistakes, setCommonMistakes] = useState<CommonMistakeRequest[]>([]);
   const [hints, setHints] = useState<string[]>([]);
@@ -58,21 +57,44 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadingDots, setLoadingDots] = useState('.');
-  const [validationResults, setValidationResults] = useState<ValidationResult | null>(null);
+  const [checkResult, setCheckResult] = useState<CheckLaTeXResponse | null>(null);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
-  const [validating, setValidating] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [fixing, setFixing] = useState(false);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [chaptersLoading, setChaptersLoading] = useState(false);
+  const [chapterSkills, setChapterSkills] = useState<Skill[]>([]);
+  const [skillsLoading, setSkillsLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    reset,
+    watch,
+  } = useForm<ExerciseFormData>({
+    resolver: zodResolver(exerciseSchema),
+  });
 
   const selectedGrade = watch('grade');
+  const selectedChapterId = watch('chapterId');
+  const { data: skillsData } = useSkills({
+    grade: (selectedGrade || exercise?.grade) as 6 | 7 | undefined,
+    chapterId: selectedChapterId || exercise?.chapterId,
+    pageSize: 1000,
+    sortBy: 'code',
+    sortDirection: 'asc',
+  });
 
-  // Fetch chapters by grade when grade is selected
+  // Fetch chapters by grade when grade is selected or when exercise is loaded
   useEffect(() => {
     const fetchChapters = async () => {
-      if (selectedGrade) {
+      const gradeToFetch = selectedGrade || exercise?.grade;
+      if (gradeToFetch) {
         setChaptersLoading(true);
         try {
-          const response = await getChaptersByGrade(selectedGrade as 6 | 7);
+          const response = await getChaptersByGrade(gradeToFetch as 6 | 7);
           if (response.errorCode === '0000' && response.data) {
             setChapters(response.data);
           }
@@ -86,18 +108,49 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
       }
     };
     fetchChapters();
-  }, [selectedGrade]);
+  }, [selectedGrade, exercise?.grade]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    reset,
-    watch,
-  } = useForm<ExerciseFormData>({
-    resolver: zodResolver(exerciseSchema),
-  });
+  // Fetch skills by chapter when chapter is selected or when exercise is loaded
+  useEffect(() => {
+    const fetchChapterSkills = async () => {
+      const chapterIdToFetch = selectedChapterId || exercise?.chapterId;
+      if (chapterIdToFetch) {
+        setSkillsLoading(true);
+        try {
+          const response = await getSkillsByChapter(chapterIdToFetch);
+          if (response.errorCode === '0000' && response.data) {
+            // Sort skills by code
+            const sorted = [...response.data].sort((a, b) => {
+              return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+            });
+            setChapterSkills(sorted);
+          } else {
+            setChapterSkills([]);
+          }
+        } catch (error) {
+          console.error('Failed to fetch chapter skills:', error);
+          setChapterSkills([]);
+        } finally {
+          setSkillsLoading(false);
+        }
+      } else {
+        setChapterSkills([]);
+      }
+    };
+    fetchChapterSkills();
+  }, [selectedChapterId, exercise?.chapterId]);
+
+  // Sort skills by code alphabetically - use chapterSkills if available, otherwise fallback to all skills
+  const sortedSkills = useMemo(() => {
+    if (chapterSkills.length > 0) {
+      return chapterSkills;
+    }
+    // Fallback to all skills if no chapter selected
+    if (!skillsData?.content) return [];
+    return [...skillsData.content].sort((a, b) => {
+      return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [chapterSkills, skillsData]);
 
   // Load exercise data
   useEffect(() => {
@@ -105,25 +158,33 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
       reset({
         skillId: exercise.skillId,
         grade: exercise.grade,
-        chapterId: exercise.chapterId,
-        problemType: exercise.problemType,
-        problemText: exercise.problemText,
-        problemLatex: exercise.problemLatex,
-        problemImageUrl: exercise.problemImageUrl,
+        chapterId: exercise.chapterId || '',
+        problemType: exercise.problemType || '',
+        problemText: exercise.problemText || '',
+        problemLatex: exercise.problemLatex || '', // Convert null to empty string
+        problemImageUrl: exercise.problemImageUrl || '',
         difficultyLevel: exercise.difficultyLevel,
-        finalAnswer: exercise.finalAnswer,
-        learningObjective: exercise.learningObjective,
+        finalAnswer: exercise.finalAnswer || '',
+        learningObjective: exercise.learningObjective || '',
         timeEstimateSec: exercise.timeEstimateSec,
       });
       setImageUrl(exercise.problemImageUrl || '');
-      setSolutionSteps(
-        exercise.solutionSteps.map((s) => ({
-          stepNumber: s.stepNumber,
-          description: s.description,
-          content: s.content,
-          explanation: s.explanation,
-        }))
-      );
+      
+      // Load solution steps - should be populated by getExerciseById now
+      if (exercise.solutionSteps && exercise.solutionSteps.length > 0) {
+        setSolutionSteps(
+          exercise.solutionSteps.map((s) => ({
+            stepNumber: s.stepNumber,
+            description: s.description || '',
+            content: s.content,
+            explanation: s.explanation || '',
+          }))
+        );
+      } else {
+        // If no solution steps, initialize with empty array
+        setSolutionSteps([]);
+      }
+      
       setCommonMistakes(exercise.commonMistakes || []);
       setHints(exercise.hints || []);
     }
@@ -168,7 +229,10 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
     try {
       const request: UpdateExerciseRequest = {
         ...data,
+        problemText: data.problemText || undefined,
+        problemLatex: data.problemLatex || undefined, // Convert empty string to undefined
         problemImageUrl: imageUrl || undefined,
+        finalAnswer: data.finalAnswer || undefined,
         solutionSteps,
         learningObjective: data.learningObjective || undefined,
         commonMistakes: commonMistakes.length > 0 ? commonMistakes : undefined,
@@ -263,17 +327,18 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
     setHints(newHints);
   };
 
-  // LaTeX Validation handlers
-  const handleValidate = async () => {
-    setValidating(true);
+  // LaTeX Check and Fix handlers (using backend API)
+  const handleCheck = async () => {
+    setCheckResult(null);
     setShowValidationErrors(true);
+    setChecking(true);
 
     try {
       // Get current form values
       const formValues = watch();
       
-      // Prepare exercise data for validation
-      const exerciseData: ExerciseFormDataForValidation = {
+      // Prepare exercise data for check
+      const checkRequest: CheckLaTeXRequest = {
         problemText: formValues.problemText,
         problemLatex: formValues.problemLatex,
         solutionSteps,
@@ -282,135 +347,115 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
         hints,
       };
 
-      // Run frontend validation
-      const result = validateExerciseLaTeX(exerciseData);
-      setValidationResults(result);
-
-      if (result.isValid) {
-        showSuccess('Không có lỗi LaTeX nào được phát hiện');
-      } else {
-        showError(`Phát hiện ${result.errors.length} lỗi LaTeX (${result.autoFixableCount} có thể sửa tự động)`);
+      const response = await checkExerciseLaTeX(id, checkRequest);
+      
+      if (response.errorCode === '0000' && response.data) {
+        setCheckResult(response.data);
         
-        // If there are complex errors (non-auto-fixable), call backend API for comprehensive validation
-        const complexErrors = result.errors.filter((e) => !e.autoFixable);
-        if (complexErrors.length > 0) {
-          try {
-            const validationRequest: ValidateLaTeXRequest = {
-              problemText: formValues.problemText,
-              problemLatex: formValues.problemLatex,
-              solutionSteps,
-              finalAnswer: formValues.finalAnswer,
-              commonMistakes,
-              hints,
-            };
-            
-            const backendResult = await validateLaTeX(id, validationRequest);
-            if (backendResult.data) {
-              // Merge backend results with frontend results
-              const mergedErrors = [...result.errors];
-              backendResult.data.errors.forEach((backendError) => {
-                // Only add if not already present (avoid duplicates)
-                if (!mergedErrors.some((e) => e.location === backendError.location && e.error === backendError.error)) {
-                  mergedErrors.push(backendError);
-                }
-              });
-              
-              setValidationResults({
-                isValid: backendResult.data.isValid,
-                errors: mergedErrors,
-                autoFixableCount: backendResult.data.autoFixableCount,
-              });
-            }
-          } catch (error) {
-            // If backend validation fails, use frontend results
-            // Log only in development mode
-            if (process.env.NODE_ENV === 'development') {
-              console.warn('Backend validation failed, using frontend results:', error);
-            }
-          }
+        if (response.data.isValid) {
+          showSuccess('LaTeX hợp lệ! Không có lỗi nào được phát hiện.');
+        } else {
+          showError(`Phát hiện ${response.data.allErrorCodes.length} lỗi. Vui lòng click "Sửa" để tự động sửa.`);
         }
+      } else {
+        showError(response.errorDetail || 'Kiểm tra thất bại');
       }
     } catch (error) {
-      showError('Lỗi khi kiểm tra LaTeX: ' + (error instanceof Error ? error.message : 'Lỗi không xác định'));
+      const errorMessage = error instanceof Error ? error.message : 'Lỗi không xác định';
+      showError('Kiểm tra thất bại: ' + errorMessage);
     } finally {
-      setValidating(false);
+      setChecking(false);
     }
   };
 
-  const handleAutoFix = () => {
-    if (!validationResults || validationResults.autoFixableCount === 0) {
+  const handleFix = async () => {
+    if (!checkResult || !checkResult.allErrorCodes || checkResult.allErrorCodes.length === 0) {
+      showError('Không có lỗi để sửa. Vui lòng kiểm tra LaTeX trước.');
       return;
     }
 
-    const autoFixableErrors = validationResults.errors.filter((e) => e.autoFixable && e.fixedValue);
+    setFixing(true);
 
-    // Apply fixes to form fields
-    autoFixableErrors.forEach((error) => {
-      if (error.fixedValue) {
-        // Determine which field to update based on location
-        if (error.location.startsWith('problemText')) {
-          const fixed = autoFixLaTeX(watch('problemText') || '');
-          setValue('problemText', fixed.fixed);
-        } else if (error.location.startsWith('problemLatex')) {
-          setValue('problemLatex', error.fixedValue);
-        } else if (error.location.startsWith('finalAnswer')) {
-          const fixed = autoFixLaTeX(watch('finalAnswer') || '');
-          setValue('finalAnswer', fixed.fixed);
-        } else if (error.location.startsWith('solutionSteps[')) {
-          const match = error.location.match(/solutionSteps\[(\d+)\]\.(content|explanation)/);
-          if (match) {
-            const index = parseInt(match[1]);
-            const field = match[2] as 'content' | 'explanation';
-            const newSteps = [...solutionSteps];
-            if (newSteps[index]) {
-              const fixed = autoFixLaTeX(newSteps[index][field] || '');
-              newSteps[index] = { ...newSteps[index], [field]: fixed.fixed };
-              setSolutionSteps(newSteps);
-            }
-          }
-        } else if (error.location.startsWith('commonMistakes[')) {
-          const match = error.location.match(/commonMistakes\[(\d+)\]\.(mistake|explanation)/);
-          if (match) {
-            const index = parseInt(match[1]);
-            const field = match[2] as 'mistake' | 'explanation';
-            const newMistakes = [...commonMistakes];
-            if (newMistakes[index]) {
-              const fixed = autoFixLaTeX(newMistakes[index][field] || '');
-              newMistakes[index] = { ...newMistakes[index], [field]: fixed.fixed };
-              setCommonMistakes(newMistakes);
-            }
-          }
-        } else if (error.location.startsWith('hints[')) {
-          const match = error.location.match(/hints\[(\d+)\]/);
-          if (match) {
-            const index = parseInt(match[1]);
-            const newHints = [...hints];
-            if (newHints[index]) {
-              const fixed = autoFixLaTeX(newHints[index]);
-              newHints[index] = fixed.fixed;
-              setHints(newHints);
-            }
-          }
+    try {
+      // Get current form values
+      const formValues = watch();
+      
+      // Prepare exercise data for fix
+      const fixRequest: FixLaTeXRequest = {
+        problemText: formValues.problemText,
+        problemLatex: formValues.problemLatex,
+        solutionSteps,
+        finalAnswer: formValues.finalAnswer,
+        commonMistakes,
+        hints,
+        errorCodes: checkResult.allErrorCodes,
+      };
+
+      const response = await fixExerciseLaTeX(id, fixRequest);
+
+      if (response.errorCode === '0000' && response.data) {
+        // Apply fixes to form fields
+        if (response.data.problemText !== undefined) {
+          setValue('problemText', response.data.problemText);
         }
-      }
-    });
+        if (response.data.problemLatex !== undefined) {
+          setValue('problemLatex', response.data.problemLatex);
+        }
+        if (response.data.finalAnswer !== undefined) {
+          setValue('finalAnswer', response.data.finalAnswer);
+        }
+        if (response.data.solutionSteps) {
+          setSolutionSteps(response.data.solutionSteps);
+        }
+        if (response.data.commonMistakes) {
+          setCommonMistakes(response.data.commonMistakes);
+        }
+        if (response.data.hints) {
+          setHints(response.data.hints);
+        }
 
-    showSuccess(`Đã áp dụng ${autoFixableErrors.length} sửa tự động`);
-    
-    // Re-validate after auto-fix
-    setTimeout(() => {
-      handleValidate();
-    }, 100);
+        if (response.data.unfixableErrors.length > 0) {
+          showError(`Đã sửa ${response.data.fixesApplied.length} lỗi. Còn ${response.data.unfixableErrors.length} lỗi không thể tự động sửa.`);
+        } else {
+          showSuccess(`Đã sửa ${response.data.fixesApplied.length} lỗi thành công. Vui lòng kiểm tra lại.`);
+          // Auto-check after fix
+          setTimeout(() => {
+            handleCheck();
+          }, 500);
+        }
+      } else {
+        showError(response.errorDetail || 'Sửa thất bại');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Lỗi không xác định';
+      showError('Sửa thất bại: ' + errorMessage);
+    } finally {
+      setFixing(false);
+    }
   };
 
   // Get errors for a specific field
-  const getFieldErrors = (fieldName: string, location?: string): LaTeXError[] => {
-    if (!validationResults || !showValidationErrors) return [];
-    return validationResults.errors.filter((e) => {
+  const getFieldErrors = (fieldName: string, location?: string): ValidationError[] => {
+    if (!checkResult || !showValidationErrors) return [];
+    
+    // Combine errors from latexBasic and latexAdvanced
+    const allErrors: ValidationError[] = [
+      ...(checkResult.latexBasic.errors || []),
+      ...(checkResult.latexAdvanced.errors || [])
+    ];
+    
+    return allErrors.filter((e) => {
       if (location) {
         return e.location === location || e.location.startsWith(location);
       }
-      return e.field === fieldName;
+      // Map fieldName to location pattern
+      const locationPattern = fieldName === 'problemText' ? 'problemText' :
+                              fieldName === 'problemLatex' ? 'problemLatex' :
+                              fieldName === 'finalAnswer' ? 'finalAnswer' :
+                              fieldName.startsWith('solutionSteps') ? 'solutionSteps' :
+                              fieldName.startsWith('commonMistakes') ? 'commonMistakes' :
+                              fieldName.startsWith('hints') ? 'hints' : '';
+      return e.location.startsWith(locationPattern);
     });
   };
 
@@ -482,11 +527,20 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
               <select
                 {...register('skillId')}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                disabled={!selectedGrade || !selectedChapterId || skillsLoading}
               >
-                <option value="">Chọn kỹ năng</option>
-                {skillsData?.content?.map((skill: Skill) => (
+                <option value="">
+                  {!selectedGrade 
+                    ? 'Chọn lớp trước' 
+                    : !selectedChapterId 
+                      ? 'Chọn chương trước' 
+                      : skillsLoading
+                        ? 'Đang tải...'
+                        : 'Chọn kỹ năng'}
+                </option>
+                {sortedSkills.map((skill: Skill) => (
                   <option key={skill.id} value={skill.id}>
-                    {skill.name}
+                    {skill.code} - {skill.name}
                   </option>
                 ))}
               </select>
@@ -527,40 +581,34 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
           <SolutionStepsEditor steps={solutionSteps} onChange={setSolutionSteps} />
         </div>
 
-        {/* Validation Results Summary */}
-        {showValidationErrors && validationResults && !validationResults.isValid && (
+        {/* Check Results Summary */}
+        {showValidationErrors && checkResult && !checkResult.isValid && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="text-sm font-semibold text-red-800 dark:text-red-200 mb-2">
-                  Phát hiện {validationResults.errors.length} lỗi LaTeX
+                  Phát hiện {checkResult.allErrorCodes.length} lỗi LaTeX
                 </h3>
                 <div className="space-y-1 max-h-48 overflow-y-auto">
-                  {validationResults.errors.slice(0, 5).map((error, index) => (
-                    <div key={index} className="text-sm text-red-700 dark:text-red-300">
-                      <span className="font-medium">{error.location}:</span> {error.error}
-                      {error.suggestion && (
-                        <span className="text-gray-600 dark:text-gray-400 ml-1">({error.suggestion})</span>
-                      )}
-                    </div>
-                  ))}
-                  {validationResults.errors.length > 5 && (
+                  {(() => {
+                    const allErrors = [...checkResult.latexBasic.errors, ...checkResult.latexAdvanced.errors];
+                    return allErrors.slice(0, 5).map((error, index) => (
+                      <div key={index} className="text-sm text-red-700 dark:text-red-300">
+                        <span className="font-medium">{error.location}:</span> {error.message}
+                        {error.suggestion && (
+                          <span className="text-gray-600 dark:text-gray-400 ml-1">({error.suggestion})</span>
+                        )}
+                      </div>
+                    ));
+                  })()}
+                  {checkResult.allErrorCodes.length > 5 && (
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      và {validationResults.errors.length - 5} lỗi khác...
+                      và {checkResult.allErrorCodes.length - 5} lỗi khác...
                     </p>
                   )}
                 </div>
               </div>
             </div>
-            {validationResults.autoFixableCount > 0 && (
-              <button
-                type="button"
-                onClick={handleAutoFix}
-                className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
-              >
-                Áp dụng {validationResults.autoFixableCount} sửa tự động
-              </button>
-            )}
           </div>
         )}
 
@@ -574,11 +622,11 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
           </button>
           <button
             type="button"
-            onClick={handleValidate}
-            disabled={validating}
+            onClick={handleCheck}
+            disabled={checking}
             className="px-6 py-2 border border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 relative"
           >
-            {validating && (
+            {checking && (
               <svg
                 className="animate-spin h-4 w-4"
                 xmlns="http://www.w3.org/2000/svg"
@@ -601,12 +649,44 @@ export default function ExerciseEditForm({ id }: ExerciseEditFormProps) {
               </svg>
             )}
             Kiểm tra
-            {validationResults && !validationResults.isValid && (
+            {checkResult && !checkResult.isValid && (
               <span className="ml-1 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
-                {validationResults.errors.length}
+                {checkResult.allErrorCodes.length}
               </span>
             )}
           </button>
+          {checkResult && !checkResult.isValid && checkResult.allErrorCodes.length > 0 && (
+            <button
+              type="button"
+              onClick={handleFix}
+              disabled={fixing}
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 relative"
+            >
+              {fixing && (
+                <svg
+                  className="animate-spin h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              )}
+              Sửa
+            </button>
+          )}
           <button
             type="submit"
             disabled={submitting}

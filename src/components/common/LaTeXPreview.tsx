@@ -7,11 +7,11 @@
 
 import React from 'react';
 import MathText from './MathText';
-import { LaTeXError } from '@/lib/utils/latex-validator';
+import { ValidationError } from '@/types/exercise';
 
 interface LaTeXPreviewProps {
   text: string;
-  errors?: LaTeXError[];
+  errors?: ValidationError[];
   showErrors?: boolean;
   className?: string;
 }
@@ -60,7 +60,7 @@ export default function LaTeXPreview({
                   className="text-xs text-red-600 dark:text-red-400"
                   title={error.suggestion}
                 >
-                  • {error.error}
+                  • {error.message}
                   {error.suggestion && (
                     <span className="text-gray-500 dark:text-gray-400 ml-1">
                       ({error.suggestion})
