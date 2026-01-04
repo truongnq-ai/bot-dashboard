@@ -792,3 +792,43 @@ Module Web Admin Dashboard hiện tại:
 
 **KẾT THÚC BÁO CÁO**
 
+Kết quả phân tích
+Phân loại codebase
+SAFE TO KEEP (~70%):
+Frontend infrastructure (NextJS, routing, layout)
+UI tooling (components, forms, icons)
+State management (React Query, Context)
+Rich text editor & Math rendering
+Authentication logic cơ bản (login)
+RESET / REWRITE REQUIRED (~20%):
+Exercise management (cần loại bỏ review workflow)
+Menu config (cần loại bỏ admin/students/parents)
+API services (cần filter theo teacher_id)
+MUST BE REMOVED (~10%):
+User management UI (students, parents, admins)
+Dashboard & analytics
+System monitoring
+Review workflow
+Reset password
+Rủi ro lớn nhất
+Admin management UI — vi phạm System Law về đối tượng trung tâm
+User management UI — vi phạm Phase 1 Law về user model
+Review workflow — vi phạm quyền kiểm soát của giáo viên
+Dashboard analytics — vi phạm Phase 1 Law về UI
+Phát hiện quan trọng
+Frontend không có role-based access control — đúng với Phase 1
+Backend có role logic — không được reuse
+Module giả định admin là actor chính — vi phạm System Law
+Dashboard tổng hợp — vi phạm Phase 1 Law
+Báo cáo chi tiết đã được lưu tại:
+tutor-admin-dashboard/WEB_ADMIN_DASHBOARD_DISCOVERY_REPORT.md
+Báo cáo bao gồm:
+Phân tích mục đích và giả định ngầm
+Phân tích từng nhóm màn hình
+Phân tích Auth, Role & Permission logic
+Phân tích Frontend infra & UI tooling
+Phân tích vi phạm System Law & Phase 1
+Phân loại thành phần (KEEP / RESET / REMOVE)
+Danh sách rủi ro
+Câu hỏi cần Product Owner chốt
+Báo cáo này có thể dùng làm tài liệu chính thức cho bước CLEANUP tiếp theo.
