@@ -1,19 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Admin } from '@/types/admin';
+import { Teacher } from '@/types/teacher';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import ActionsDropdown from '@/components/common/ActionsDropdown';
 import { ActionItem } from '@/types/common';
 import { formatDate, truncateText } from '@/lib/utils/formatters';
-import { resetUserPassword } from '@/lib/api/admin.service';
+import { resetTeacherPassword } from '@/lib/api/teacher.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import AlertModal from '@/components/common/AlertModal';
 import ConfirmModal from '@/components/common/ConfirmModal';
 
-interface AdminListTableProps {
-  admins: Admin[];
-  onViewDetail?: (admin: Admin) => void;
+interface TeacherListTableProps {
+  teachers: Teacher[];
+  onViewDetail?: (teacher: Teacher) => void;
   pagination?: {
     page: number;
     pageSize: number;
@@ -24,18 +24,18 @@ interface AdminListTableProps {
   };
 }
 
-export default function AdminListTable({
-  admins,
+export default function TeacherListTable({
+  teachers,
   onViewDetail,
   pagination,
-}: AdminListTableProps) {
+}: TeacherListTableProps) {
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
-    admin: Admin | null;
+    teacher: Teacher | null;
   }>({
     isOpen: false,
-    admin: null,
+    teacher: null,
   });
   const [resetPasswordModal, setResetPasswordModal] = useState<{
     isOpen: boolean;
@@ -59,19 +59,19 @@ export default function AdminListTable({
     }
   };
 
-  const handleResetPasswordClick = (admin: Admin) => {
+  const handleResetPasswordClick = (teacher: Teacher) => {
     setConfirmModal({
       isOpen: true,
-      admin,
+      teacher,
     });
   };
 
   const handleConfirmResetPassword = async () => {
-    if (!confirmModal.admin) return;
+    if (!confirmModal.teacher) return;
 
     try {
-      setResettingId(confirmModal.admin.id);
-      const response = await resetUserPassword(confirmModal.admin.id);
+      setResettingId(confirmModal.teacher.id);
+      const response = await resetTeacherPassword(confirmModal.teacher.id);
       if (response.errorCode === '0000' && response.data) {
         setResetPasswordModal({
           isOpen: true,
@@ -85,24 +85,24 @@ export default function AdminListTable({
       showError('Hệ thống không có phản hồi.');
     } finally {
       setResettingId(null);
-      setConfirmModal({ isOpen: false, admin: null });
+      setConfirmModal({ isOpen: false, teacher: null });
     }
   };
 
-  const getActions = (admin: Admin): ActionItem[] => {
+  const getActions = (teacher: Teacher): ActionItem[] => {
     return [
       {
         id: 'view',
         label: 'Xem chi tiết',
         type: 'success',
-        onClick: () => onViewDetail?.(admin),
+        onClick: () => onViewDetail?.(teacher),
       },
       {
         id: 'reset-password',
         label: 'Reset mật khẩu',
         type: 'warning',
-        onClick: () => handleResetPasswordClick(admin),
-        disabled: resettingId === admin.id,
+        onClick: () => handleResetPasswordClick(teacher),
+        disabled: resettingId === teacher.id,
       },
     ];
   };
@@ -136,34 +136,34 @@ export default function AdminListTable({
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {admins.length === 0 ? (
+                {teachers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
                       Không tìm thấy người dùng nào
                     </TableCell>
                   </TableRow>
                 ) : (
-                  admins.map((admin) => (
-                    <TableRow key={admin.id}>
+                  teachers.map((teacher) => (
+                    <TableRow key={teacher.id}>
                       <TableCell className="px-5 py-4 sm:px-6 text-start text-theme-sm dark:text-white/90">
-                        {truncateText(admin.id, 8)}
+                        {truncateText(teacher.id, 8)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-900 text-start text-theme-sm dark:text-white font-medium">
-                        {admin.username}
+                        {teacher.username}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-900 text-start text-theme-sm dark:text-white">
-                        {admin.name}
+                        {teacher.name}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                          {admin.role || 'ADMIN'}
+                          {teacher.role || 'TEACHER'}
                         </span>
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                        {formatDate(admin.createdAt)}
+                        {formatDate(teacher.createdAt)}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-start">
-                        <ActionsDropdown actions={getActions(admin)} />
+                        <ActionsDropdown actions={getActions(teacher)} />
                       </TableCell>
                     </TableRow>
                   ))
@@ -207,14 +207,14 @@ export default function AdminListTable({
       {/* Confirm Reset Password Modal */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal({ isOpen: false, admin: null })}
+        onClose={() => setConfirmModal({ isOpen: false, teacher: null })}
         onConfirm={handleConfirmResetPassword}
         variant="warning"
         title="Xác nhận reset mật khẩu"
-        message={`Bạn có chắc muốn reset mật khẩu cho ${confirmModal.admin?.username}?`}
+        message={`Bạn có chắc muốn reset mật khẩu cho ${confirmModal.teacher?.username}?`}
         confirmText="Xác nhận"
         cancelText="Hủy"
-        isLoading={resettingId === confirmModal.admin?.id}
+        isLoading={resettingId === confirmModal.teacher?.id}
       />
 
       {/* Reset Password Result Modal */}

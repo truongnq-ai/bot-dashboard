@@ -57,11 +57,17 @@ export const API_ENDPOINTS = {
 
   // Admins
   ADMINS_LIST: `${API_VERSION}/admin/users`,
+  ADMINS_GET_PAGE: `${API_VERSION}/admin/users/getPage/`,
   ADMINS_GET: (id: string) => `${API_VERSION}/admin/users/${id}`,
   ADMINS_CREATE: `${API_VERSION}/admin/users`,
   USERS_RESET_PASSWORD: (id: string) => `${API_VERSION}/admin/users/${id}/reset-password`,
 
-  // Students
+  // Teachers
+  TEACHERS_GET_PAGE: `${API_VERSION}/admin/users/getPage/`,
+  TEACHERS_GET: (id: string) => `${API_VERSION}/admin/users/${id}`,
+  TEACHERS_CREATE: `${API_VERSION}/admin/users`,
+
+  // Students (legacy - may be used elsewhere)
   STUDENTS_LIST: `${API_VERSION}/admin/users`,
   STUDENTS_GET: (id: string) => `${API_VERSION}/admin/users/${id}`,
 

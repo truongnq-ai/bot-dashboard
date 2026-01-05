@@ -39,7 +39,7 @@ export const PHASE1_MAIN_MENU_ITEMS: NavItem[] = [
     icon: <UserCircleIcon />,
     name: "Người dùng",
     subItems: [
-      { name: "Học sinh", path: "/users/students", pro: false },
+      { name: "Giáo viên", path: "/users/teachers", pro: false },
       { name: "Phụ huynh", path: "/users/parents", pro: false },
       { name: "Quản trị viên", path: "/users/admins", pro: false },
     ],

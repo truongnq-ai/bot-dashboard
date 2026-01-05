@@ -2,23 +2,23 @@
 
 import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/modal';
-import { CreateUserRequest } from '@/types/admin';
-import { createAdmin } from '@/lib/api/admin.service';
+import { CreateUserRequest } from '@/types/teacher';
+import { createTeacher } from '@/lib/api/teacher.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
 
-interface AdminCreateModalProps {
+interface TeacherCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCreateModalProps) {
+export default function TeacherCreateModal({ isOpen, onClose, onSuccess }: TeacherCreateModalProps) {
   const [formData, setFormData] = useState<CreateUserRequest>({
     username: '',
     password: '',
     name: '',
-    role: 'ADMIN',
+    role: 'TEACHER',
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -78,21 +78,21 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
 
     try {
       setLoading(true);
-      const response = await createAdmin(formData);
+      const response = await createTeacher(formData);
       if (response.errorCode === '0000') {
-        showSuccess('Tạo tài khoản admin thành công');
+        showSuccess('Tạo tài khoản giáo viên thành công');
         onSuccess?.();
         onClose();
         setFormData({
           username: '',
           password: '',
           name: '',
-          role: 'ADMIN',
+          role: 'TEACHER',
         });
         setConfirmPassword('');
         setErrors({});
       } else {
-        showError(response.errorDetail || 'Tạo tài khoản admin thất bại');
+        showError(response.errorDetail || 'Tạo tài khoản giáo viên thất bại');
       }
     } catch (error) {
       showError('Hệ thống không có phản hồi.');
@@ -104,7 +104,7 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-4 sm:p-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tạo tài khoản Admin</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tạo tài khoản Giáo viên</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -175,10 +175,10 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
             </label>
             <select
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
-              value="ADMIN"
+              value="TEACHER"
               disabled
             >
-              <option value="ADMIN">Admin</option>
+              <option value="TEACHER">Giáo viên</option>
             </select>
           </div>
 

@@ -1,16 +1,16 @@
 /**
- * Admin Service
+ * Teacher Service
  */
 
 import apiClient from './client';
 import { API_ENDPOINTS } from './endpoints';
 import {
-  Admin,
-  AdminSearchParams,
+  Teacher,
+  TeacherSearchParams,
   CreateUserRequest,
-  AdminListResponse,
-  AdminResponse,
-} from '../../types/admin';
+  TeacherListResponse,
+  TeacherResponse,
+} from '../../types/teacher';
 import {
   ResponseObject,
   PageResponse,
@@ -20,14 +20,14 @@ import {
 } from '../../types/common';
 
 /**
- * Get admins list with filters and pagination using POST getPage pattern
+ * Get teachers list with filters and pagination using POST getPage pattern
  */
-export async function getAdmins(
-  params: AdminSearchParams = {}
-): Promise<ResponseObject<PageResponse<Admin>>> {
-  // Build UserPageRequest filter - role is always ADMIN
+export async function getTeachers(
+  params: TeacherSearchParams = {}
+): Promise<ResponseObject<PageResponse<Teacher>>> {
+  // Build UserPageRequest filter - role is always TEACHER
   const userPageRequest: UserPageRequest = {
-    role: 'ADMIN',
+    role: 'TEACHER',
     username: params.username,
     name: params.name,
   };
@@ -39,8 +39,8 @@ export async function getAdmins(
     dataRequest: userPageRequest,
   };
 
-  const response = await apiClient.post<AdminListResponse>(
-    API_ENDPOINTS.ADMINS_GET_PAGE,
+  const response = await apiClient.post<TeacherListResponse>(
+    API_ENDPOINTS.TEACHERS_GET_PAGE,
     pageRequest
   );
 
@@ -52,10 +52,10 @@ export async function getAdmins(
 }
 
 /**
- * Get admin by ID
+ * Get teacher by ID
  */
-export async function getAdminById(id: string): Promise<ResponseObject<Admin>> {
-  const response = await apiClient.get<AdminResponse>(API_ENDPOINTS.ADMINS_GET(id));
+export async function getTeacherById(id: string): Promise<ResponseObject<Teacher>> {
+  const response = await apiClient.get<TeacherResponse>(API_ENDPOINTS.TEACHERS_GET(id));
 
   return {
     errorCode: response.data.errorCode,
@@ -65,12 +65,12 @@ export async function getAdminById(id: string): Promise<ResponseObject<Admin>> {
 }
 
 /**
- * Create new admin
+ * Create new teacher
  */
-export async function createAdmin(
+export async function createTeacher(
   data: CreateUserRequest
-): Promise<ResponseObject<Admin>> {
-  const response = await apiClient.post<AdminResponse>(API_ENDPOINTS.ADMINS_CREATE, data);
+): Promise<ResponseObject<Teacher>> {
+  const response = await apiClient.post<TeacherResponse>(API_ENDPOINTS.TEACHERS_CREATE, data);
 
   return {
     errorCode: response.data.errorCode,
@@ -80,9 +80,9 @@ export async function createAdmin(
 }
 
 /**
- * Reset user password
+ * Reset teacher password
  */
-export async function resetUserPassword(
+export async function resetTeacherPassword(
   id: string
 ): Promise<ResponseObject<ResetPasswordResponse>> {
   const response = await apiClient.post<ResponseObject<ResetPasswordResponse>>(
@@ -95,5 +95,4 @@ export async function resetUserPassword(
     data: response.data.data,
   };
 }
-
 

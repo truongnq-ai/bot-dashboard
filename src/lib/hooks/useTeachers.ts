@@ -1,22 +1,22 @@
 /**
- * Admin Hooks
+ * Teacher Hooks
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Admin, AdminSearchParams } from '@/types/admin';
+import { Teacher, TeacherSearchParams } from '@/types/teacher';
 import { PageResponse } from '@/types/common';
-import { getAdmins, getAdminById } from '@/lib/api/admin.service';
+import { getTeachers, getTeacherById } from '@/lib/api/teacher.service';
 
 /**
- * Hook to fetch admins list with pagination
+ * Hook to fetch teachers list with pagination
  */
-export function useAdmins(searchParams: AdminSearchParams = {}) {
-  const [data, setData] = useState<PageResponse<Admin> | null>(null);
+export function useTeachers(searchParams: TeacherSearchParams = {}) {
+  const [data, setData] = useState<PageResponse<Teacher> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   
   // Store searchParams in ref to use in callback
-  const searchParamsRef = useRef<AdminSearchParams>(searchParams);
+  const searchParamsRef = useRef<TeacherSearchParams>(searchParams);
   searchParamsRef.current = searchParams;
   
   // Serialize searchParams to string for stable comparison
@@ -34,18 +34,18 @@ export function useAdmins(searchParams: AdminSearchParams = {}) {
   // Store previous key to detect changes
   const prevKeyRef = useRef<string>('');
 
-  const fetchAdmins = useCallback(async () => {
+  const fetchTeachers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getAdmins(searchParamsRef.current);
+      const response = await getTeachers(searchParamsRef.current);
       if (response.errorCode === '0000' && response.data) {
         setData(response.data);
       } else {
-        setError(new Error(response.errorDetail || 'Failed to fetch admins'));
+        setError(new Error(response.errorDetail || 'Failed to fetch teachers'));
       }
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch admins'));
+      setError(err instanceof Error ? err : new Error('Failed to fetch teachers'));
     } finally {
       setLoading(false);
     }
@@ -55,22 +55,22 @@ export function useAdmins(searchParams: AdminSearchParams = {}) {
     // Only fetch if searchParams actually changed
     if (prevKeyRef.current !== searchParamsKey) {
       prevKeyRef.current = searchParamsKey;
-      fetchAdmins();
+      fetchTeachers();
     }
-  }, [searchParamsKey, fetchAdmins]);
+  }, [searchParamsKey, fetchTeachers]);
 
-  return { data, loading, error, refetch: fetchAdmins };
+  return { data, loading, error, refetch: fetchTeachers };
 }
 
 /**
- * Hook to fetch single admin by ID
+ * Hook to fetch single teacher by ID
  */
-export function useAdmin(id: string | null) {
-  const [data, setData] = useState<Admin | null>(null);
+export function useTeacher(id: string | null) {
+  const [data, setData] = useState<Teacher | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchAdmin = useCallback(async () => {
+  const fetchTeacher = useCallback(async () => {
     if (!id) {
       setData(null);
       setLoading(false);
@@ -80,23 +80,23 @@ export function useAdmin(id: string | null) {
     try {
       setLoading(true);
       setError(null);
-      const response = await getAdminById(id);
+      const response = await getTeacherById(id);
       if (response.errorCode === '0000' && response.data) {
         setData(response.data);
       } else {
-        setError(new Error(response.errorDetail || 'Failed to fetch admin'));
+        setError(new Error(response.errorDetail || 'Failed to fetch teacher'));
       }
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch admin'));
+      setError(err instanceof Error ? err : new Error('Failed to fetch teacher'));
     } finally {
       setLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
-    fetchAdmin();
-  }, [fetchAdmin]);
+    fetchTeacher();
+  }, [fetchTeacher]);
 
-  return { data, loading, error, refetch: fetchAdmin };
+  return { data, loading, error, refetch: fetchTeacher };
 }
 

@@ -1,14 +1,14 @@
 'use client';
 
 import React from 'react';
-import { AdminSearchParams } from '@/types/admin';
+import { TeacherSearchParams } from '@/types/teacher';
 
-interface AdminFiltersProps {
-  searchParams: AdminSearchParams;
-  onFilterChange: (params: Partial<AdminSearchParams>) => void;
+interface TeacherFiltersProps {
+  searchParams: TeacherSearchParams;
+  onFilterChange: (params: Partial<TeacherSearchParams>) => void;
 }
 
-export default function AdminFilters({ searchParams, onFilterChange }: AdminFiltersProps) {
+export default function TeacherFilters({ searchParams, onFilterChange }: TeacherFiltersProps) {
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -18,10 +18,10 @@ export default function AdminFilters({ searchParams, onFilterChange }: AdminFilt
           </label>
           <select
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
-            value="ADMIN"
+            value="TEACHER"
             disabled
           >
-            <option value="ADMIN">Admin</option>
+            <option value="TEACHER">Giáo viên</option>
           </select>
         </div>
         <div>
