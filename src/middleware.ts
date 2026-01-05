@@ -2,13 +2,12 @@
  * Next.js Middleware
  * 
  * Protects routes and checks authentication.
- * Also enforces Phase 1 scope - blocks routes outside Phase 1 allowed scope.
  */
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { COOKIE_NAMES } from './lib/config/cookie.config';
 import { decodeJWT, isTokenExpired } from './lib/utils/jwt';
-import { isPhase1AllowedRoute } from './lib/config/phase1-routes.config';
 
 // Routes that require authentication
 const protectedRoutes = ['/dashboard', '/content', '/users', '/ai-quality', '/system', '/profile'];
@@ -24,7 +23,7 @@ export function middleware(request: NextRequest) {
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
   // Get access token from cookie
-  const accessToken = request.cookies.get('accessToken')?.value;
+  const accessToken = request.cookies.get(COOKIE_NAMES.ACCESS_TOKEN)?.value;
 
   // Handle protected routes
   if (isProtectedRoute) {
@@ -43,17 +42,16 @@ export function middleware(request: NextRequest) {
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
-
-    // Phase 1 scope check: After authentication passes, check if route is in Phase 1 allowed scope
-    if (!isPhase1AllowedRoute(pathname)) {
-      // Route is protected but not in Phase 1 scope - redirect to dashboard
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
   }
 
   // Handle auth routes (redirect to dashboard if already authenticated)
   if (isAuthRoute && accessToken && !isTokenExpired(accessToken)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    // Get redirect parameter from URL
+    const redirectPath = request.nextUrl.searchParams.get('redirect');
+    const targetPath = redirectPath && redirectPath.startsWith('/')
+      ? decodeURIComponent(redirectPath)
+      : '/dashboard';
+    return NextResponse.redirect(new URL(targetPath, request.url));
   }
 
   return NextResponse.next();

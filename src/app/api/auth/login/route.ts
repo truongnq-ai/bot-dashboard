@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getApiBaseUrl } from '@/lib/config/api.config';
+import { COOKIE_NAMES } from '@/lib/config/cookie.config';
 import { ResponseObject } from '@/types/common';
 import { AuthenticationResponse } from '@/types/auth';
 
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
     const cookieStore = await cookies();
     
     // Set accessToken cookie
-    cookieStore.set('accessToken', authResponse.accessToken, {
+    cookieStore.set(COOKIE_NAMES.ACCESS_TOKEN, authResponse.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Set refreshToken cookie
-    cookieStore.set('refreshToken', authResponse.refreshToken, {
+    cookieStore.set(COOKIE_NAMES.REFRESH_TOKEN, authResponse.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

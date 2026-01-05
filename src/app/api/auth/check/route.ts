@@ -6,12 +6,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { COOKIE_NAMES } from '@/lib/config/cookie.config';
 import { decodeJWT, isTokenExpired } from '@/lib/utils/jwt';
 
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const accessToken = cookieStore.get('accessToken')?.value;
+    const accessToken = cookieStore.get(COOKIE_NAMES.ACCESS_TOKEN)?.value;
 
     if (!accessToken) {
       return NextResponse.json({ isAuthenticated: false });

@@ -13,7 +13,6 @@ import ExerciseGenerateModal from './ExerciseGenerateModal';
 import ExercisePreviewModal from './ExercisePreviewModal';
 import { getChaptersByGrade, getChapterSkills } from '@/lib/api/chapter.service';
 import { Chapter, ChapterSkillDetail } from '@/types/chapter';
-import { isPhase1FeatureEnabled } from '@/lib/config/phase1-features.config';
 import { Dropdown } from '@/components/ui/dropdown/Dropdown';
 import { DropdownItem } from '@/components/ui/dropdown/DropdownItem';
 import { ChevronDownIcon, PlusIcon, PencilIcon, BoltIcon, FileIcon } from '@/icons';
@@ -195,13 +194,11 @@ export default function ExerciseList() {
       </div>
 
       {/* Modals */}
-      {isPhase1FeatureEnabled('AI_GENERATION') && (
-        <ExerciseGenerateModal
-          isOpen={isGenerateModalOpen}
-          onClose={() => setIsGenerateModalOpen(false)}
-          onSuccess={(exercises, metadata) => handleGenerateSuccess(exercises, metadata)}
-        />
-      )}
+      <ExerciseGenerateModal
+        isOpen={isGenerateModalOpen}
+        onClose={() => setIsGenerateModalOpen(false)}
+        onSuccess={(exercises, metadata) => handleGenerateSuccess(exercises, metadata)}
+      />
       <ExercisePreviewModal
         isOpen={isPreviewModalOpen}
         exercises={generatedExercises}

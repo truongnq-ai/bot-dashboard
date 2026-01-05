@@ -7,13 +7,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getApiBaseUrl } from '@/lib/config/api.config';
+import { COOKIE_NAMES } from '@/lib/config/cookie.config';
 import { ResponseObject } from '@/types/common';
 import { AuthenticationResponse } from '@/types/auth';
 
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const refreshToken = cookieStore.get('refreshToken')?.value;
+    const refreshToken = cookieStore.get(COOKIE_NAMES.REFRESH_TOKEN)?.value;
 
     if (!refreshToken) {
       return NextResponse.json(
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
     const authResponse: AuthenticationResponse = refreshResponse.data;
 
     // Update cookies with new tokens
-    cookieStore.set('accessToken', authResponse.accessToken, {
+    cookieStore.set(COOKIE_NAMES.ACCESS_TOKEN, authResponse.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
       path: '/',
     });
 
-    cookieStore.set('refreshToken', authResponse.refreshToken, {
+    cookieStore.set(COOKIE_NAMES.REFRESH_TOKEN, authResponse.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

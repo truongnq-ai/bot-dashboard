@@ -31,17 +31,19 @@ export const API_ENDPOINTS = {
   EXERCISES_FIX_JSON: `${API_VERSION}/admin/exercises/fix-json`,
   EXERCISES_IMPORT_JSON: `${API_VERSION}/admin/exercises/import-json`,
 
-  // Chapters
-  CHAPTERS_LIST: `${API_VERSION}/admin/chapters`,
-  CHAPTERS_CREATE: `${API_VERSION}/admin/chapters`,
-  CHAPTERS_GET: (id: string) => `${API_VERSION}/admin/chapters/${id}`,
-  CHAPTERS_UPDATE: (id: string) => `${API_VERSION}/admin/chapters/${id}`,
-  CHAPTERS_DELETE: (id: string) => `${API_VERSION}/admin/chapters/${id}`,
-  CHAPTERS_BY_GRADE: (grade: number) => `${API_VERSION}/admin/chapters/by-grade/${grade}`,
-  CHAPTERS_GET_SKILLS: (chapterId: string) => `${API_VERSION}/admin/chapters/${chapterId}/skills`,
-  CHAPTERS_GET_AVAILABLE_SKILLS: (chapterId: string) => `${API_VERSION}/admin/chapters/${chapterId}/available-skills`,
-  CHAPTERS_ADD_SKILL: (chapterId: string) => `${API_VERSION}/admin/chapters/${chapterId}/skills`,
-  CHAPTERS_REMOVE_SKILL: (chapterId: string, skillId: string) => `${API_VERSION}/admin/chapters/${chapterId}/skills/${skillId}`,
+  // Subjects
+  SUBJECTS_LIST: `${API_VERSION}/admin/subjects`,
+  SUBJECTS_GET: (id: string) => `${API_VERSION}/admin/subjects/${id}`,
+  SUBJECTS_CREATE: `${API_VERSION}/admin/subjects`,
+  SUBJECTS_UPDATE: (id: string) => `${API_VERSION}/admin/subjects/${id}`,
+  SUBJECTS_DELETE: (id: string) => `${API_VERSION}/admin/subjects/${id}`,
+
+  // Topics
+  TOPICS_LIST: `${API_VERSION}/admin/topics`,
+  TOPICS_GET: (id: string) => `${API_VERSION}/admin/topics/${id}`,
+  TOPICS_CREATE: `${API_VERSION}/admin/topics`,
+  TOPICS_UPDATE: (id: string) => `${API_VERSION}/admin/topics/${id}`,
+  TOPICS_DELETE: (id: string) => `${API_VERSION}/admin/topics/${id}`,
 
   // Skills
   SKILLS_LIST: `${API_VERSION}/admin/skills`,

@@ -59,8 +59,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (response.errorCode === '0000') {
         setIsAuthenticated(true);
-        // Redirect to dashboard
-        router.push('/dashboard');
+        
+        // Get redirect parameter from URL
+        const redirectPath = typeof window !== 'undefined' 
+          ? new URLSearchParams(window.location.search).get('redirect')
+          : null;
+        
+        // Use redirect parameter or default to dashboard
+        const targetPath = redirectPath && redirectPath.startsWith('/') 
+          ? decodeURIComponent(redirectPath)
+          : '/dashboard';
+        
+        // Refresh router to ensure middleware sees the new cookies
+        router.refresh();
+        
+        // Small delay to ensure cookies are available for middleware
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Navigate to target path
+        router.push(targetPath);
       } else {
         const errorMessage = response.errorDetail || 'Login failed';
         showError(errorMessage);

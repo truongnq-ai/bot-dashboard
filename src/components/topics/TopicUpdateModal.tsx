@@ -1,28 +1,52 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Modal } from '@/components/ui/modal';
-import { CreateChapterRequest } from '@/types/chapter';
-import { createChapter } from '@/lib/api/chapter.service';
+import { UpdateTopicRequest, Topic } from '@/types/topic';
+import { updateTopic } from '@/lib/api/topic.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
+import { useTopics } from '@/lib/hooks/useTopics';
 
-interface ChapterCreateModalProps {
+interface TopicUpdateModalProps {
   isOpen: boolean;
   onClose: () => void;
+  topic: Topic | null;
   onSuccess?: () => void;
 }
 
-export default function ChapterCreateModal({ isOpen, onClose, onSuccess }: ChapterCreateModalProps) {
-  const [formData, setFormData] = useState<CreateChapterRequest>({
-    grade: 6,
-    code: '',
+export default function TopicUpdateModal({ isOpen, onClose, topic, onSuccess }: TopicUpdateModalProps) {
+  const [formData, setFormData] = useState<UpdateTopicRequest>({
     name: '',
     description: '',
+    parentId: undefined,
+    orderIndex: undefined,
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadingDots, setLoadingDots] = useState('.');
+
+  // Get topics for parent dropdown (same subject)
+  const { data: topics } = useTopics({ subjectId: topic?.subjectId });
+
+  // Filter out current topic and its descendants from parent options
+  const availableParentTopics = useMemo(() => {
+    if (!topics || !topic) return [];
+    return topics.filter((t) => t.id !== topic.id);
+  }, [topics, topic]);
+
+  // Initialize form data when topic changes
+  useEffect(() => {
+    if (topic) {
+      setFormData({
+        name: topic.name || '',
+        description: topic.description || '',
+        parentId: topic.parentId,
+        orderIndex: topic.orderIndex,
+      });
+      setErrors({});
+    }
+  }, [topic]);
 
   // Animation for loading dots
   useEffect(() => {
@@ -44,24 +68,8 @@ export default function ChapterCreateModal({ isOpen, onClose, onSuccess }: Chapt
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.code.trim()) {
-      newErrors.code = 'Mã chương là bắt buộc';
-    } else if (formData.code.length > 50) {
-      newErrors.code = 'Mã chương không được vượt quá 50 ký tự';
-    }
-
-    if (!formData.grade || (formData.grade !== 6 && formData.grade !== 7)) {
-      newErrors.grade = 'Lớp phải là 6 hoặc 7';
-    }
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Tên chương là bắt buộc';
-    } else if (formData.name.length > 255) {
-      newErrors.name = 'Tên chương không được vượt quá 255 ký tự';
-    }
-
-    if (formData.description && formData.description.length > 1000) {
-      newErrors.description = 'Mô tả không được vượt quá 1000 ký tự';
+    if (formData.name && formData.name.length > 255) {
+      newErrors.name = 'Tên topic không được vượt quá 255 ký tự';
     }
 
     setErrors(newErrors);
@@ -71,30 +79,27 @@ export default function ChapterCreateModal({ isOpen, onClose, onSuccess }: Chapt
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!topic) return;
+
     if (!validate()) {
       return;
     }
 
     try {
       setLoading(true);
-      const requestData: CreateChapterRequest = {
-        ...formData,
+      const requestData: UpdateTopicRequest = {
+        name: formData.name?.trim() || undefined,
         description: formData.description?.trim() || undefined,
+        parentId: formData.parentId || undefined,
+        orderIndex: formData.orderIndex || undefined,
       };
-      const response = await createChapter(requestData);
+      const response = await updateTopic(topic.id, requestData);
       if (response.errorCode === '0000') {
-        showSuccess('Tạo chương thành công');
+        showSuccess('Cập nhật topic thành công');
         onSuccess?.();
         onClose();
-        setFormData({
-          grade: 6,
-          code: '',
-          name: '',
-          description: '',
-        });
-        setErrors({});
       } else {
-        showError(response.errorDetail || 'Tạo chương thất bại');
+        showError(response.errorDetail || 'Cập nhật topic thất bại');
       }
     } catch (error) {
       showError('Hệ thống không có phản hồi.');
@@ -103,59 +108,46 @@ export default function ChapterCreateModal({ isOpen, onClose, onSuccess }: Chapt
     }
   };
 
+  if (!topic) return null;
+
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-4 sm:p-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tạo chương mới</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Chỉnh sửa topic</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Lớp <span className="text-red-500">*</span>
+              Topic cha (tùy chọn)
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                errors.grade ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-              }`}
-              value={formData.grade}
-              onChange={(e) => {
-                const grade = parseInt(e.target.value) as 6 | 7;
-                setFormData({ ...formData, grade });
-              }}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              value={formData.parentId || ''}
+              onChange={(e) => setFormData({ ...formData, parentId: e.target.value || undefined })}
             >
-              <option value={6}>Lớp 6</option>
-              <option value={7}>Lớp 7</option>
+              <option value="">Không có (topic gốc)</option>
+              {availableParentTopics.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
             </select>
-            {errors.grade && <p className="mt-1 text-sm text-red-500">{errors.grade}</p>}
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Chọn topic cha để tạo cấu trúc cây. Để trống để làm topic gốc.
+            </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Mã chương <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                errors.code ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-              }`}
-              placeholder="Ví dụ: 6.3"
-              value={formData.code}
-              onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-            />
-            {errors.code && <p className="mt-1 text-sm text-red-500">{errors.code}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Tên chương <span className="text-red-500">*</span>
+              Tên topic
             </label>
             <input
               type="text"
               className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
                 errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
-              placeholder="Ví dụ: Phân số"
-              value={formData.name}
+              placeholder="Ví dụ: Đại số"
+              value={formData.name || ''}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
             {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
@@ -166,15 +158,30 @@ export default function ChapterCreateModal({ isOpen, onClose, onSuccess }: Chapt
               Mô tả
             </label>
             <textarea
-              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                errors.description ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-              }`}
-              placeholder="Mô tả chi tiết về chương học (tùy chọn)"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="Mô tả topic (tùy chọn)"
               rows={3}
               value={formData.description || ''}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
-            {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Thứ tự
+            </label>
+            <input
+              type="number"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="Thứ tự hiển thị (tùy chọn)"
+              value={formData.orderIndex || ''}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  orderIndex: e.target.value ? parseInt(e.target.value) : undefined,
+                })
+              }
+            />
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -212,7 +219,7 @@ export default function ChapterCreateModal({ isOpen, onClose, onSuccess }: Chapt
                   ></path>
                 </svg>
               )}
-              {loading ? `Đang tạo${loadingDots}` : 'Tạo mới'}
+              {loading ? `Đang cập nhật${loadingDots}` : 'Cập nhật'}
             </button>
           </div>
         </form>

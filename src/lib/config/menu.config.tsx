@@ -39,19 +39,16 @@ export const PHASE1_MAIN_MENU_ITEMS: NavItem[] = [
     icon: <UserCircleIcon />,
     name: "Người dùng",
     subItems: [
-      { name: "Giáo viên", path: "/users/teachers", pro: false },
-      { name: "Phụ huynh", path: "/users/parents", pro: false },
       { name: "Quản trị viên", path: "/users/admins", pro: false },
+      { name: "Giáo viên", path: "/users/teachers", pro: false },
     ],
   },
   {
     icon: <PageIcon />,
-    name: "Nội dung",
+    name: "Danh mục",
     subItems: [
-      { name: "Chương", path: "/content/chapters", pro: false },
-      { name: "Kỹ năng", path: "/content/skills", pro: false },
-      { name: "Câu hỏi", path: "/content/questions", pro: false },
-      { name: "Bài tập", path: "/content/exercises", pro: false },
+      { name: "Môn học", path: "/content/subjects", pro: false },
+      { name: "Chủ đề", path: "/content/topics", pro: false },
     ],
   },
 ];

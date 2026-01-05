@@ -7,12 +7,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getApiBaseUrl } from '@/lib/config/api.config';
+import { COOKIE_NAMES } from '@/lib/config/cookie.config';
 import { ResponseObject } from '@/types/common';
 
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const refreshToken = cookieStore.get('refreshToken')?.value;
+    const refreshToken = cookieStore.get(COOKIE_NAMES.REFRESH_TOKEN)?.value;
 
     if (refreshToken) {
       // Call Core Service logout endpoint to revoke refresh token
@@ -27,8 +28,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Clear cookies
-    cookieStore.delete('accessToken');
-    cookieStore.delete('refreshToken');
+    cookieStore.delete(COOKIE_NAMES.ACCESS_TOKEN);
+    cookieStore.delete(COOKIE_NAMES.REFRESH_TOKEN);
 
     // Return success response
     return NextResponse.json({
@@ -40,8 +41,8 @@ export async function POST(request: NextRequest) {
     console.error('Logout error:', error);
     // Even if there's an error, clear cookies
     const cookieStore = await cookies();
-    cookieStore.delete('accessToken');
-    cookieStore.delete('refreshToken');
+    cookieStore.delete(COOKIE_NAMES.ACCESS_TOKEN);
+    cookieStore.delete(COOKIE_NAMES.REFRESH_TOKEN);
 
     return NextResponse.json(
       {

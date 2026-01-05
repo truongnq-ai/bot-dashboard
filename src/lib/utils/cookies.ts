@@ -5,6 +5,8 @@
  * Client-side cookie utilities are for non-httpOnly cookies only.
  */
 
+import { COOKIE_NAMES } from '../config/cookie.config';
+
 /**
  * Set a cookie (client-side only, for non-httpOnly cookies)
  */
@@ -93,6 +95,6 @@ export function deleteCookie(name: string, options?: {
  * httpOnly cookies must be cleared from server-side (API routes).
  */
 export function clearAuthCookies(): void {
-  deleteCookie('accessToken');
-  deleteCookie('refreshToken');
+  deleteCookie(COOKIE_NAMES.ACCESS_TOKEN);
+  deleteCookie(COOKIE_NAMES.REFRESH_TOKEN);
 }

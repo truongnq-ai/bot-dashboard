@@ -2,39 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/modal';
-import { UpdateChapterRequest, Chapter } from '@/types/chapter';
-import { updateChapter } from '@/lib/api/chapter.service';
+import { CreateSubjectRequest } from '@/types/subject';
+import { createSubject } from '@/lib/api/subject.service';
 import { showError, showSuccess } from '@/lib/utils/toast';
 import { BUTTON_LOADING_CONFIG } from '@/lib/config/ui.config';
 
-interface ChapterUpdateModalProps {
+interface SubjectCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  chapter: Chapter | null;
   onSuccess?: () => void;
 }
 
-export default function ChapterUpdateModal({ isOpen, onClose, chapter, onSuccess }: ChapterUpdateModalProps) {
-  const [formData, setFormData] = useState<UpdateChapterRequest>({
-    code: '',
+export default function SubjectCreateModal({ isOpen, onClose, onSuccess }: SubjectCreateModalProps) {
+  const [formData, setFormData] = useState<CreateSubjectRequest>({
     name: '',
-    description: '',
+    orderIndex: undefined,
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadingDots, setLoadingDots] = useState('.');
-
-  // Initialize form data when chapter changes
-  useEffect(() => {
-    if (chapter) {
-      setFormData({
-        code: chapter.code || '',
-        name: chapter.name || '',
-        description: chapter.description || '',
-      });
-      setErrors({});
-    }
-  }, [chapter]);
 
   // Animation for loading dots
   useEffect(() => {
@@ -56,16 +42,10 @@ export default function ChapterUpdateModal({ isOpen, onClose, chapter, onSuccess
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (formData.code && formData.code.length > 50) {
-      newErrors.code = 'Mã chương không được vượt quá 50 ký tự';
-    }
-
-    if (formData.name && formData.name.length > 255) {
-      newErrors.name = 'Tên chương không được vượt quá 255 ký tự';
-    }
-
-    if (formData.description && formData.description.length > 1000) {
-      newErrors.description = 'Mô tả không được vượt quá 1000 ký tự';
+    if (!formData.name.trim()) {
+      newErrors.name = 'Tên môn học là bắt buộc';
+    } else if (formData.name.length > 255) {
+      newErrors.name = 'Tên môn học không được vượt quá 255 ký tự';
     }
 
     setErrors(newErrors);
@@ -75,26 +55,28 @@ export default function ChapterUpdateModal({ isOpen, onClose, chapter, onSuccess
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!chapter) return;
-
     if (!validate()) {
       return;
     }
 
     try {
       setLoading(true);
-      const requestData: UpdateChapterRequest = {
-        code: formData.code?.trim() || undefined,
-        name: formData.name?.trim() || undefined,
-        description: formData.description?.trim() || undefined,
+      const requestData: CreateSubjectRequest = {
+        name: formData.name.trim(),
+        orderIndex: formData.orderIndex || undefined,
       };
-      const response = await updateChapter(chapter.id, requestData);
+      const response = await createSubject(requestData);
       if (response.errorCode === '0000') {
-        showSuccess('Cập nhật chương thành công');
+        showSuccess('Tạo môn học thành công');
         onSuccess?.();
         onClose();
+        setFormData({
+          name: '',
+          orderIndex: undefined,
+        });
+        setErrors({});
       } else {
-        showError(response.errorDetail || 'Cập nhật chương thất bại');
+        showError(response.errorDetail || 'Tạo môn học thất bại');
       }
     } catch (error) {
       showError('Hệ thống không có phản hồi.');
@@ -103,41 +85,23 @@ export default function ChapterUpdateModal({ isOpen, onClose, chapter, onSuccess
     }
   };
 
-  if (!chapter) return null;
-
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-4 sm:p-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Chỉnh sửa chương</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tạo môn học mới</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Mã chương
-            </label>
-            <input
-              type="text"
-              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                errors.code ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-              }`}
-              placeholder="Ví dụ: 6.3"
-              value={formData.code || ''}
-              onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-            />
-            {errors.code && <p className="mt-1 text-sm text-red-500">{errors.code}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Tên chương
+              Tên môn học <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
                 errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
-              placeholder="Ví dụ: Phân số"
-              value={formData.name || ''}
+              placeholder="Ví dụ: Toán"
+              value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
             {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
@@ -145,18 +109,23 @@ export default function ChapterUpdateModal({ isOpen, onClose, chapter, onSuccess
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Mô tả
+              Thứ tự
             </label>
-            <textarea
+            <input
+              type="number"
               className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                errors.description ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                errors.orderIndex ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
-              placeholder="Mô tả chi tiết về chương học (tùy chọn)"
-              rows={3}
-              value={formData.description || ''}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Thứ tự hiển thị (tùy chọn)"
+              value={formData.orderIndex || ''}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  orderIndex: e.target.value ? parseInt(e.target.value) : undefined,
+                })
+              }
             />
-            {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
+            {errors.orderIndex && <p className="mt-1 text-sm text-red-500">{errors.orderIndex}</p>}
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -194,7 +163,7 @@ export default function ChapterUpdateModal({ isOpen, onClose, chapter, onSuccess
                   ></path>
                 </svg>
               )}
-              {loading ? `Đang cập nhật${loadingDots}` : 'Cập nhật'}
+              {loading ? `Đang tạo${loadingDots}` : 'Tạo mới'}
             </button>
           </div>
         </form>
