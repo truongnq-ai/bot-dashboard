@@ -144,7 +144,7 @@ export default function TopicList() {
         }
         confirmText="Xóa"
         cancelText="Hủy"
-        type="danger"
+        variant="danger"
       />
     </div>
   );

@@ -8,7 +8,7 @@
 // Production API URL (base domain only, without /api)
 const PRODUCTION_API_URL = 'https://apitutor.dienluc.vn';
 // Development API URL - used when running locally
-const DEVELOPMENT_API_URL = 'http://localhost:6889';
+const DEVELOPMENT_API_URL = 'https://apitutor.dienluc.vn';
 
 export function getApiBaseUrl(): string {
   // Determine default URL based on environment

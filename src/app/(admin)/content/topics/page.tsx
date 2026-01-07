@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import TopicList from '@/components/topics/TopicList';
 
 export const metadata: Metadata = {
-  title: 'Quản lý Topic',
+  title: 'Quản lý Topic | Tutor Admin Dashboard',
   description: 'Quản lý danh mục topic',
 };
 
