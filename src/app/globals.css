@@ -165,6 +165,17 @@
   --z-index-9999: 9999;
   --z-index-99999: 99999;
   --z-index-999999: 999999;
+
+  /* Animation Duration Tokens */
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+
+  /* Animation Easing Tokens */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 /*
@@ -799,4 +810,46 @@ body > div[id^="react-hot-toast"] {
 
 .dark .ProseMirror code {
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Animation Keyframes */
+@keyframes fadeInSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iconScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animation Classes */
+.animate-fade-in-slide-up {
+  animation: fadeInSlideUp var(--duration-normal) var(--ease-out) forwards;
+}
+
+.animate-icon-scale-in {
+  animation: iconScaleIn var(--duration-normal) var(--ease-out) forwards;
+}
+
+/* Accessibility: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-slide-up,
+  .animate-icon-scale-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
