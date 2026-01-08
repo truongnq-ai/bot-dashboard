@@ -176,27 +176,37 @@ export default function TeacherListTable({
 
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          {/* Text info - responsive: full text on desktop, compact on mobile */}
           <div className="text-theme-sm text-gray-700 dark:text-gray-300">
-            Hiển thị {pagination.page * pagination.pageSize + 1} đến{' '}
-            {Math.min((pagination.page + 1) * pagination.pageSize, pagination.totalElements)} trong tổng số{' '}
-            {pagination.totalElements} kết quả
+            {/* Full text on desktop */}
+            <span className="hidden md:inline">
+              Hiển thị {pagination.page * pagination.pageSize + 1} đến{' '}
+              {Math.min((pagination.page + 1) * pagination.pageSize, pagination.totalElements)} trong tổng số{' '}
+              {pagination.totalElements} kết quả
+            </span>
+            {/* Compact text on mobile */}
+            <span className="md:hidden">
+              {pagination.page * pagination.pageSize + 1}-{Math.min((pagination.page + 1) * pagination.pageSize, pagination.totalElements)} / {pagination.totalElements}
+            </span>
           </div>
-          <div className="flex items-center gap-2">
+          
+          {/* Controls - centered on mobile, right-aligned on desktop */}
+          <div className="flex items-center justify-center md:justify-end gap-2">
             <button
               onClick={() => pagination.onPageChange(pagination.page - 1)}
               disabled={pagination.page === 0}
-              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-white/[0.05] transition-colors"
             >
               Trước
             </button>
-            <span className="text-theme-sm text-gray-700 dark:text-gray-300">
+            <span className="text-theme-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
               Trang {pagination.page + 1} / {pagination.totalPages}
             </span>
             <button
               onClick={() => pagination.onPageChange(pagination.page + 1)}
               disabled={pagination.page >= pagination.totalPages - 1}
-              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-white/[0.05] transition-colors"
             >
               Sau
             </button>

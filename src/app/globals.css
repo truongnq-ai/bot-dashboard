@@ -201,6 +201,12 @@
   body {
     @apply relative font-normal font-inter z-1 bg-gray-50;
   }
+  /* Override Preflight for functional titles to ensure utility classes apply correctly */
+  h1.text-title-functional,
+  h2.text-title-functional {
+    font-size: unset;
+    font-weight: unset;
+  }
 }
 
 @utility menu-item {
