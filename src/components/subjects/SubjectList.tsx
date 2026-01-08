@@ -55,7 +55,7 @@ export default function SubjectList() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-title-lg font-medium text-gray-900 dark:text-white">Quản lý Môn học</h1>
+        <h1 className="text-title-functional text-gray-900 dark:text-white">Quản lý Môn học</h1>
         <button
           onClick={() => setIsCreateModalOpen(true)}
           className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"

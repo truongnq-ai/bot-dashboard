@@ -17,7 +17,7 @@ export default function TeacherDetailModal({ isOpen, onClose, teacher }: Teacher
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-4 sm:p-6">
-        <h2 className="text-title-lg font-medium text-gray-900 dark:text-white mb-6">Chi tiết Giáo viên</h2>
+        <h2 className="text-title-functional text-gray-900 dark:text-white mb-6">Chi tiết Giáo viên</h2>
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">

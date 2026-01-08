@@ -113,7 +113,7 @@ export default function TopicUpdateModal({ isOpen, onClose, topic, onSuccess }: 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-4 sm:p-6">
-        <h2 className="text-title-lg font-medium text-gray-900 dark:text-white mb-6">Chỉnh sửa topic</h2>
+        <h2 className="text-title-functional text-gray-900 dark:text-white mb-6">Chỉnh sửa topic</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

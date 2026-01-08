@@ -20,8 +20,24 @@ const navItems: NavItem[] = PHASE1_MAIN_MENU_ITEMS;
 const othersItems: NavItem[] = PHASE1_OTHERS_MENU_ITEMS;
 
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered, toggleMobileSidebar, toggleSidebar } = useSidebar();
   const pathname = usePathname();
+
+  // Handler to close sidebar when clicking menu items on mobile/tablet
+  const handleLinkClick = useCallback(() => {
+    // Close mobile sidebar if it's open (mobile view)
+    if (isMobileOpen) {
+      toggleMobileSidebar();
+    }
+    // On tablet (768px - 1024px), if sidebar is expanded, collapse it to mini-size
+    if (typeof window !== 'undefined') {
+      const width = window.innerWidth;
+      const isTablet = width >= 768 && width < 1024;
+      if (isTablet && isExpanded) {
+        toggleSidebar();
+      }
+    }
+  }, [isMobileOpen, isExpanded, toggleMobileSidebar, toggleSidebar]);
 
   const renderMenuItems = (
     navItems: NavItem[],
@@ -70,6 +86,7 @@ const AppSidebar: React.FC = () => {
             nav.path && (
               <Link
                 href={nav.path}
+                onClick={handleLinkClick}
                 className={`menu-item group ${
                   isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
                 }`}
@@ -107,6 +124,7 @@ const AppSidebar: React.FC = () => {
                   <li key={subItem.name}>
                     <Link
                       href={subItem.path}
+                      onClick={handleLinkClick}
                       className={`menu-dropdown-item ${
                         isActive(subItem.path)
                           ? "menu-dropdown-item-active"
