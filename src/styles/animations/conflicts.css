@@ -1,0 +1,54 @@
+/* ============================================
+   CONFLICT RESOLUTION
+   ============================================
+   Auto-resolve conflicts between entry animations and interaction animations
+   
+   Pattern:
+   1. Generic resolvers (work for all combinations)
+   2. Specific overrides (when generic doesn't work)
+   ============================================ */
+
+@layer animations.conflicts {
+  /* ============================================
+     GENERIC CONFLICT RESOLVERS
+     ============================================
+     These work for all entry + interaction combinations
+     ============================================ */
+  
+  /* Pause entry animation on hover interaction */
+  [class*="animate-"]:is(.hover-lift):hover,
+  [class*="animate-"]:is(.hover-lift):focus,
+  [class*="animate-"]:is(.hover-lift):active {
+    animation-play-state: paused;
+  }
+
+  /* TODO: Add generic resolvers for new interactions */
+  /* [class*="animate-"]:is(.hover-glow):hover,
+  [class*="animate-"]:is(.hover-scale):hover,
+  [class*="animate-"]:is(.focus-scale):focus,
+  [class*="animate-"]:is(.active-press):active {
+    animation-play-state: paused;
+  } */
+
+  /* ============================================
+     SPECIFIC OVERRIDES
+     ============================================
+     Only add these when generic resolver doesn't work
+     ============================================ */
+
+  /* Fade In Slide Up + Hover Lift */
+  .animate-fade-in-slide-up.hover-lift:hover {
+    transform: scale(1.05) translateY(-4px) translateZ(0) !important;
+  }
+
+  /* Icon Scale In + Hover Lift */
+  .animate-icon-scale-in.hover-lift:hover {
+    transform: scale(1.05) translateY(-4px) translateZ(0) !important;
+  }
+
+  /* TODO: Add specific overrides when needed */
+  /* Example: When generic resolver doesn't work for specific combination */
+  /* .animate-slide-in-left.hover-glow:hover {
+    transform: translateX(0) translateZ(0) !important;
+  } */
+}

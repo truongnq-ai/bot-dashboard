@@ -301,6 +301,10 @@
     display: none;
     -webkit-appearance: none;
   }
+
+  .hover\:shadow-theme-md:hover {
+    box-shadow: var(--shadow-theme-md);
+  }
 }
 
 /* third-party libraries CSS */
@@ -812,44 +816,23 @@ body > div[id^="react-hot-toast"] {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Animation Keyframes */
-@keyframes fadeInSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes iconScaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Animation Classes */
-.animate-fade-in-slide-up {
-  animation: fadeInSlideUp var(--duration-normal) var(--ease-out) forwards;
-}
-
-.animate-icon-scale-in {
-  animation: iconScaleIn var(--duration-normal) var(--ease-out) forwards;
-}
-
-/* Accessibility: Respect prefers-reduced-motion */
-@media (prefers-reduced-motion: reduce) {
-  .animate-fade-in-slide-up,
-  .animate-icon-scale-in {
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
-}
+/* ============================================
+   ANIMATION SYSTEM IMPORTS
+   ============================================
+   Import order matters:
+   1. Entry animations (base animations)
+   2. Interaction animations (user-triggered)
+   3. Conflict resolution (resolves conflicts)
+   
+   Pattern: Separation of Concerns
+   - Entry Animations: Mount/initial animations
+   - Interaction Animations: User-triggered animations (hover, focus, etc.)
+   - Conflict Resolution: Auto-resolve conflicts between entry + interaction
+   
+   Naming Convention:
+   - Entry: animate-{effect}-{direction}
+   - Interaction: {trigger}-{effect}
+   ============================================ */
+@import '../styles/animations/entry.css';
+@import '../styles/animations/interactions.css';
+@import '../styles/animations/conflicts.css';

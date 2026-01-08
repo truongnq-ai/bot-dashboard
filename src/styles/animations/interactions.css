@@ -1,0 +1,123 @@
+/* ============================================
+   INTERACTION ANIMATIONS
+   ============================================
+   Animations triggered by user interactions
+   
+   Naming Convention: {trigger}-{effect}
+   Triggers: hover-, focus-, active-
+   Examples: hover-lift, focus-scale, active-press
+   ============================================ */
+
+@layer animations.interactions {
+  /* ============================================
+     CURRENT INTERACTIONS
+     ============================================ */
+
+  /* Hover Lift */
+  .hover-lift {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transition: transform var(--duration-normal) var(--ease-out);
+  }
+
+  .hover-lift:hover {
+    transform: scale(1.05) translateY(-4px) translateZ(0) !important;
+  }
+
+  /* ============================================
+     FUTURE INTERACTIONS - TEMPLATE
+     ============================================
+     Copy this template when adding new interaction animations:
+     
+     .{trigger}-{effect} {
+       transform: translateZ(0);
+       backface-visibility: hidden;
+       transition: transform var(--duration-normal) var(--ease-out);
+     }
+
+     .{trigger}-{effect}:{pseudo-class} {
+       transform: ... !important;
+     }
+     ============================================ */
+
+  /* TODO: Hover Glow Effect
+  .hover-glow {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    transition: box-shadow var(--duration-normal) var(--ease-out);
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 20px rgba(70, 95, 255, 0.3);
+  }
+  */
+
+  /* TODO: Hover Scale Effect
+  .hover-scale {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    transition: transform var(--duration-normal) var(--ease-out);
+  }
+
+  .hover-scale:hover {
+    transform: scale(1.02) translateZ(0) !important;
+  }
+  */
+
+  /* TODO: Focus Scale Effect
+  .focus-scale {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    transition: transform var(--duration-normal) var(--ease-out);
+  }
+
+  .focus-scale:focus {
+    transform: scale(1.05) translateZ(0) !important;
+    outline: none;
+  }
+  */
+
+  /* TODO: Active Press Effect
+  .active-press {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    transition: transform var(--duration-fast) var(--ease-in);
+  }
+
+  .active-press:active {
+    transform: scale(0.98) translateZ(0) !important;
+  }
+  */
+
+  /* TODO: Hover Rotate Effect
+  .hover-rotate {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    transition: transform var(--duration-normal) var(--ease-out);
+  }
+
+  .hover-rotate:hover {
+    transform: rotate(5deg) translateZ(0) !important;
+  }
+  */
+
+  /* ============================================
+     ACCESSIBILITY: Prefers Reduced Motion
+     ============================================ */
+  @media (prefers-reduced-motion: reduce) {
+    .hover-lift:hover {
+      transform: none;
+    }
+
+    /* TODO: Add new interactions to this list when implemented */
+    /* .hover-glow:hover,
+    .hover-scale:hover,
+    .focus-scale:focus,
+    .active-press:active,
+    .hover-rotate:hover {
+      transform: none;
+      box-shadow: none;
+    } */
+  }
+}

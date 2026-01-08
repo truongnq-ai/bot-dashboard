@@ -1,0 +1,163 @@
+/* ============================================
+   ENTRY ANIMATIONS
+   ============================================
+   Animations that run when component mounts/enters viewport
+   
+   Naming Convention: animate-{effect}-{direction}
+   Examples: animate-fade-in-slide-up, animate-slide-in-left
+   ============================================ */
+
+@layer animations.entry {
+  /* ============================================
+     CURRENT ANIMATIONS
+     ============================================ */
+  
+  /* Fade In Slide Up */
+  @keyframes fadeInSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-slide-up {
+    animation: fadeInSlideUp var(--duration-normal) var(--ease-out) forwards;
+  }
+
+  /* Icon Scale In */
+  @keyframes iconScaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-icon-scale-in {
+    animation: iconScaleIn var(--duration-normal) var(--ease-out) forwards;
+  }
+
+  /* ============================================
+     FUTURE ANIMATIONS - TEMPLATE
+     ============================================
+     Copy this template when adding new entry animations:
+     
+     @keyframes {animationName} {
+       from {
+         opacity: 0;
+         transform: ...;
+       }
+       to {
+         opacity: 1;
+         transform: ...;
+       }
+     }
+
+     .animate-{effect}-{direction} {
+       animation: {animationName} var(--duration-normal) var(--ease-out) forwards;
+     }
+     ============================================ */
+
+  /* TODO: Slide In Left Animation
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft var(--duration-normal) var(--ease-out) forwards;
+  }
+  */
+
+  /* TODO: Slide In Right Animation
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight var(--duration-normal) var(--ease-out) forwards;
+  }
+  */
+
+  /* TODO: Bounce In Animation
+  @keyframes bounceIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+    70% {
+      transform: scale(0.9);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .animate-bounce-in {
+    animation: bounceIn var(--duration-slow) var(--ease-spring) forwards;
+  }
+  */
+
+  /* TODO: Fade In Zoom Animation
+  @keyframes fadeInZoom {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fade-in-zoom {
+    animation: fadeInZoom var(--duration-normal) var(--ease-out) forwards;
+  }
+  */
+
+  /* ============================================
+     ACCESSIBILITY: Prefers Reduced Motion
+     ============================================ */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in-slide-up,
+    .animate-icon-scale-in {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+
+    /* TODO: Add new animations to this list when implemented */
+    /* .animate-slide-in-left,
+    .animate-slide-in-right,
+    .animate-bounce-in,
+    .animate-fade-in-zoom {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    } */
+  }
+}

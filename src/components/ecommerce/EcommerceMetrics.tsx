@@ -50,13 +50,16 @@ export const EcommerceMetrics = () => {
             dark:border-gray-800 
             dark:bg-white/[0.03] 
             md:p-6
-            ${isVisible ? 'animate-fade-in-slide-up' : 'opacity-0 translate-y-2'}
-            hover:scale-[1.02] 
-            hover:shadow-theme-sm
-            transition-all 
-            duration-200 
-            ease-out
             cursor-pointer
+            ${isVisible ? 'animate-fade-in-slide-up' : 'opacity-0 translate-y-2'}
+            hover-lift
+            hover:shadow-[var(--shadow-theme-md)]
+            hover:border-brand-500
+            dark:hover:border-brand-500
+            transition-all 
+            duration-300 
+            ease-out
+            will-change-transform
           `}
           style={{
             animationDelay: `${index * 50}ms`,
