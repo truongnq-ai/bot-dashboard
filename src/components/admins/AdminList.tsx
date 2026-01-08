@@ -40,10 +40,10 @@ export default function AdminList() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quản lý Admin</h1>
+        <h1 className="text-title-lg font-medium text-gray-900 dark:text-white">Quản lý Admin</h1>
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
         >
           + Tạo mới
         </button>

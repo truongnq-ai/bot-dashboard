@@ -86,7 +86,7 @@ export default function AlertModal({
                 ? 'bg-red-600 text-white hover:bg-red-700'
                 : variant === 'warning'
                 ? 'bg-yellow-600 text-white hover:bg-yellow-700'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-brand-500 text-white hover:bg-brand-600'
             }`}
           >
             {okButtonText}

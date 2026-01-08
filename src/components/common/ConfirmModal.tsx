@@ -47,7 +47,7 @@ export default function ConfirmModal({
     info: {
       container: 'border-blue-light-500 bg-blue-light-50 dark:border-blue-light-500/30 dark:bg-blue-light-500/15',
       icon: 'text-blue-light-500',
-      button: 'bg-blue-600 text-white hover:bg-blue-700',
+      button: 'bg-brand-500 text-white hover:bg-brand-600',
     },
     danger: {
       container: 'border-error-500 bg-error-50 dark:border-error-500/30 dark:bg-error-500/15',

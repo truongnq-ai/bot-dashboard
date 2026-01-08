@@ -29,10 +29,10 @@ const actionColors = {
     border: 'border-red-500',
   },
   info: {
-    bg: 'bg-blue-500',
-    hover: 'hover:bg-blue-600',
-    text: 'text-blue-700',
-    border: 'border-blue-500',
+    bg: 'bg-brand-500',
+    hover: 'hover:bg-brand-600',
+    text: 'text-brand-700',
+    border: 'border-brand-500',
   },
 };
 

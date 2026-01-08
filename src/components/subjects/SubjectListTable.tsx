@@ -155,7 +155,7 @@ export default function SubjectListTable({
       {/* Client-side Pagination */}
       {pagination && totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-700 dark:text-gray-300">
+          <div className="text-theme-sm text-gray-700 dark:text-gray-300">
             Hiển thị {pagination.page * pagination.pageSize + 1} đến{' '}
             {Math.min((pagination.page + 1) * pagination.pageSize, pagination.totalElements)} trong tổng số{' '}
             {pagination.totalElements} kết quả
@@ -168,7 +168,7 @@ export default function SubjectListTable({
             >
               Trước
             </button>
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span className="text-theme-sm text-gray-700 dark:text-gray-300">
               Trang {pagination.page + 1} / {totalPages}
             </span>
             <button

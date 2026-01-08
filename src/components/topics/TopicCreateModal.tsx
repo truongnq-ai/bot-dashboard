@@ -118,16 +118,16 @@ export default function TopicCreateModal({ isOpen, onClose, onSuccess }: TopicCr
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-4 sm:p-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tạo topic mới</h2>
+        <h2 className="text-title-lg font-medium text-gray-900 dark:text-white mb-6">Tạo topic mới</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Môn học <span className="text-red-500">*</span>
             </label>
             <select
               className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                errors.subjectId ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                errors.subjectId ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               value={formData.subjectId}
               onChange={(e) => {
@@ -141,12 +141,12 @@ export default function TopicCreateModal({ isOpen, onClose, onSuccess }: TopicCr
                 </option>
               ))}
             </select>
-            {errors.subjectId && <p className="mt-1 text-sm text-red-500">{errors.subjectId}</p>}
+            {errors.subjectId && <p className="mt-1 text-theme-sm text-red-500">{errors.subjectId}</p>}
           </div>
 
           {formData.subjectId && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Topic cha (tùy chọn)
               </label>
               <select
@@ -165,23 +165,23 @@ export default function TopicCreateModal({ isOpen, onClose, onSuccess }: TopicCr
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Tên topic <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                errors.name ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="Ví dụ: Đại số"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
-            {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+            {errors.name && <p className="mt-1 text-theme-sm text-red-500">{errors.name}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Mô tả
             </label>
             <textarea
@@ -194,7 +194,7 @@ export default function TopicCreateModal({ isOpen, onClose, onSuccess }: TopicCr
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Thứ tự
             </label>
             <input
@@ -222,7 +222,7 @@ export default function TopicCreateModal({ isOpen, onClose, onSuccess }: TopicCr
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading && (
                 <svg

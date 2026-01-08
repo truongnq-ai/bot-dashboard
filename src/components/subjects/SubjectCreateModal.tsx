@@ -88,33 +88,33 @@ export default function SubjectCreateModal({ isOpen, onClose, onSuccess }: Subje
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-4 sm:p-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tạo môn học mới</h2>
+        <h2 className="text-title-lg font-medium text-gray-900 dark:text-white mb-6">Tạo môn học mới</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Tên môn học <span className="text-red-500">*</span>
+            <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Tên môn học <span className="text-error-500">*</span>
             </label>
             <input
               type="text"
               className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                errors.name ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="Ví dụ: Toán"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
-            {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+            {errors.name && <p className="mt-1 text-theme-sm text-error-500">{errors.name}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Thứ tự
             </label>
             <input
               type="number"
               className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                errors.orderIndex ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                errors.orderIndex ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="Thứ tự hiển thị (tùy chọn)"
               value={formData.orderIndex || ''}
@@ -125,7 +125,7 @@ export default function SubjectCreateModal({ isOpen, onClose, onSuccess }: Subje
                 })
               }
             />
-            {errors.orderIndex && <p className="mt-1 text-sm text-red-500">{errors.orderIndex}</p>}
+            {errors.orderIndex && <p className="mt-1 text-theme-sm text-error-500">{errors.orderIndex}</p>}
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -139,7 +139,7 @@ export default function SubjectCreateModal({ isOpen, onClose, onSuccess }: Subje
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading && (
                 <svg

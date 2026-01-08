@@ -10,10 +10,9 @@ interface TeacherFiltersProps {
 
 export default function TeacherFilters({ searchParams, onFilterChange }: TeacherFiltersProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Vai trò
           </label>
           <select
@@ -25,7 +24,7 @@ export default function TeacherFilters({ searchParams, onFilterChange }: Teacher
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Tên đăng nhập
           </label>
           <input
@@ -37,7 +36,7 @@ export default function TeacherFilters({ searchParams, onFilterChange }: Teacher
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Tên
           </label>
           <input
@@ -48,7 +47,6 @@ export default function TeacherFilters({ searchParams, onFilterChange }: Teacher
             onChange={(e) => onFilterChange({ name: e.target.value || undefined })}
           />
         </div>
-      </div>
     </div>
   );
 }

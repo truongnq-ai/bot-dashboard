@@ -17,43 +17,43 @@ export default function TeacherDetailModal({ isOpen, onClose, teacher }: Teacher
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-4 sm:p-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Chi tiết Giáo viên</h2>
+        <h2 className="text-title-lg font-medium text-gray-900 dark:text-white mb-6">Chi tiết Giáo viên</h2>
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 ID
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">{teacher.id}</p>
+              <p className="text-theme-sm text-gray-900 dark:text-white">{teacher.id}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Username
               </label>
-              <p className="text-sm text-gray-900 dark:text-white font-medium">{teacher.username}</p>
+              <p className="text-theme-sm text-gray-900 dark:text-white font-medium">{teacher.username}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Tên
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">{teacher.name}</p>
+              <p className="text-theme-sm text-gray-900 dark:text-white">{teacher.name}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Vai trò
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">{teacher.role || 'TEACHER'}</p>
+              <p className="text-theme-sm text-gray-900 dark:text-white">{teacher.role || 'TEACHER'}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Ngày tạo
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">
+              <p className="text-theme-sm text-gray-900 dark:text-white">
                 {formatDateTime(teacher.createdAt)}
               </p>
             </div>

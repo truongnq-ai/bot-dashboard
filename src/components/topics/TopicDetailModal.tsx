@@ -26,74 +26,74 @@ export default function TopicDetailModal({ isOpen, onClose, topic }: TopicDetail
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Chi tiết Topic</h2>
+        <h2 className="text-title-lg font-medium text-gray-900 dark:text-white mb-6">Chi tiết Topic</h2>
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 ID
               </label>
-              <p className="text-sm text-gray-900 dark:text-white font-mono">{topic.id}</p>
+              <p className="text-theme-sm text-gray-900 dark:text-white font-mono">{topic.id}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Tên topic
               </label>
-              <p className="text-sm text-gray-900 dark:text-white font-medium">{topic.name}</p>
+              <p className="text-theme-sm text-gray-900 dark:text-white font-medium">{topic.name}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Môn học
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">{subject?.name || '-'}</p>
+              <p className="text-theme-sm text-gray-900 dark:text-white">{subject?.name || '-'}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Topic cha
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">{parentTopic?.name || 'Không có (topic gốc)'}</p>
+              <p className="text-theme-sm text-gray-900 dark:text-white">{parentTopic?.name || 'Không có (topic gốc)'}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Cấp độ
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">{topic.level !== undefined ? topic.level : '-'}</p>
+              <p className="text-theme-sm text-gray-900 dark:text-white">{topic.level !== undefined ? topic.level : '-'}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Số topic con
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">{childrenCount}</p>
+              <p className="text-theme-sm text-gray-900 dark:text-white">{childrenCount}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Thứ tự
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">{topic.orderIndex ?? '-'}</p>
+              <p className="text-theme-sm text-gray-900 dark:text-white">{topic.orderIndex ?? '-'}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Ngày tạo
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">
+              <p className="text-theme-sm text-gray-900 dark:text-white">
                 {formatDateTime(topic.createdAt)}
               </p>
             </div>
 
             {topic.updatedAt && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Ngày cập nhật
                 </label>
-                <p className="text-sm text-gray-900 dark:text-white">
+                <p className="text-theme-sm text-gray-900 dark:text-white">
                   {formatDateTime(topic.updatedAt)}
                 </p>
               </div>
@@ -102,10 +102,10 @@ export default function TopicDetailModal({ isOpen, onClose, topic }: TopicDetail
 
           {topic.description && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Mô tả
               </label>
-              <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">
+              <p className="text-theme-sm text-gray-900 dark:text-white whitespace-pre-wrap">
                 {topic.description}
               </p>
             </div>
@@ -115,7 +115,7 @@ export default function TopicDetailModal({ isOpen, onClose, topic }: TopicDetail
         <div className="flex justify-end pt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600"
           >
             Đóng
           </button>

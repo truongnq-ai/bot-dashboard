@@ -22,10 +22,9 @@ export default function SubjectFilters({ searchParams, onFilterChange }: Subject
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Tìm kiếm theo tên môn học
           </label>
           <input
@@ -40,12 +39,11 @@ export default function SubjectFilters({ searchParams, onFilterChange }: Subject
         <div className="flex items-end">
           <button
             onClick={handleSearch}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
           >
             Tìm kiếm
           </button>
         </div>
-      </div>
     </div>
   );
 }

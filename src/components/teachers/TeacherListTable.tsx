@@ -155,7 +155,7 @@ export default function TeacherListTable({
                         {teacher.name}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800 dark:bg-brand-900/30 dark:text-brand-400">
                           {teacher.role || 'TEACHER'}
                         </span>
                       </TableCell>
@@ -177,7 +177,7 @@ export default function TeacherListTable({
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-700 dark:text-gray-300">
+          <div className="text-theme-sm text-gray-700 dark:text-gray-300">
             Hiển thị {pagination.page * pagination.pageSize + 1} đến{' '}
             {Math.min((pagination.page + 1) * pagination.pageSize, pagination.totalElements)} trong tổng số{' '}
             {pagination.totalElements} kết quả
@@ -190,7 +190,7 @@ export default function TeacherListTable({
             >
               Trước
             </button>
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span className="text-theme-sm text-gray-700 dark:text-gray-300">
               Trang {pagination.page + 1} / {pagination.totalPages}
             </span>
             <button
@@ -228,7 +228,7 @@ export default function TeacherListTable({
         title="Reset mật khẩu thành công"
         content={
           <div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+            <p className="text-theme-sm text-gray-700 dark:text-gray-300 mb-3">
               Mật khẩu mới cho tài khoản <strong>{resetPasswordModal.username}</strong> là:
             </p>
             <div className="flex items-center gap-2">
@@ -240,7 +240,7 @@ export default function TeacherListTable({
                 className={`px-4 py-3 rounded-lg font-medium transition-colors ${
                   copied
                     ? 'bg-green-600 text-white'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-brand-500 text-white hover:bg-brand-600'
                 }`}
               >
                 {copied ? '✓ Đã copy' : 'Copy'}

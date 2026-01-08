@@ -104,11 +104,11 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-4 sm:p-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tạo tài khoản Admin</h2>
+        <h2 className="text-title-lg font-medium text-gray-900 dark:text-white mb-6">Tạo tài khoản Admin</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Tên đăng nhập <span className="text-red-500">*</span>
             </label>
             <input
@@ -119,11 +119,11 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             />
-            {errors.username && <p className="mt-1 text-sm text-red-500">{errors.username}</p>}
+            {errors.username && <p className="mt-1 text-theme-sm text-red-500">{errors.username}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Mật khẩu <span className="text-red-500">*</span>
             </label>
             <input
@@ -134,11 +134,11 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
-            {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+            {errors.password && <p className="mt-1 text-theme-sm text-red-500">{errors.password}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Xác nhận mật khẩu <span className="text-red-500">*</span>
             </label>
             <input
@@ -150,12 +150,12 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
             {errors.confirmPassword && (
-              <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
+              <p className="mt-1 text-theme-sm text-red-500">{errors.confirmPassword}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Tên <span className="text-red-500">*</span>
             </label>
             <input
@@ -166,11 +166,11 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
-            {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+            {errors.name && <p className="mt-1 text-theme-sm text-red-500">{errors.name}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Vai trò <span className="text-red-500">*</span>
             </label>
             <select
@@ -193,7 +193,7 @@ export default function AdminCreateModal({ isOpen, onClose, onSuccess }: AdminCr
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading && (
                 <svg
