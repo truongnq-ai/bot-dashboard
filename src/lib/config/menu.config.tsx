@@ -11,6 +11,7 @@ import {
   UserCircleIcon,
   PageIcon,
   PlugInIcon,
+  GraduationCapIcon,
 } from "@/icons/index";
 
 export type NavItem = {
@@ -49,6 +50,15 @@ export const PHASE1_MAIN_MENU_ITEMS: NavItem[] = [
     subItems: [
       { name: "Môn học", path: "/content/subjects", pro: false },
       { name: "Chủ đề", path: "/content/topics", pro: false },
+    ],
+  },
+  {
+    icon: <GraduationCapIcon />,
+    name: "Giảng dạy",
+    subItems: [
+      { name: "Bài tập", path: "/exercises", pro: false },
+      { name: "Đề bài", path: "/exercise-sets", pro: false },
+      { name: "Giao bài", path: "/assignments", pro: false },
     ],
   },
 ];

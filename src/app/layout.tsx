@@ -7,6 +7,9 @@ import { AuthProvider } from '@/context/AuthContext';
 import Toaster from '@/components/common/Toaster';
 import QueryProvider from '@/components/providers/QueryProvider';
 
+import { ReferenceDataProvider } from '@/context/ReferenceDataContext';
+import ReferenceDataInitializer from '@/components/providers/ReferenceDataInitializer';
+
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
   variable: '--font-inter',
@@ -20,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      <body 
+      <body
         className={`${inter.variable} font-inter dark:bg-gray-900`}
         suppressHydrationWarning
       >
@@ -28,8 +31,12 @@ export default function RootLayout({
           <QueryProvider>
             <SidebarProvider>
               <AuthProvider>
-                {children}
-                <Toaster />
+                <ReferenceDataProvider>
+                  <ReferenceDataInitializer>
+                    {children}
+                  </ReferenceDataInitializer>
+                  <Toaster />
+                </ReferenceDataProvider>
               </AuthProvider>
             </SidebarProvider>
           </QueryProvider>
