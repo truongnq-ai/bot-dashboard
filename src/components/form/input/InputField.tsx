@@ -1,4 +1,6 @@
-import React, { FC } from "react";
+"use client";
+import React, { FC, useState } from "react";
+import { EyeCloseIcon, EyeIcon } from "../../../icons";
 
 interface InputProps {
   type?: "text" | "number" | "email" | "password" | "date" | "time" | string;
@@ -33,6 +35,14 @@ const Input: FC<InputProps> = ({
   error = false,
   hint,
 }) => {
+  const [showPassword, setShowPassword] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const inputType = type === "password" && showPassword ? "text" : type;
+
   // Determine input styles based on state (disabled, success, error)
   let inputClasses = `h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${className}`;
 
@@ -50,7 +60,7 @@ const Input: FC<InputProps> = ({
   return (
     <div className="relative">
       <input
-        type={type}
+        type={inputType}
         id={id}
         name={name}
         placeholder={placeholder}
@@ -63,16 +73,29 @@ const Input: FC<InputProps> = ({
         className={inputClasses}
       />
 
+      {type === "password" && (
+        <button
+          type="button"
+          onClick={togglePasswordVisibility}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        >
+          {showPassword ? (
+            <EyeIcon className="h-5 w-5" />
+          ) : (
+            <EyeCloseIcon className="h-5 w-5" />
+          )}
+        </button>
+      )}
+
       {/* Optional Hint Text */}
       {hint && (
         <p
-          className={`mt-1.5 text-xs ${
-            error
+          className={`mt-1.5 text-xs ${error
               ? "text-error-500"
               : success
-              ? "text-success-500"
-              : "text-gray-500"
-          }`}
+                ? "text-success-500"
+                : "text-gray-500"
+            }`}
         >
           {hint}
         </p>
