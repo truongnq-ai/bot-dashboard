@@ -19,6 +19,7 @@ import BoxIconLine from "./box-line.svg";
 import GroupIcon from "./group.svg";
 import CalenderIcon from "./calendar.svg";
 import TimeIcon from "./time.svg";
+import PieChartIcon from "./pie-chart.svg";
 
 export {
   EyeIcon,
@@ -40,4 +41,5 @@ export {
   GroupIcon,
   CalenderIcon,
   TimeIcon,
+  PieChartIcon,
 };

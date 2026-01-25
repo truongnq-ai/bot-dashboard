@@ -12,6 +12,7 @@ import ExerciseStatusBadge from './ExerciseStatusBadge';
 import ActionsDropdown from '@/components/common/ActionsDropdown';
 import { ActionItem } from '@/types/common';
 import { formatDate, getExerciseTypeName, getDifficultyLabel } from '@/lib/utils/formatters';
+import DifficultyBadge from './DifficultyBadge';
 import { deleteExercise, approveExercise, getExerciseById } from '@/lib/api/exercise.service';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { setExerciseDataForCopy } from '@/lib/utils/navigation';
@@ -222,8 +223,8 @@ export default function ExerciseListTable({
                                                 />
                                             </TableCell>
 
-                                            <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 w-24">
-                                                {getDifficultyLabel(exercise.difficulty)}
+                                            <TableCell className="px-4 py-3 text-start w-24">
+                                                <DifficultyBadge difficulty={exercise.difficulty} />
                                             </TableCell>
                                             <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 w-28">
                                                 {getExerciseTypeName(exercise.type)}

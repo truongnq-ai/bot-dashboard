@@ -12,6 +12,7 @@ import {
   PageIcon,
   PlugInIcon,
   GraduationCapIcon,
+  PieChartIcon,
 } from "@/icons/index";
 
 export type NavItem = {
@@ -59,6 +60,13 @@ export const PHASE1_MAIN_MENU_ITEMS: NavItem[] = [
       { name: "Bài tập", path: "/exercises", pro: false },
       { name: "Đề bài", path: "/exercise-sets", pro: false },
       { name: "Giao bài", path: "/assignments", pro: false },
+    ],
+  },
+  {
+    icon: <PieChartIcon />,
+    name: "Thống kê",
+    subItems: [
+      { name: "Bài tập", path: "/statistics/exercises", pro: false },
     ],
   },
 ];

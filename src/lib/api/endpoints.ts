@@ -51,6 +51,7 @@ export const API_ENDPOINTS = {
   EXERCISES_UPLOAD_IMAGE: `${API_VERSION}/exercises/upload/image`,
   EXERCISES_UPLOAD_PDF: `${API_VERSION}/exercises/upload/pdf`,
   EXERCISES_UPLOAD_DOCX: `${API_VERSION}/exercises/upload/docx`,
+  EXERCISES_STATS: `${API_VERSION}/exercises/stats`,
 
   // Prompts
   PROMPTS_GENERATE: `${API_VERSION}/prompts/generate`,

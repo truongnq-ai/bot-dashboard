@@ -161,6 +161,25 @@ export interface ExercisePageRequest {
     type?: ExerciseType; // Exercise type filter, optional
 }
 
+// Request for exercise statistics
+export interface ExerciseStatsRequest {
+    subjectId?: string;
+    topicId?: string;
+    difficulty?: number;
+    type?: ExerciseType;
+}
+
+// Exercise statistics item
+export interface ExerciseStats {
+    subjectId: string;
+    subjectName: string;
+    topicId: string;
+    topicName: string;
+    difficulty: number;
+    type: ExerciseType;
+    exerciseCount: number;
+}
+
 // Request for batch fetching exercises
 export interface GetExercisesBatchRequest {
     exerciseIds: string[];
@@ -170,3 +189,4 @@ export interface GetExercisesBatchRequest {
 export interface ExerciseResponse extends ResponseObject<Exercise> { }
 export interface ExerciseListResponse extends PageResponse<ExerciseListItem> { }
 export interface ExerciseListResponseData extends ResponseObject<ExerciseListResponse> { }
+export interface ExerciseStatsResponse extends ResponseObject<ExerciseStats[]> { }

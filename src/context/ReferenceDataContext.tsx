@@ -30,6 +30,7 @@ interface ReferenceDataContextType {
     init: () => Promise<void>;
     getSubjectName: (id: string) => string | undefined;
     getTopicName: (id: string) => string | undefined;
+    getTopicPath: (id: string) => string | undefined;
     getTopicsBySubjectId: (subjectId: string) => Topic[];
     getSubjectsByFilter: (params: SubjectSearchParams) => Subject[];
     getTopicsByFilter: (params: TopicSearchParams) => Topic[];
@@ -169,6 +170,29 @@ export function ReferenceDataProvider({ children }: { children: React.ReactNode 
     );
 
     /**
+     * Get full topic path (Level 1 > Level 2 > Level 3)
+     */
+    const getTopicPath = useCallback(
+        (id: string): string | undefined => {
+            const path: string[] = [];
+            let currentId: string | undefined = id;
+
+            while (currentId) {
+                const topic: Topic | undefined = topics.find((t) => t.id === currentId);
+                if (topic) {
+                    path.unshift(topic.name);
+                    currentId = topic.parentId;
+                } else {
+                    currentId = undefined;
+                }
+            }
+
+            return path.length > 0 ? path.join(' > ') : undefined;
+        },
+        [topics]
+    );
+
+    /**
      * Get topics by subject ID
      */
     const getTopicsBySubjectId = useCallback(
@@ -239,6 +263,7 @@ export function ReferenceDataProvider({ children }: { children: React.ReactNode 
             init,
             getSubjectName,
             getTopicName,
+            getTopicPath,
             getTopicsBySubjectId,
             getSubjectsByFilter,
             getTopicsByFilter,
@@ -252,6 +277,7 @@ export function ReferenceDataProvider({ children }: { children: React.ReactNode 
             init,
             getSubjectName,
             getTopicName,
+            getTopicPath,
             getTopicsBySubjectId,
             getSubjectsByFilter,
             getTopicsByFilter,
