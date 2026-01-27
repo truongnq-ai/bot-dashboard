@@ -14,12 +14,12 @@ export function useSubjects(searchParams: SubjectSearchParams = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Fetch all subjects once
+  // Fetch all subjects when searchParams changes
   const fetchSubjects = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getAllSubjects();
+      const response = await getAllSubjects(searchParams.name);
       if (response.errorCode === '0000' && response.data) {
         setAllSubjects(response.data);
       } else {
@@ -30,29 +30,22 @@ export function useSubjects(searchParams: SubjectSearchParams = {}) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [searchParams.name]);
 
   useEffect(() => {
-    fetchSubjects();
+    const timeoutId = setTimeout(() => {
+      fetchSubjects();
+    }, 300); // Debounce search
+
+    return () => clearTimeout(timeoutId);
   }, [fetchSubjects]);
 
-  // Client-side filtering
-  const filteredSubjects = useMemo(() => {
-    if (!searchParams.name || searchParams.name.trim() === '') {
-      return allSubjects;
-    }
-    const searchTerm = searchParams.name.toLowerCase().trim();
-    return allSubjects.filter((subject) =>
-      subject.name.toLowerCase().includes(searchTerm)
-    );
-  }, [allSubjects, searchParams.name]);
-
   return {
-    data: filteredSubjects,
+    data: allSubjects,
     loading,
     error,
     refetch: fetchSubjects,
-    totalElements: filteredSubjects.length,
+    totalElements: allSubjects.length,
   };
 }
 

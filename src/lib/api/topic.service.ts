@@ -17,8 +17,11 @@ import { ResponseObject } from '@/types/common';
  * Get all topics (flat list)
  * @param subjectId Optional subject ID to filter by
  */
-export async function getAllTopics(subjectId?: string): Promise<ResponseObject<Topic[]>> {
-  const params = subjectId ? { subjectId } : {};
+export async function getAllTopics(subjectId?: string, search?: string): Promise<ResponseObject<Topic[]>> {
+  const params: any = {};
+  if (subjectId) params.subjectId = subjectId;
+  if (search) params.search = search;
+
   const response = await apiClient.get<TopicListResponse>(API_ENDPOINTS.TOPICS_LIST, { params });
 
   return {

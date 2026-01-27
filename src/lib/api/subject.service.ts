@@ -16,8 +16,9 @@ import { ResponseObject } from '@/types/common';
 /**
  * Get all subjects (no pagination)
  */
-export async function getAllSubjects(): Promise<ResponseObject<Subject[]>> {
-  const response = await apiClient.get<SubjectListResponse>(API_ENDPOINTS.SUBJECTS_LIST);
+export async function getAllSubjects(search?: string): Promise<ResponseObject<Subject[]>> {
+  const params = search ? { search } : {};
+  const response = await apiClient.get<SubjectListResponse>(API_ENDPOINTS.SUBJECTS_LIST, { params });
 
   return {
     errorCode: response.data.errorCode,
