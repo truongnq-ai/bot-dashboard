@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AdminSearchParams } from '@/types/admin';
+import { useSearchOptimization } from '@/lib/hooks/useSearchOptimization';
 
 interface AdminFiltersProps {
   searchParams: AdminSearchParams;
@@ -9,6 +10,34 @@ interface AdminFiltersProps {
 }
 
 export default function AdminFilters({ searchParams, onFilterChange }: AdminFiltersProps) {
+  const {
+    input: usernameInput,
+    setInput: setUsernameInput,
+    debouncedValue: debouncedUsername,
+  } = useSearchOptimization({
+    initialValue: searchParams.username,
+  });
+
+  const {
+    input: nameInput,
+    setInput: setNameInput,
+    debouncedValue: debouncedName,
+  } = useSearchOptimization({
+    initialValue: searchParams.name,
+  });
+
+  React.useEffect(() => {
+    if (debouncedUsername !== searchParams.username) {
+      onFilterChange({ username: debouncedUsername });
+    }
+  }, [debouncedUsername, searchParams.username, onFilterChange]);
+
+  React.useEffect(() => {
+    if (debouncedName !== searchParams.name) {
+      onFilterChange({ name: debouncedName });
+    }
+  }, [debouncedName, searchParams.name, onFilterChange]);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
@@ -31,8 +60,8 @@ export default function AdminFilters({ searchParams, onFilterChange }: AdminFilt
             type="text"
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             placeholder="Tìm theo username..."
-            value={searchParams.username || ''}
-            onChange={(e) => onFilterChange({ username: e.target.value || undefined })}
+            value={usernameInput}
+            onChange={(e) => setUsernameInput(e.target.value)}
           />
         </div>
         <div>
@@ -43,8 +72,8 @@ export default function AdminFilters({ searchParams, onFilterChange }: AdminFilt
             type="text"
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             placeholder="Tìm theo tên..."
-            value={searchParams.name || ''}
-            onChange={(e) => onFilterChange({ name: e.target.value || undefined })}
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
           />
         </div>
     </div>

@@ -11,7 +11,7 @@ import { PageRequest } from '@/types/common';
 import AssignmentListTable from './AssignmentListTable';
 import { useSubjects } from '@/lib/hooks/useSubjects';
 import { useClassesWithFilters } from '@/lib/hooks/useClasses';
-import { useDebounce } from '@/lib/hooks/useDebounce';
+import { useSearchOptimization } from '@/lib/hooks/useSearchOptimization';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 import { useRouter } from 'next/navigation';
@@ -30,8 +30,11 @@ export default function AssignmentList() {
     const { data: classes } = useClassesWithFilters();
 
     // Debounce exercise set title search
-    const [exerciseSetTitle, setExerciseSetTitle] = useState<string>('');
-    const debouncedExerciseSetTitle = useDebounce(exerciseSetTitle, 300);
+    const {
+        input: exerciseSetTitle,
+        setInput: setExerciseSetTitle,
+        debouncedValue: debouncedExerciseSetTitle,
+    } = useSearchOptimization({ initialValue: '', minLength: 3 });
 
     // Update pageRequest when debounced value changes
     React.useEffect(() => {
@@ -40,7 +43,7 @@ export default function AssignmentList() {
             page: 0, // Reset to first page on filter change
             dataRequest: {
                 ...(prev.dataRequest as AssignmentPageRequest),
-                exerciseSetTitle: debouncedExerciseSetTitle || undefined,
+                exerciseSetTitle: debouncedExerciseSetTitle,
             },
         }));
     }, [debouncedExerciseSetTitle]);

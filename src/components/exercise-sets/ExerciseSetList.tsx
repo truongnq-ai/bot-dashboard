@@ -4,13 +4,14 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useExerciseSets } from '@/lib/hooks/useExerciseSets';
 import { ExerciseSetPageRequest, ExerciseSetIntent } from '@/types/exercise-set';
 import { PageRequest } from '@/types/common';
 import ExerciseSetListTable from './ExerciseSetListTable';
 import { useSubjects } from '@/lib/hooks/useSubjects';
+import { useSearchOptimization } from '@/lib/hooks/useSearchOptimization';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 
@@ -24,6 +25,28 @@ export default function ExerciseSetList() {
 
     const { data, loading, error, refetch } = useExerciseSets(pageRequest);
     const { data: subjects } = useSubjects();
+
+    const {
+        input: titleInput,
+        setInput: setTitleInput,
+        debouncedValue: debouncedTitle,
+    } = useSearchOptimization({
+        initialValue: pageRequest.dataRequest?.title,
+        minLength: 3,
+    });
+
+    useEffect(() => {
+        if (debouncedTitle !== pageRequest.dataRequest?.title) {
+            const t = setTimeout(() => {
+                setPageRequest((prev) => ({
+                    ...prev,
+                    page: 0,
+                    dataRequest: { ...prev.dataRequest, title: debouncedTitle },
+                }));
+            }, 0);
+            return () => clearTimeout(t);
+        }
+    }, [debouncedTitle, pageRequest.dataRequest?.title]);
 
     const handleFilterChange = (newFilters: Partial<ExerciseSetPageRequest>) => {
         setPageRequest((prev) => ({
@@ -109,8 +132,8 @@ export default function ExerciseSetList() {
                             type="text"
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
                             placeholder="Nhập tiêu đề..."
-                            value={pageRequest.dataRequest?.title || ''}
-                            onChange={(e) => handleFilterChange({ title: e.target.value || undefined })}
+                            value={titleInput}
+                            onChange={(e) => setTitleInput(e.target.value)}
                         />
                     </div>
                 </div>

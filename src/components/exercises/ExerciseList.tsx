@@ -53,19 +53,31 @@ export default function ExerciseList() {
         selectedSubjectId ? { subjectId: selectedSubjectId } : {}
     );
 
-    // Reset topicId when subjectId changes
+    // Local filters state for manual search
+    const [filters, setFilters] = useState<ExercisePageRequest>(pageRequest.dataRequest);
+
+    // Reset topicId when subjectId changes in local filters
     const currentTopicId = useMemo(() => {
-        if (!selectedSubjectId) {
+        if (!filters.subjectId) {
             return undefined;
         }
-        return pageRequest.dataRequest?.topicId;
-    }, [selectedSubjectId, pageRequest.dataRequest?.topicId]);
+        return filters.topicId;
+    }, [filters.subjectId, filters.topicId]);
 
-    const handleFilterChange = (newFilters: Partial<ExercisePageRequest>) => {
+    // Update local filter state
+    const handleLocalFilterChange = (newFilters: Partial<ExercisePageRequest>) => {
+        setFilters((prev) => ({
+            ...prev,
+            ...newFilters,
+        }));
+    };
+
+    // Trigger search when user clicks button
+    const handleSearch = () => {
         setPageRequest((prev) => ({
             ...prev,
-            page: 0, // Reset to first page on filter change
-            dataRequest: { ...prev.dataRequest, ...newFilters },
+            page: 0,
+            dataRequest: filters,
         }));
     };
 
@@ -111,16 +123,29 @@ export default function ExerciseList() {
 
             {/* Filters */}
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700">
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 items-end">
+                    <div className="md:col-span-1 lg:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Tìm kiếm
+                        </label>
+                        <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
+                            placeholder="Nội dung, lời giải..."
+                            value={filters.search || ''}
+                            onChange={(e) => handleLocalFilterChange({ search: e.target.value })}
+                        />
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Môn học
                         </label>
                         <select
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
-                            value={pageRequest.dataRequest?.subjectId || ''}
+                            value={filters.subjectId || ''}
                             onChange={(e) =>
-                                handleFilterChange({
+                                handleLocalFilterChange({
                                     subjectId: e.target.value || undefined,
                                     topicId: undefined, // Reset topic when subject changes
                                 })
@@ -141,10 +166,10 @@ export default function ExerciseList() {
                         </label>
                         <TopicTreeSelect
                             value={currentTopicId}
-                            onChange={(value) => handleFilterChange({ topicId: value || undefined })}
+                            onChange={(value) => handleLocalFilterChange({ topicId: value || undefined })}
                             treeData={topics || []}
                             placeholder={
-                                !selectedSubjectId
+                                !filters.subjectId
                                     ? 'Chọn môn học trước'
                                     : topicsLoading
                                         ? 'Đang tải...'
@@ -152,7 +177,7 @@ export default function ExerciseList() {
                                             ? 'Không có chủ đề'
                                             : 'Chọn chủ đề'
                             }
-                            disabled={!selectedSubjectId || topicsLoading}
+                            disabled={!filters.subjectId || topicsLoading}
                         />
                     </div>
 
@@ -162,9 +187,9 @@ export default function ExerciseList() {
                         </label>
                         <select
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
-                            value={pageRequest.dataRequest?.status || ''}
+                            value={filters.status || ''}
                             onChange={(e) =>
-                                handleFilterChange({ status: (e.target.value as ExerciseStatus) || undefined })
+                                handleLocalFilterChange({ status: (e.target.value as ExerciseStatus) || undefined })
                             }
                         >
                             <option value="">Tất cả</option>
@@ -179,9 +204,9 @@ export default function ExerciseList() {
                         </label>
                         <select
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
-                            value={pageRequest.dataRequest?.difficulty || ''}
+                            value={filters.difficulty || ''}
                             onChange={(e) =>
-                                handleFilterChange({ difficulty: e.target.value ? parseInt(e.target.value) : undefined })
+                                handleLocalFilterChange({ difficulty: e.target.value ? parseInt(e.target.value) : undefined })
                             }
                         >
                             <option value="">Tất cả</option>
@@ -199,9 +224,9 @@ export default function ExerciseList() {
                         </label>
                         <select
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
-                            value={pageRequest.dataRequest?.type || ''}
+                            value={filters.type || ''}
                             onChange={(e) =>
-                                handleFilterChange({ type: (e.target.value as ExerciseType) || undefined })
+                                handleLocalFilterChange({ type: (e.target.value as ExerciseType) || undefined })
                             }
                         >
                             <option value="">Tất cả</option>
@@ -211,6 +236,15 @@ export default function ExerciseList() {
                                 </option>
                             ))}
                         </select>
+                    </div>
+
+                    <div className="md:col-start-4 lg:col-start-7 flex justify-end">
+                        <button
+                            onClick={handleSearch}
+                            className="w-2/3 px-4 py-2.5 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors font-medium shadow-sm active:scale-[0.98]"
+                        >
+                            Tìm kiếm
+                        </button>
                     </div>
                 </div>
             </div>

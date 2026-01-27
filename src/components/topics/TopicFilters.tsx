@@ -13,15 +13,13 @@ export default function TopicFilters({ searchParams, onFilterChange }: TopicFilt
   const [searchName, setSearchName] = useState(searchParams.name || '');
   const { data: subjects } = useSubjects();
 
-  const handleSearch = () => {
-    onFilterChange({ name: searchName.trim() || undefined });
-  };
+  React.useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      onFilterChange({ name: searchName.trim() || undefined });
+    }, 500);
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchName, onFilterChange]);
 
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const subjectId = e.target.value || undefined;
@@ -47,7 +45,7 @@ export default function TopicFilters({ searchParams, onFilterChange }: TopicFilt
             ))}
           </select>
         </div>
-        <div className="md:col-span-2">
+        <div className="md:col-span-3">
           <label className="block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Tìm kiếm theo tên topic
           </label>
@@ -57,16 +55,7 @@ export default function TopicFilters({ searchParams, onFilterChange }: TopicFilt
             placeholder="Nhập tên topic..."
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
-            onKeyPress={handleKeyPress}
           />
-        </div>
-        <div className="flex items-end">
-          <button
-            onClick={handleSearch}
-            className="w-full px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
-          >
-            Tìm kiếm
-          </button>
         </div>
     </div>
   );

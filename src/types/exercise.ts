@@ -159,6 +159,7 @@ export interface ExercisePageRequest {
     status?: ExerciseStatus;
     difficulty?: number; // 1-5
     type?: ExerciseType; // Exercise type filter, optional
+    search?: string; // Text search
 }
 
 // Request for exercise statistics
