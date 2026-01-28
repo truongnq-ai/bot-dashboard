@@ -22,22 +22,26 @@ export function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
-  // Get access token from cookie
-  const accessToken = request.cookies.get(COOKIE_NAMES.ACCESS_TOKEN)?.value;
+  // Get refresh token from cookie
+  const refreshToken = request.cookies.get(COOKIE_NAMES.REFRESH_TOKEN)?.value;
 
   // Handle protected routes
   if (isProtectedRoute) {
-    if (!accessToken) {
-      // No token, redirect to login
+    if (!accessToken && !refreshToken) {
+      // No tokens at all, redirect to login
       const url = new URL('/login', request.url);
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
 
-    // Check if token is expired
-    if (isTokenExpired(accessToken)) {
-      // Token expired, try to refresh (this will be handled by API client)
-      // For now, redirect to login
+    // If access token is missing or expired, but refresh token exists
+    // Let it pass so the client-side can handle silent refresh
+    if ((!accessToken || isTokenExpired(accessToken)) && refreshToken) {
+      return NextResponse.next();
+    }
+
+    // Check if access token is expired and no refresh token
+    if (accessToken && isTokenExpired(accessToken) && !refreshToken) {
       const url = new URL('/login', request.url);
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);

@@ -35,9 +35,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials: 'include',
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        setIsAuthenticated(data.isAuthenticated);
+      let data = await response.json();
+      
+      // If not authenticated, try silent refresh
+      if (!response.ok || !data.isAuthenticated) {
+        try {
+          // Attempt silent refresh
+          const refreshResponse = await fetch('/api/auth/refresh', {
+            method: 'GET',
+            credentials: 'include',
+          });
+          
+          if (refreshResponse.ok) {
+            // Refresh success, re-run checkAuth to get user info
+            const secondCheck = await fetch('/api/auth/check', {
+              method: 'GET',
+              credentials: 'include',
+            });
+            if (secondCheck.ok) {
+              data = await secondCheck.json();
+            }
+          }
+        } catch (refreshError) {
+          console.error('Silent refresh error:', refreshError);
+        }
+      }
+      
+      if (data.isAuthenticated) {
+        setIsAuthenticated(true);
         setUser(data.user);
       } else {
         setIsAuthenticated(false);
