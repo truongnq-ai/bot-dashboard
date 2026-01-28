@@ -22,7 +22,8 @@ export function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
-  // Get refresh token from cookie
+  // Get tokens from cookies
+  const accessToken = request.cookies.get(COOKIE_NAMES.ACCESS_TOKEN)?.value;
   const refreshToken = request.cookies.get(COOKIE_NAMES.REFRESH_TOKEN)?.value;
 
   // Handle protected routes
