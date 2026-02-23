@@ -5,13 +5,20 @@ import { getStrategyStatus, getBackgroundTasksStatus, getPositions } from '@/lib
 import type { StrategyStatus, Position } from '@/types/bot';
 import Link from 'next/link';
 
-interface BgTasksStatus {
-  data?: Record<string, { status?: string; is_running?: boolean }>;
+/** Response thực tế từ GET /background-tasks/status */
+interface BgTasksData {
+  running: boolean;
+  total_jobs: number;
+  jobs: Array<{
+    id: string;
+    name: string;
+    next_run_time: string;
+  }>;
 }
 
 export default function DashboardPage() {
   const [strategy, setStrategy] = useState<StrategyStatus | null>(null);
-  const [bgTasks, setBgTasks] = useState<BgTasksStatus | null>(null);
+  const [bgTasks, setBgTasks] = useState<BgTasksData | null>(null);
   const [openPositions, setOpenPositions] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,8 +32,22 @@ export default function DashboardPage() {
         getPositions({ status: 'OPEN', limit: 200 }),
       ]);
       setStrategy(strategyData);
-      setBgTasks(bgData);
-      setOpenPositions(positionsData.count);
+
+      // bgData có thể là { responseCode, responseMessage, data: {...} }
+      // hoặc trực tiếp là { running, total_jobs, jobs }
+      if (bgData?.data) {
+        setBgTasks(bgData.data);
+      } else if (bgData?.running !== undefined) {
+        setBgTasks(bgData);
+      }
+
+      // positionsData trả về { count, positions } từ bot.service.ts
+      if (positionsData?.positions) {
+        setOpenPositions(positionsData.positions.length);
+      } else if (typeof positionsData?.count === 'number') {
+        setOpenPositions(positionsData.count);
+      }
+
       setError(null);
     } catch (err) {
       setError('Không thể kết nối backend. Kiểm tra bot-core-service đang chạy.');
@@ -37,7 +58,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 30000); // Auto-refresh 30s
+    const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
   }, [loadData]);
 
@@ -140,33 +161,46 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Background Tasks */}
-      {bgTasks?.data && (
+      {/* Background Tasks — hiển thị đúng format: running, total_jobs, jobs[] */}
+      {bgTasks && (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">Background Tasks</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {Object.entries(bgTasks.data).map(([taskName, taskInfo]) => {
-              const isRunning = taskInfo?.is_running === true || taskInfo?.status === 'running';
-              return (
-                <div
-                  key={taskName}
-                  className={`rounded-lg p-3 border ${
-                    isRunning
-                      ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                      : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className={`w-2 h-2 rounded-full ${isRunning ? 'bg-green-500' : 'bg-gray-400'}`} />
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">{taskName}</span>
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {isRunning ? '✓ Running' : '✗ Stopped'}
-                  </p>
-                </div>
-              );
-            })}
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">Background Tasks</h2>
+            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              bgTasks.running
+                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${bgTasks.running ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`} />
+              {bgTasks.running ? 'Running' : 'Stopped'}
+            </span>
+            <span className="text-xs text-gray-400">{bgTasks.total_jobs} jobs</span>
           </div>
+
+          {bgTasks.jobs && bgTasks.jobs.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {bgTasks.jobs.map((job) => {
+                const nextRun = new Date(job.next_run_time);
+                const isUpcoming = nextRun > new Date();
+                return (
+                  <div
+                    key={job.id}
+                    className="rounded-lg p-3 border bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                  >
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{job.name}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {isUpcoming ? '⏱ Next:' : '⏱ Last:'} {nextRun.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">Không có background jobs nào.</p>
+          )}
         </div>
       )}
     </div>
