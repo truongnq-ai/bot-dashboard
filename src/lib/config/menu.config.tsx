@@ -1,8 +1,5 @@
 /**
- * Menu Configuration for Phase 1
- * 
- * Defines which menu items are visible in Phase 1.
- * This config is separate from route access control (middleware handles that).
+ * Menu Configuration for bot-dashboard (Phase 1)
  */
 
 import React from "react";
@@ -11,7 +8,6 @@ import {
   UserCircleIcon,
   PageIcon,
   PlugInIcon,
-  GraduationCapIcon,
   PieChartIcon,
 } from "@/icons/index";
 
@@ -22,66 +18,58 @@ export type NavItem = {
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
-/**
- * Phase 1 Main Menu Items
- * Only includes routes that are in Phase 1 Allowed Scope
- */
 export const PHASE1_MAIN_MENU_ITEMS: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Bảng điều khiển",
+    name: "Dashboard",
     path: "/dashboard",
   },
   {
     icon: <UserCircleIcon />,
-    name: "Hồ sơ người dùng",
-    path: "/profile",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "Người dùng",
+    name: "Users",
     subItems: [
-      { name: "Quản trị viên", path: "/users/admins", pro: false },
-      { name: "Giáo viên", path: "/users/teachers", pro: false },
+      { name: "All Users", path: "/users" },
     ],
   },
   {
     icon: <PageIcon />,
-    name: "Danh mục",
+    name: "Accounts",
     subItems: [
-      { name: "Môn học", path: "/content/subjects", pro: false },
-      { name: "Chủ đề", path: "/content/topics", pro: false },
-    ],
-  },
-  {
-    icon: <GraduationCapIcon />,
-    name: "Giảng dạy",
-    subItems: [
-      { name: "Bài tập", path: "/exercises", pro: false },
-      { name: "Đề bài", path: "/exercise-sets", pro: false },
-      { name: "Giao bài", path: "/assignments", pro: false },
+      { name: "Accounts", path: "/accounts" },
+      { name: "Balances", path: "/balances" },
     ],
   },
   {
     icon: <PieChartIcon />,
-    name: "Thống kê",
+    name: "Trading",
     subItems: [
-      { name: "Bài tập", path: "/statistics/exercises", pro: false },
+      { name: "Signals", path: "/signals" },
+      { name: "Orders", path: "/orders" },
+      { name: "Positions", path: "/positions" },
     ],
+  },
+  {
+    icon: <PieChartIcon />,
+    name: "Risk & System",
+    subItems: [
+      { name: "Risk Alerts", path: "/risk-alerts" },
+      { name: "System Health", path: "/system-health" },
+    ],
+  },
+  {
+    icon: <PageIcon />,
+    name: "Config",
+    path: "/config",
   },
 ];
 
-/**
- * Phase 1 Others Menu Items (Auth section)
- */
 export const PHASE1_OTHERS_MENU_ITEMS: NavItem[] = [
   {
     icon: <PlugInIcon />,
-    name: "Xác thực",
+    name: "Auth",
     subItems: [
-      { name: "Đăng nhập", path: "/login", pro: false },
-      { name: "Đặt lại mật khẩu", path: "/reset-password", pro: false },
+      { name: "Login", path: "/login" },
+      { name: "Reset Password", path: "/reset-password" },
     ],
   },
 ];
-
