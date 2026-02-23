@@ -57,7 +57,7 @@ export default function UsersPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-900/50">
                 <tr>
-                  {['ID', 'Username', 'Email', 'Họ tên', 'Trạng thái', 'Superuser', 'Thao tác'].map(h => (
+                  {['ID', 'Email', 'Họ tên', 'Trạng thái', 'Superuser', 'Thao tác'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       {h}
                     </th>
@@ -68,7 +68,6 @@ export default function UsersPage() {
                 {users.map(user => (
                   <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                     <td className="px-4 py-3 font-mono text-gray-500">{user.id}</td>
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{user.username || '—'}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{user.email}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{user.full_name || '—'}</td>
                     <td className="px-4 py-3">

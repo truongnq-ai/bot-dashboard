@@ -11,19 +11,21 @@ export interface BotAuthResponse {
   user: BotUserInfo;
 }
 
+// Bot auth response — responseData khi login thành công
+// (VPS backend trả thêm refreshToken qua code local chưa deploy — field này có sau khi deploy)
 export interface BotUserInfo {
   id: number;
   name: string;
-  username: string;
   email: string;
   is_superuser: boolean;
   avatarFilePath: string | null;
 }
 
 // ─── Users
+// VPS UserPublic schema (openapi.json): id, email, is_active, is_superuser, full_name
+// username field KHÔNG có trong VPS backend schema hiện tại
 export interface UserPublic {
   id: number;
-  username: string | null;
   email: string;
   full_name: string | null;
   is_active: boolean;
@@ -35,11 +37,12 @@ export interface UsersPublic {
   count: number;
 }
 
+// VPS UserCreate schema: email, password, is_active, is_superuser, full_name
+// (không có username field trong VPS hiện tại)
 export interface UserCreate {
   email: string;
   password: string;
   full_name?: string;
-  username?: string;
   is_active?: boolean;
   is_superuser?: boolean;
 }
