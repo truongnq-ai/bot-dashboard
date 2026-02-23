@@ -94,19 +94,25 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
-// Create axios instance
+// Create axios instance — baseURL được set dynamically trong interceptor
+// Browser: /api/proxy (Next.js rewrites → VPS)
+// Server-side: http://171.244.10.135/api/v1 (direct)
 const apiClient: AxiosInstance = axios.create({
-  baseURL: getApiBaseUrl(),
   timeout: getApiTimeout(),
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Include cookies in requests
+  withCredentials: true,
 });
 
-// Request interceptor: Add access token
+// Request interceptor: Set baseURL dynamically + Add access token
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
+    // Set baseURL dynamically mỗi request — đảm bảo đúng context
+    if (!config.baseURL) {
+      config.baseURL = getApiBaseUrl();
+    }
+
     // Get access token from API route
     const token = await getAccessToken();
     
