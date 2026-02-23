@@ -1,7 +1,6 @@
 /**
- * Next.js Middleware
- * 
- * Protects routes and checks authentication.
+ * Next.js Middleware — Bot Dashboard
+ * Bảo vệ routes và kiểm tra authentication.
  */
 
 import { NextResponse } from 'next/server';
@@ -9,39 +8,46 @@ import type { NextRequest } from 'next/server';
 import { COOKIE_NAMES } from './lib/config/cookie.config';
 import { decodeJWT, isTokenExpired } from './lib/utils/jwt';
 
-// Routes that require authentication
-const protectedRoutes = ['/dashboard', '/content', '/users', '/system', '/profile'];
+// Routes yêu cầu xác thực
+const protectedRoutes = [
+  '/dashboard',
+  '/users',
+  '/accounts',
+  '/balances',
+  '/signals',
+  '/orders',
+  '/positions',
+  '/risk-alerts',
+  '/system-health',
+  '/config',
+];
 
-// Routes that should redirect to dashboard if already authenticated
+// Routes chỉ cho user chưa đăng nhập
 const authRoutes = ['/login', '/reset-password'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
-  // Check if route is protected
+
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
-  // Get tokens from cookies
   const accessToken = request.cookies.get(COOKIE_NAMES.ACCESS_TOKEN)?.value;
   const refreshToken = request.cookies.get(COOKIE_NAMES.REFRESH_TOKEN)?.value;
 
-  // Handle protected routes
+  // Xử lý protected routes
   if (isProtectedRoute) {
     if (!accessToken && !refreshToken) {
-      // No tokens at all, redirect to login
       const url = new URL('/login', request.url);
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
 
-    // If access token is missing or expired, but refresh token exists
-    // Let it pass so the client-side can handle silent refresh
+    // Nếu access token hết hạn nhưng còn refresh token → cho qua (client sẽ silent refresh)
     if ((!accessToken || isTokenExpired(accessToken)) && refreshToken) {
       return NextResponse.next();
     }
 
-    // Check if access token is expired and no refresh token
+    // Access token hết hạn, không có refresh token → login
     if (accessToken && isTokenExpired(accessToken) && !refreshToken) {
       const url = new URL('/login', request.url);
       url.searchParams.set('redirect', pathname);
@@ -49,13 +55,11 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Handle auth routes (redirect to dashboard if already authenticated)
+  // Redirect về dashboard nếu đã login rồi vào auth routes
   if (isAuthRoute && accessToken && !isTokenExpired(accessToken)) {
-    // Get redirect parameter from URL
     const redirectPath = request.nextUrl.searchParams.get('redirect');
-    const targetPath = redirectPath && redirectPath.startsWith('/')
-      ? decodeURIComponent(redirectPath)
-      : '/dashboard';
+    const targetPath =
+      redirectPath && redirectPath.startsWith('/') ? decodeURIComponent(redirectPath) : '/dashboard';
     return NextResponse.redirect(new URL(targetPath, request.url));
   }
 
@@ -63,14 +67,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

@@ -1,14 +1,12 @@
 /**
- * Logout API Route
- * 
- * Server-side API route to logout and clear cookies.
+ * Logout API Route — Bot Dashboard (Next.js proxy)
+ * Revoke refreshToken trên backend, xóa cả 2 cookies.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getApiBaseUrl } from '@/lib/config/api.config';
 import { COOKIE_NAMES } from '@/lib/config/cookie.config';
-import { ResponseObject } from '@/types/common';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,40 +14,26 @@ export async function POST(request: NextRequest) {
     const refreshToken = cookieStore.get(COOKIE_NAMES.REFRESH_TOKEN)?.value;
 
     if (refreshToken) {
-      // Call Core Service logout endpoint to revoke refresh token
+      // Gọi backend để revoke refresh token
       const apiUrl = getApiBaseUrl();
-      await fetch(`${apiUrl}/api/v1/auth/logout`, {
+      await fetch(`${apiUrl}/auth/logout`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${refreshToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      }).catch(() => { /* ignore backend error — vẫn xóa cookie */ });
     }
 
-    // Clear cookies
+    // Xóa cookies
     cookieStore.delete(COOKIE_NAMES.ACCESS_TOKEN);
     cookieStore.delete(COOKIE_NAMES.REFRESH_TOKEN);
 
-    // Return success response
-    return NextResponse.json({
-      errorCode: '0000',
-      errorDetail: 'Logged out successfully',
-      data: null,
-    } as ResponseObject<null>);
+    return NextResponse.json({ errorCode: '0000', errorDetail: 'Đăng xuất thành công', data: null });
   } catch (error) {
     console.error('Logout error:', error);
-    // Even if there's an error, clear cookies
+    // Vẫn xóa cookie kể cả khi lỗi
     const cookieStore = await cookies();
     cookieStore.delete(COOKIE_NAMES.ACCESS_TOKEN);
     cookieStore.delete(COOKIE_NAMES.REFRESH_TOKEN);
-
-    return NextResponse.json(
-      {
-        errorCode: '0000',
-        errorDetail: 'Logged out successfully',
-        data: null,
-      } as ResponseObject<null>
-    );
+    return NextResponse.json({ errorCode: '0000', errorDetail: 'Đăng xuất thành công', data: null });
   }
 }

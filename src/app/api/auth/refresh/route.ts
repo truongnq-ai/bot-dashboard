@@ -1,15 +1,17 @@
 /**
- * Refresh Token API Route
- * 
- * Server-side API route to refresh access token and update cookies.
+ * Refresh Token API Route — Bot Dashboard (Next.js proxy)
+ *
+ * Đọc refreshToken từ httpOnly cookie → gọi bot-core-service POST /auth/refresh_token
+ * → Backend dùng rotation strategy: revoke cũ, tạo cặp token mới
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getApiBaseUrl } from '@/lib/config/api.config';
 import { COOKIE_NAMES } from '@/lib/config/cookie.config';
-import { ResponseObject } from '@/types/common';
-import { AuthenticationResponse } from '@/types/auth';
+
+const ACCESS_TOKEN_MAX_AGE = 8 * 60 * 60;       // 8 giờ
+const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60; // 30 ngày
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,64 +20,59 @@ export async function GET(request: NextRequest) {
 
     if (!refreshToken) {
       return NextResponse.json(
-        {
-          errorCode: '1006',
-          errorDetail: 'Refresh token not found',
-          data: null,
-        } as ResponseObject<null>,
+        { errorCode: '1006', errorDetail: 'Refresh token không tồn tại', data: null },
         { status: 401 }
       );
     }
 
-    // Call Core Service refresh token endpoint
+    // Gọi bot-core-service (POST với body)
     const apiUrl = getApiBaseUrl();
-    const response = await fetch(`${apiUrl}/api/v1/auth/refresh_token`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${refreshToken}`,
-        'Content-Type': 'application/json',
-      },
+    const response = await fetch(`${apiUrl}/auth/refresh_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      return NextResponse.json(error, { status: response.status });
+    const backendResponse = await response.json();
+
+    if (backendResponse.responseCode !== '0000' || !backendResponse.responseData) {
+      // Xóa cookies nếu refresh thất bại
+      cookieStore.delete(COOKIE_NAMES.ACCESS_TOKEN);
+      cookieStore.delete(COOKIE_NAMES.REFRESH_TOKEN);
+      return NextResponse.json(
+        { errorCode: '1006', errorDetail: backendResponse.responseMessage || 'Token không hợp lệ', data: null },
+        { status: 401 }
+      );
     }
 
-    const refreshResponse = await response.json();
-    const authResponse: AuthenticationResponse = refreshResponse.data;
+    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = backendResponse.responseData;
 
-    // Update cookies with new tokens
-    cookieStore.set(COOKIE_NAMES.ACCESS_TOKEN, authResponse.accessToken, {
+    // Cập nhật cookies với token mới
+    cookieStore.set(COOKIE_NAMES.ACCESS_TOKEN, newAccessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: authResponse.expiresIn, // seconds
+      maxAge: ACCESS_TOKEN_MAX_AGE,
       path: '/',
     });
 
-    cookieStore.set(COOKIE_NAMES.REFRESH_TOKEN, authResponse.refreshToken, {
+    cookieStore.set(COOKIE_NAMES.REFRESH_TOKEN, newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: authResponse.refreshTokenExpiresIn, // seconds
+      maxAge: REFRESH_TOKEN_MAX_AGE,
       path: '/',
     });
 
-    // Return success response
     return NextResponse.json({
       errorCode: '0000',
-      errorDetail: 'Token refreshed successfully',
-      data: authResponse,
-    } as ResponseObject<AuthenticationResponse>);
+      errorDetail: 'Token đã được làm mới',
+      data: { accessToken: newAccessToken },
+    });
   } catch (error) {
-    console.error('Refresh token error:', error);
+    console.error('Refresh token proxy error:', error);
     return NextResponse.json(
-      {
-        errorCode: '5001',
-        errorDetail: 'Internal server error',
-        data: null,
-      } as ResponseObject<null>,
+      { errorCode: '5001', errorDetail: 'Lỗi server nội bộ', data: null },
       { status: 500 }
     );
   }

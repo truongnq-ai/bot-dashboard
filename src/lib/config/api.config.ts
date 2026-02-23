@@ -1,38 +1,23 @@
 /**
- * API Configuration
- * 
- * API URLs are configured here, not in environment variables.
- * Environment variables should only contain secrets/keys for third-party services.
+ * API Configuration — Bot Dashboard
+ * Backend: bot-core-service trên VPS
+ *
+ * PRODUCTION : http://171.244.10.135/api/v1
+ * LOCAL DEV  : http://localhost:6388/api/v1
+ *
+ * Cấu hình trực tiếp trong code, không dùng .env
  */
 
-// Production API URL (base domain only, without /api)
-const PRODUCTION_API_URL = 'https://apitutor.dienluc.vn';
-// Development API URL - used when running locally
-const DEVELOPMENT_API_URL = 'http://localhost:6889';
+const PRODUCTION_API_URL  = 'http://171.244.10.135/api/v1';
+const DEVELOPMENT_API_URL = 'http://localhost:6388/api/v1';
 
 export function getApiBaseUrl(): string {
-  // Determine default URL based on environment
   const isProduction = process.env.NODE_ENV === 'production';
-  const defaultUrl = isProduction ? PRODUCTION_API_URL : DEVELOPMENT_API_URL;
-  
-  if (typeof window === 'undefined') {
-    // Server-side: use environment variable or default based on NODE_ENV
-    // For development, always use DEVELOPMENT_API_URL
-    return process.env.API_BASE_URL || defaultUrl;
-  }
-  
-  // Client-side: for development, always use DEVELOPMENT_API_URL
-  // Only use environment variable if explicitly set (for production overrides)
-  if (!isProduction) {
-    return DEVELOPMENT_API_URL;
-  }
-  
-  // In production, allow environment variable override
-  return process.env.NEXT_PUBLIC_API_BASE_URL || defaultUrl;
+  return isProduction ? PRODUCTION_API_URL : DEVELOPMENT_API_URL;
 }
 
 export function getApiTimeout(): number {
-  return parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || '60000', 10);
+  return 30_000; // 30 giây
 }
 
 export const API_CONFIG = {

@@ -1,15 +1,17 @@
 /**
- * Login API Route
- * 
- * Server-side API route to handle login and set httpOnly cookies.
+ * Login API Route — Bot Dashboard (Next.js proxy)
+ *
+ * Layer trung gian: nhận credentials → gọi bot-core-service → set httpOnly cookies.
+ * Bot-core-service response format: { responseCode, responseMessage, responseData }
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getApiBaseUrl } from '@/lib/config/api.config';
 import { COOKIE_NAMES } from '@/lib/config/cookie.config';
-import { ResponseObject } from '@/types/common';
-import { AuthenticationResponse } from '@/types/auth';
+
+const ACCESS_TOKEN_MAX_AGE = 8 * 60 * 60;    // 8 giờ (giây)
+const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60; // 30 ngày (giây)
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,80 +20,75 @@ export async function POST(request: NextRequest) {
 
     if (!username || !password) {
       return NextResponse.json(
-        {
-          errorCode: '4003',
-          errorDetail: 'Username and password are required',
-          data: null,
-        } as ResponseObject<null>,
+        { errorCode: '4003', errorDetail: 'Username và password là bắt buộc', data: null },
         { status: 400 }
       );
     }
 
-    // Call Core Service login endpoint
+    // Gọi bot-core-service
     const apiUrl = getApiBaseUrl();
-    const response = await fetch(`${apiUrl}/api/v1/auth/login`, {
+    const response = await fetch(`${apiUrl}/auth/login`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      return NextResponse.json(error, { status: response.status });
-    }
+    const backendResponse = await response.json();
 
-    const backendResponse: ResponseObject<AuthenticationResponse> = await response.json();
-    
-    if (backendResponse.errorCode !== '0000' || !backendResponse.data) {
+    // bot-core-service trả responseCode: '0000' khi thành công (từ constants.py ResponseCode.SUCCESS = "0000")
+    if (backendResponse.responseCode !== '0000' || !backendResponse.responseData) {
       return NextResponse.json(
         {
-          errorCode: backendResponse.errorCode || '5001',
-          errorDetail: backendResponse.errorDetail || 'Login failed',
+          errorCode: '4001',
+          errorDetail: backendResponse.responseMessage || 'Đăng nhập thất bại',
           data: null,
-        } as ResponseObject<null>,
-        { status: 400 }
+        },
+        { status: 401 }
       );
     }
 
-    const authResponse: AuthenticationResponse = backendResponse.data;
+    const authData = backendResponse.responseData;
+    const { accessToken, refreshToken } = authData;
+
+    if (!accessToken || !refreshToken) {
+      return NextResponse.json(
+        { errorCode: '5001', errorDetail: 'Backend không trả về token', data: null },
+        { status: 500 }
+      );
+    }
 
     // Set httpOnly cookies
     const cookieStore = await cookies();
-    
-    // Set accessToken cookie
-    cookieStore.set(COOKIE_NAMES.ACCESS_TOKEN, authResponse.accessToken, {
+
+    cookieStore.set(COOKIE_NAMES.ACCESS_TOKEN, accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: authResponse.expiresIn, // seconds
+      maxAge: ACCESS_TOKEN_MAX_AGE,
       path: '/',
     });
 
-    // Set refreshToken cookie
-    cookieStore.set(COOKIE_NAMES.REFRESH_TOKEN, authResponse.refreshToken, {
+    cookieStore.set(COOKIE_NAMES.REFRESH_TOKEN, refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: authResponse.refreshTokenExpiresIn, // seconds
+      maxAge: REFRESH_TOKEN_MAX_AGE,
       path: '/',
     });
 
-    // Return success response
+    // Trả về format frontend expect: errorCode '0000' = success
     return NextResponse.json({
       errorCode: '0000',
-      errorDetail: 'Login successful',
-      data: authResponse,
-    } as ResponseObject<AuthenticationResponse>);
+      errorDetail: 'Đăng nhập thành công',
+      data: {
+        accessToken,
+        user: authData.user,
+      },
+    });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login proxy error:', error);
     return NextResponse.json(
-      {
-        errorCode: '5001',
-        errorDetail: 'Internal server error',
-        data: null,
-      } as ResponseObject<null>,
+      { errorCode: '5001', errorDetail: 'Lỗi server nội bộ', data: null },
       { status: 500 }
     );
   }
