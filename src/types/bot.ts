@@ -65,42 +65,62 @@ export interface UserSummary {
   total_margin_used: number;
 }
 
-// ─── Account Config
-export interface AccountConfig {
+// ─── Account (identity & credentials)
+export interface Account {
   id: number;
   name: string;
   description: string | null;
   user_id: number | null;
-  trade_amount_usdt: number;
-  leverage: number;
-  max_open_signals: number;
-  max_open_positions: number;
-  oc_ratio: number | null;
-  oc_multiplier_override: number | null;
   enabled: boolean;
+  effective_config?: AccountEffectiveConfig;
 }
 
 export interface AccountCreate {
   name: string;
   user_id?: number;
   description?: string;
-  trade_amount_usdt?: number;
-  leverage?: number;
-  max_open_signals?: number;
-  max_open_positions?: number;
-  oc_ratio?: number | null;
+  configs?: Record<string, string>; // EAV per-account params
 }
 
 export interface AccountUpdate {
   name?: string;
   description?: string;
-  trade_amount_usdt?: number;
-  leverage?: number;
-  max_open_signals?: number;
-  max_open_positions?: number;
-  oc_ratio?: number | null;
-  oc_multiplier_override?: number | null;
   enabled?: boolean;
+}
+
+// ─── Account Config (EAV per-account)
+export interface AccountConfigEntry {
+  param_code: string;
+  param_value: string;
+  param_description?: string | null;
+}
+
+export interface AccountEffectiveConfig {
+  TRADE_AMOUNT_USDT: number;
+  LEVERAGE: number;
+  MAX_OPEN_SIGNALS: number;
+  MAX_OPEN_POSITIONS: number;
+  OC_RATIO: number | null;
+  OC_MULTIPLIER_OVERRIDE: number | null;
+  OC_PERCENTILE: number;
+  OC_LOOKBACK: number;
+  TRIGGER_RATIO: number;
+  SL_OC_RATIO: number;
+  TP_OC_RATIO: number;
+  MIN_SL_OC_RATIO: number;
+  DECAY_RATE: number;
+  SL_OC_BUMP: number;
+  TP_OC_BUMP: number;
+  OC_MULTIPLIER_DECAY: number;
+  MAX_OC_MULTIPLIER: number;
+  MIN_VOLUME_USDT: number;
+  TIME_FRAMES: string;
+  [key: string]: unknown;
+}
+
+export interface ConfigUpsert {
+  param_value: string;
+  param_description?: string;
 }
 
 // ─── Account Balance
@@ -115,6 +135,7 @@ export interface AccountBalance {
   fee_total: number;
   pnl_net: number;
   available_equity: number;
+  total_equity: number;
 }
 
 // ─── Signal

@@ -11,7 +11,7 @@ import type {
   UserCreate,
   UserUpdate,
   UserSummary,
-  AccountConfig,
+  Account,
   AccountCreate,
   AccountUpdate,
   AccountBalance,
@@ -57,17 +57,17 @@ export async function getUserSummary(userId: number): Promise<UserSummary> {
 
 // ─── ACCOUNTS ────────────────────────────────────────────────────────────────
 
-export async function getAccounts(): Promise<{ count: number; accounts: AccountConfig[] }> {
-  const res = await apiClient.get<{ count: number; accounts: AccountConfig[] }>(API_ENDPOINTS.ACCOUNTS_LIST);
+export async function getAccounts(): Promise<{ count: number; accounts: Account[] }> {
+  const res = await apiClient.get<{ count: number; accounts: Account[] }>(API_ENDPOINTS.ACCOUNTS_LIST);
   return res.data;
 }
 
-export async function getAccountById(id: number): Promise<AccountConfig> {
-  const res = await apiClient.get<AccountConfig>(API_ENDPOINTS.ACCOUNTS_GET(id));
+export async function getAccountById(id: number): Promise<Account> {
+  const res = await apiClient.get<Account>(API_ENDPOINTS.ACCOUNTS_GET(id));
   return res.data;
 }
 
-export async function createAccount(data: AccountCreate): Promise<{ id: number; name: string; message: string }> {
+export async function createAccount(data: AccountCreate): Promise<{ id: number; name: string; configs_saved: number; message: string }> {
   const res = await apiClient.post(API_ENDPOINTS.ACCOUNTS_CREATE, data);
   return res.data;
 }
@@ -86,6 +86,11 @@ export async function getAccountBalances(accountId: number): Promise<{ account_i
 
 export async function seedBalance(accountId: number, data: { balance_type: 'SPOT' | 'FUTURES'; initial_balance: number }) {
   const res = await apiClient.post(API_ENDPOINTS.BALANCES_SEED(accountId), data);
+  return res.data;
+}
+
+export async function checkAccountReadiness(accountId: number): Promise<{ ready: boolean; checks: Record<string, boolean>; warnings: string[] }> {
+  const res = await apiClient.get(`/accounts/${accountId}/readiness`);
   return res.data;
 }
 
