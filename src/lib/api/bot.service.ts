@@ -94,6 +94,15 @@ export async function checkAccountReadiness(accountId: number): Promise<{ ready:
   return res.data;
 }
 
+export async function getAccountConfig(accountId: number): Promise<{ account_id: number; effective_config: Record<string, unknown>; overrides: Record<string, string> }> {
+  const res = await apiClient.get(API_ENDPOINTS.ACCOUNTS_CONFIG(accountId));
+  return res.data;
+}
+
+export async function upsertAccountConfig(accountId: number, paramCode: string, paramValue: string): Promise<void> {
+  await apiClient.put(API_ENDPOINTS.ACCOUNTS_CONFIG_UPSERT(accountId, paramCode), { param_value: paramValue });
+}
+
 // ─── SIGNALS ─────────────────────────────────────────────────────────────────
 
 export async function getSignals(params?: { status?: string; limit?: number }): Promise<{ count: number; signals: Signal[] }> {

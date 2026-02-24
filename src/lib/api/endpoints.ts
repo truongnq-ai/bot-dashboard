@@ -25,6 +25,9 @@ export const API_ENDPOINTS = {
   ACCOUNTS_GET: (id: number) => `/accounts/${id}`,
   ACCOUNTS_CREATE: `/accounts/`,
   ACCOUNTS_UPDATE: (id: number) => `/accounts/${id}`,
+  ACCOUNTS_CONFIG: (id: number) => `/accounts/${id}/config`,
+  ACCOUNTS_CONFIG_UPSERT: (id: number, code: string) => `/accounts/${id}/config/${code}`,
+  ACCOUNTS_READINESS: (id: number) => `/accounts/${id}/readiness`,
 
   // ─── Balances
   BALANCES_GET: (accountId: number) => `/accounts/${accountId}/balances`,
@@ -48,4 +51,10 @@ export const API_ENDPOINTS = {
 
   // ─── System
   BG_TASKS_STATUS: `/background-tasks/status`,
+
+  // ─── System Params
+  PARAMS_LIST: `/params/`,
+  PARAMS_CREATE: `/params/`,
+  PARAMS_UPDATE: (id: number) => `/params/${id}`,
+  PARAMS_DELETE: (id: number) => `/params/${id}`,
 } as const;

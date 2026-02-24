@@ -12,6 +12,7 @@ export default function UsersPage() {
   const [showCreate, setShowCreate] = useState(false);
 
   // Form tạo User
+  const [formUsername, setFormUsername] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPassword, setFormPassword] = useState('');
   const [formFullName, setFormFullName] = useState('');
@@ -34,8 +35,8 @@ export default function UsersPage() {
 
   useEffect(() => { loadUsers(); }, []);
 
-  const handleDelete = async (id: number, email: string) => {
-    if (!confirm(`Xóa user ${email}?`)) return;
+  const handleDelete = async (id: number, username: string) => {
+    if (!confirm(`Xóa user ${username}?`)) return;
     try {
       await deleteUser(id);
       setUsers(prev => prev.filter(u => u.id !== id));
@@ -45,6 +46,7 @@ export default function UsersPage() {
   };
 
   const resetForm = () => {
+    setFormUsername('');
     setFormEmail('');
     setFormPassword('');
     setFormFullName('');
@@ -54,21 +56,22 @@ export default function UsersPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formEmail || !formPassword) {
-      setCreateError('Email và mật khẩu là bắt buộc');
+    if (!formUsername || !formPassword || !formFullName) {
+      setCreateError('Username, Mật khẩu và Họ tên là bắt buộc');
       return;
     }
-    if (formPassword.length < 6) {
-      setCreateError('Mật khẩu tối thiểu 6 ký tự');
+    if (formPassword.length < 8) {
+      setCreateError('Mật khẩu tối thiểu 8 ký tự');
       return;
     }
     try {
       setCreating(true);
       setCreateError(null);
       await createUser({
-        email: formEmail,
+        username: formUsername,
         password: formPassword,
-        full_name: formFullName || undefined,
+        full_name: formFullName,
+        email: formEmail || undefined,
         is_superuser: formSuperuser,
       });
       resetForm();
@@ -118,14 +121,14 @@ export default function UsersPage() {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username *</label>
                 <input
-                  type="email"
-                  value={formEmail}
-                  onChange={(e) => setFormEmail(e.target.value)}
+                  type="text"
+                  value={formUsername}
+                  onChange={(e) => setFormUsername(e.target.value)}
                   required
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="user@example.com"
+                  placeholder="admin_new"
                 />
               </div>
               <div>
@@ -135,19 +138,30 @@ export default function UsersPage() {
                   value={formPassword}
                   onChange={(e) => setFormPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Tối thiểu 6 ký tự"
+                  placeholder="Tối thiểu 8 ký tự"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Họ tên</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Họ tên *</label>
                 <input
                   type="text"
                   value={formFullName}
                   onChange={(e) => setFormFullName(e.target.value)}
+                  required
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Nguyễn Văn A"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={formEmail}
+                  onChange={(e) => setFormEmail(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="user@example.com (không bắt buộc)"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -189,7 +203,7 @@ export default function UsersPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-900/50">
                 <tr>
-                  {['ID', 'Email', 'Họ tên', 'Trạng thái', 'Superuser', 'Thao tác'].map(h => (
+                  {['ID', 'Username', 'Email', 'Họ tên', 'Trạng thái', 'Superuser', 'Thao tác'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       {h}
                     </th>
@@ -200,7 +214,8 @@ export default function UsersPage() {
                 {users.map(user => (
                   <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                     <td className="px-4 py-3 font-mono text-gray-500">{user.id}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{user.email}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{user.username || '—'}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{user.email || '—'}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{user.full_name || '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -228,7 +243,7 @@ export default function UsersPage() {
                         </Link>
                         {!user.is_superuser && (
                           <button
-                            onClick={() => handleDelete(user.id, user.email)}
+                            onClick={() => handleDelete(user.id, user.username || user.email || String(user.id))}
                             className="text-xs text-red-500 hover:text-red-700 hover:underline"
                           >
                             Xóa

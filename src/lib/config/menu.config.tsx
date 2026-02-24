@@ -58,8 +58,11 @@ export const PHASE1_MAIN_MENU_ITEMS: NavItem[] = [
   },
   {
     icon: <PageIcon />,
-    name: "Config",
-    path: "/config",
+    name: 'Config',
+    subItems: [
+      { name: 'Strategy Config', path: '/config' },
+      { name: 'Tham số hệ thống', path: '/params' },
+    ],
   },
 ];
 

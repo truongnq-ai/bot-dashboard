@@ -22,11 +22,10 @@ export interface BotUserInfo {
 }
 
 // ─── Users
-// VPS UserPublic schema (openapi.json): id, email, is_active, is_superuser, full_name
-// username field KHÔNG có trong VPS backend schema hiện tại
 export interface UserPublic {
   id: number;
-  email: string;
+  username: string | null;
+  email: string | null;
   full_name: string | null;
   is_active: boolean;
   is_superuser: boolean;
@@ -37,17 +36,17 @@ export interface UsersPublic {
   count: number;
 }
 
-// VPS UserCreate schema: email, password, is_active, is_superuser, full_name
-// (không có username field trong VPS hiện tại)
 export interface UserCreate {
-  email: string;
+  username: string;
   password: string;
-  full_name?: string;
+  full_name: string;
+  email?: string;
   is_active?: boolean;
   is_superuser?: boolean;
 }
 
 export interface UserUpdate {
+  username?: string;
   email?: string;
   full_name?: string;
   is_active?: boolean;
