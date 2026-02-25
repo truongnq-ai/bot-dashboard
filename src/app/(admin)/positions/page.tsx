@@ -2,9 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { getPositions } from '@/lib/api/bot.service';
+import { useAuth } from '@/context/AuthContext';
 import type { Position } from '@/types/bot';
 
 export default function PositionsPage() {
+  const { getAccountName } = useAuth();
   const [positions, setPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('OPEN');
@@ -53,7 +55,7 @@ export default function PositionsPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-900/50">
                 <tr>
-                  {['ID', 'Acc', 'Symbol', 'TF', 'Side', 'Entry', 'Exit', 'SL', 'TP', 'PnL $', 'PnL %', 'Close Type', 'Status', 'Opened', 'Decay'].map(h => (
+                  {['ID', 'Acc', 'Symbol', 'TF', 'Side', 'Entry', 'Exit', 'SL', 'TP', 'PnL $', 'PnL %', 'Close Type', 'Status', 'Opened'].map(h => (
                     <th key={h} className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -62,11 +64,11 @@ export default function PositionsPage() {
                 {positions.map(p => (
                   <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                     <td className="px-3 py-2 font-mono text-gray-500 text-xs">{p.id}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{p.account_id}</td>
+                    <td className="px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300">{getAccountName(p.account_id)}</td>
                     <td className="px-3 py-2 font-medium">{p.symbol}</td>
                     <td className="px-3 py-2 text-gray-500 text-xs">{p.time_frame}</td>
                     <td className="px-3 py-2">
-                      <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${p.side === 'LONG' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+                      <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${p.side === 'BUY' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
                         {p.side}
                       </span>
                     </td>
@@ -78,7 +80,7 @@ export default function PositionsPage() {
                       {p.pnl_usd !== null ? `${p.pnl_usd >= 0 ? '+' : ''}${p.pnl_usd.toFixed(2)}` : '—'}
                     </td>
                     <td className={`px-3 py-2 font-mono text-xs font-semibold ${p.pnl_percent !== null ? (p.pnl_percent >= 0 ? 'text-green-600' : 'text-red-500') : ''}`}>
-                      {p.pnl_percent !== null ? `${p.pnl_percent >= 0 ? '+' : ''}${p.pnl_percent.toFixed(2)}%` : '—'}
+                      {p.pnl_percent !== null ? `${p.pnl_percent >= 0 ? '+' : ''}${(p.pnl_percent * 100).toFixed(2)}%` : '—'}
                     </td>
                     <td className="px-3 py-2 text-xs text-gray-400">{p.close_type ?? '—'}</td>
                     <td className="px-3 py-2">
@@ -91,11 +93,10 @@ export default function PositionsPage() {
                     <td className="px-3 py-2 text-xs text-gray-400 whitespace-nowrap">
                       {p.opened_at ? new Date(p.opened_at).toLocaleString('vi-VN') : '—'}
                     </td>
-                    <td className="px-3 py-2 font-mono text-xs text-gray-400">{p.decay_count ?? '—'}</td>
                   </tr>
                 ))}
                 {positions.length === 0 && (
-                  <tr><td colSpan={15} className="px-4 py-8 text-center text-gray-400">Không có position nào</td></tr>
+                  <tr><td colSpan={14} className="px-4 py-8 text-center text-gray-400">Không có position nào</td></tr>
                 )}
               </tbody>
             </table>

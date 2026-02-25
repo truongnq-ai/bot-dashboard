@@ -176,7 +176,7 @@ export interface Position {
   account_id: number;
   symbol: string;
   time_frame: string;
-  side: 'LONG' | 'SHORT';
+  side: 'BUY' | 'SELL';
   entry_price: number;
   exit_price: number | null;
   sl_price: number | null;

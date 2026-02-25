@@ -28,6 +28,13 @@ export const API_ENDPOINTS = {
   ACCOUNTS_CONFIG: (id: number) => `/accounts/${id}/config`,
   ACCOUNTS_CONFIG_UPSERT: (id: number, code: string) => `/accounts/${id}/config/${code}`,
   ACCOUNTS_READINESS: (id: number) => `/accounts/${id}/readiness`,
+  ACCOUNTS_OC_SUMMARY: (id: number) => `/accounts/${id}/oc-summary`,
+  ACCOUNTS_OC_RESET: (id: number) => `/accounts/${id}/oc-state`,
+
+  // ─── OC States (Admin CRUD)
+  OC_STATES_LIST: `/oc-states/`,
+  OC_STATES_UPDATE: (id: number) => `/oc-states/${id}`,
+  OC_STATES_DELETE: (id: number) => `/oc-states/${id}`,
 
   // ─── Balances
   BALANCES_GET: (accountId: number) => `/accounts/${accountId}/balances`,

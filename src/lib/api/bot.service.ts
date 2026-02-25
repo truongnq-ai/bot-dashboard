@@ -55,6 +55,11 @@ export async function getUserSummary(userId: number): Promise<UserSummary> {
   return res.data;
 }
 
+export async function getCurrentUser(): Promise<UserPublic> {
+  const res = await apiClient.get<UserPublic>(API_ENDPOINTS.USERS_ME);
+  return res.data;
+}
+
 // ─── ACCOUNTS ────────────────────────────────────────────────────────────────
 
 export async function getAccounts(): Promise<{ count: number; accounts: Account[] }> {
@@ -101,6 +106,67 @@ export async function getAccountConfig(accountId: number): Promise<{ account_id:
 
 export async function upsertAccountConfig(accountId: number, paramCode: string, paramValue: string): Promise<void> {
   await apiClient.put(API_ENDPOINTS.ACCOUNTS_CONFIG_UPSERT(accountId, paramCode), { param_value: paramValue });
+}
+
+export interface AccountOcSummary {
+  account_id: number;
+  oc_config: {
+    OC_RATIO: number | null;
+    OC_PERCENTILE: number;
+    OC_MULTIPLIER_OVERRIDE: number | null;
+    OC_LOOKBACK: number;
+    MAX_OC_MULTIPLIER: number;
+    OC_MULTIPLIER_DECAY: number;
+    SL_OC_BUMP: number;
+    TP_OC_BUMP: number;
+  };
+  live_oc: Array<{
+    symbol: string;
+    time_frame: string;
+    oc_base: number;
+    oc_ratio: number | null;
+    oc_chained: number;
+    adaptive_multiplier: number;
+    oc_effective: number;
+  }>;
+}
+
+export async function getAccountOcSummary(accountId: number): Promise<AccountOcSummary> {
+  const res = await apiClient.get<AccountOcSummary>(API_ENDPOINTS.ACCOUNTS_OC_SUMMARY(accountId));
+  return res.data;
+}
+
+export async function resetAccountOC(accountId: number): Promise<{ success: boolean; cleared: number; message: string }> {
+  const res = await apiClient.delete(API_ENDPOINTS.ACCOUNTS_OC_RESET(accountId));
+  return res.data;
+}
+
+// ─── OC STATES (Admin CRUD) ───────────────────────────────────────────────────
+
+export interface OcStateItem {
+  id: number;
+  account_id: number;
+  account_name: string;
+  symbol: string;
+  time_frame: string;
+  oc_multiplier: number;
+  updated_at: string | null;
+}
+
+export async function getOcStates(accountId?: number): Promise<{ count: number; oc_states: OcStateItem[] }> {
+  const params = accountId !== undefined ? { account_id: accountId } : {};
+  const res = await apiClient.get(API_ENDPOINTS.OC_STATES_LIST, { params });
+  return res.data;
+}
+
+export async function updateOcState(id: number, oc_multiplier: number): Promise<OcStateItem> {
+  const res = await apiClient.patch(API_ENDPOINTS.OC_STATES_UPDATE(id), { oc_multiplier });
+  return res.data;
+}
+
+export async function deleteOcState(id: number): Promise<{ success: boolean; message: string }> {
+  const res = await apiClient.delete(API_ENDPOINTS.OC_STATES_DELETE(id));
+  return res.data;
 }
 
 // ─── SIGNALS ─────────────────────────────────────────────────────────────────

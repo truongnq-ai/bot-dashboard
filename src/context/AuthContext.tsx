@@ -7,14 +7,18 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { login, logout as logoutService } from '@/lib/api/auth.service';
+import { getAccounts } from '@/lib/api/bot.service';
 import { ResponseObject } from '@/types/common';
 import { AuthenticationResponse } from '@/types/auth';
+import type { Account } from '@/types/bot';
 import { showError } from '@/lib/utils/toast';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: { sub?: string } | null;
   loading: boolean;
+  accounts: Account[];
+  getAccountName: (accountId: number) => string;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -26,7 +30,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<{ sub?: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const router = useRouter();
+
+  const fetchAccounts = useCallback(async () => {
+    try {
+      const res = await getAccounts();
+      setAccounts(res.accounts ?? []);
+    } catch {
+      setAccounts([]);
+    }
+  }, []);
+
+  const getAccountName = useCallback((accountId: number): string => {
+    const found = accounts.find(a => a.id === accountId);
+    return found ? found.name : `#${accountId}`;
+  }, [accounts]);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -64,9 +83,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.isAuthenticated) {
         setIsAuthenticated(true);
         setUser(data.user);
+        // Load accounts vào cache ngay sau khi xác thực thành công
+        fetchAccounts();
       } else {
         setIsAuthenticated(false);
         setUser(null);
+        setAccounts([]);
       }
     } catch (error) {
       console.error('Check auth error:', error);
@@ -75,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchAccounts]);
 
   const handleLogin = useCallback(async (username: string, password: string) => {
     try {
@@ -100,6 +122,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Small delay to ensure cookies are available for middleware
         await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Load accounts ngay sau login
+        fetchAccounts();
         
         // Navigate to target path
         router.push(targetPath);
@@ -117,7 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, fetchAccounts]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -125,12 +150,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await logoutService();
       setIsAuthenticated(false);
       setUser(null);
+      setAccounts([]);
       router.push('/login');
     } catch (error) {
       console.error('Logout error:', error);
       // Even if logout fails, clear local state
       setIsAuthenticated(false);
       setUser(null);
+      setAccounts([]);
       router.push('/login');
     } finally {
       setLoading(false);
@@ -147,6 +174,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated,
         user,
         loading,
+        accounts,
+        getAccountName,
         login: handleLogin,
         logout: handleLogout,
         checkAuth,

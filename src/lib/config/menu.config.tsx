@@ -43,6 +43,7 @@ export const PHASE1_MAIN_MENU_ITEMS: NavItem[] = [
     icon: <PieChartIcon />,
     name: "Trading",
     subItems: [
+      { name: "OC States", path: "/oc-states" },
       { name: "Signals", path: "/signals" },
       { name: "Orders", path: "/orders" },
       { name: "Positions", path: "/positions" },

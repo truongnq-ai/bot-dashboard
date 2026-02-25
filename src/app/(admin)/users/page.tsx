@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getUsers, createUser, deleteUser } from '@/lib/api/bot.service';
+import { getUsers, createUser, deleteUser, getCurrentUser } from '@/lib/api/bot.service';
 import type { UserPublic } from '@/types/bot';
 import Link from 'next/link';
 
@@ -10,6 +10,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [isSuperuser, setIsSuperuser] = useState(false);
 
   // Form tạo User
   const [formUsername, setFormUsername] = useState('');
@@ -33,7 +34,13 @@ export default function UsersPage() {
     }
   };
 
-  useEffect(() => { loadUsers(); }, []);
+  useEffect(() => {
+    // Lấy thông tin user hiện tại để check quyền trước
+    getCurrentUser()
+      .then(me => setIsSuperuser(me.is_superuser ?? false))
+      .catch(() => setIsSuperuser(false));
+    loadUsers();
+  }, []);
 
   const handleDelete = async (id: number, username: string) => {
     if (!confirm(`Xóa user ${username}?`)) return;
@@ -90,12 +97,14 @@ export default function UsersPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quản lý Users</h1>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => { resetForm(); setShowCreate(true); }}
-            className="text-sm px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium"
-          >
-            + Thêm User
-          </button>
+          {isSuperuser && (
+            <button
+              onClick={() => { resetForm(); setShowCreate(true); }}
+              className="text-sm px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium"
+            >
+              + Thêm User
+            </button>
+          )}
           <button
             onClick={loadUsers}
             className="text-sm px-3 py-1.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 transition"
@@ -241,7 +250,7 @@ export default function UsersPage() {
                         >
                           Chi tiết
                         </Link>
-                        {!user.is_superuser && (
+                        {isSuperuser && !user.is_superuser && (
                           <button
                             onClick={() => handleDelete(user.id, user.username || user.email || String(user.id))}
                             className="text-xs text-red-500 hover:text-red-700 hover:underline"

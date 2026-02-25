@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { getSignals } from '@/lib/api/bot.service';
+import { useAuth } from '@/context/AuthContext';
 import type { Signal } from '@/types/bot';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -11,6 +12,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function SignalsPage() {
+  const { getAccountName } = useAuth();
   const [signals, setSignals] = useState<Signal[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -75,7 +77,7 @@ export default function SignalsPage() {
                 {signals.map(s => (
                   <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                     <td className="px-3 py-2 font-mono text-gray-500 text-xs">{s.id}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{s.account_id}</td>
+                    <td className="px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300">{getAccountName(s.account_id)}</td>
                     <td className="px-3 py-2 font-medium">{s.symbol}</td>
                     <td className="px-3 py-2 text-gray-500">{s.time_frame}</td>
                     <td className="px-3 py-2">

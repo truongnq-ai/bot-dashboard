@@ -5,9 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   getAccountById, updateAccount, getAccountBalances,
   getAccountConfig, upsertAccountConfig,
-  checkAccountReadiness, seedBalance,
+  checkAccountReadiness, seedBalance, getAccountOcSummary, resetAccountOC,
 } from '@/lib/api/bot.service';
 import type { Account, AccountBalance } from '@/types/bot';
+import type { AccountOcSummary } from '@/lib/api/bot.service';
 
 // ─── Param metadata ───────────────────────────────────────────
 const TRADING_PARAMS = ['TRADE_AMOUNT_USDT', 'LEVERAGE', 'OC_RATIO', 'MAX_OPEN_SIGNALS', 'MAX_OPEN_POSITIONS', 'TIME_FRAMES'];
@@ -25,7 +26,7 @@ const PARAM_LABELS: Record<string, string> = {
 const fmt = (n: number) => n.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pnlCls = (v: number) => v > 0 ? 'text-green-600 dark:text-green-400' : v < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500';
 
-type ActiveTab = 'info' | 'balance' | 'config';
+type ActiveTab = 'info' | 'balance' | 'config' | 'oc';
 
 export default function AccountDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +45,11 @@ export default function AccountDetailPage() {
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [savingParam, setSavingParam] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // OC tab
+  const [ocData, setOcData] = useState<AccountOcSummary | null>(null);
+  const [ocLoading, setOcLoading] = useState(false);
+  const [resettingOC, setResettingOC] = useState(false);
 
   // Seed balance modal
   const [showSeed, setShowSeed] = useState(false);
@@ -84,7 +90,22 @@ export default function AccountDetailPage() {
   const handleToggle = async () => {
     if (!account) return;
     await updateAccount(accountId, { enabled: !account.enabled });
-    setAccount(prev => prev ? { ...prev, enabled: !prev.enabled } : prev);
+    setAccount((prev: Account | null) => prev ? { ...prev, enabled: !prev.enabled } : prev);
+  };
+
+  const handleTabChange = async (tab: ActiveTab) => {
+    setActiveTab(tab);
+    if (tab === 'oc' && !ocData) {
+      setOcLoading(true);
+      try {
+        const data = await getAccountOcSummary(accountId);
+        setOcData(data);
+      } catch {
+        // silent — sẽ hiển thị empty state
+      } finally {
+        setOcLoading(false);
+      }
+    }
   };
 
   const handleSaveParam = async (code: string) => {
@@ -111,6 +132,22 @@ export default function AccountDetailPage() {
       await load();
     } catch { alert('Không thể seed balance (có thể đã tồn tại)'); }
     finally { setSeeding(false); }
+  };
+
+  const handleResetOC = async () => {
+    if (!confirm(`Reset toàn bộ OC Multiplier về 1.0x cho account "${account?.name}"?\nHành động này có hiệu lực ngay lập tức.`)) return;
+    setResettingOC(true);
+    try {
+      const res = await resetAccountOC(accountId);
+      alert(res.message);
+      // Refresh OC data
+      const data = await getAccountOcSummary(accountId);
+      setOcData(data);
+    } catch {
+      alert('Không thể reset OC. Vui lòng thử lại.');
+    } finally {
+      setResettingOC(false);
+    }
   };
 
   if (loading) return <div className="text-center py-16 text-gray-400">Đang tải...</div>;
@@ -161,6 +198,7 @@ export default function AccountDetailPage() {
     { key: 'info', label: '📋 Thông tin' },
     { key: 'balance', label: '💰 Balance' },
     { key: 'config', label: '⚙️ Config' },
+    { key: 'oc', label: '📊 OC' },
   ];
 
   return (
@@ -205,7 +243,7 @@ export default function AccountDetailPage() {
           {tabs.map(t => (
             <button
               key={t.key}
-              onClick={() => setActiveTab(t.key)}
+              onClick={() => handleTabChange(t.key)}
               className={`px-5 py-2.5 text-sm font-medium border-b-2 transition ${activeTab === t.key ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
             >
               {t.label}
@@ -299,6 +337,127 @@ export default function AccountDetailPage() {
           </div>
 
           <p className="text-xs text-gray-400">● override = đã có row trong DB | default = dùng từ config.py</p>
+        </div>
+      )}
+
+      {/* ─── Tab: OC ─── */}
+      {activeTab === 'oc' && (
+        <div className="space-y-4">
+          {ocLoading ? (
+            <div className="text-center py-10 text-gray-400 text-sm">Đang tải dữ liệu OC...</div>
+          ) : (
+            <>
+              {/* Card: OC Config của account */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">📊 Cấu hình OC của Account</h3>
+                  <p className="text-xs text-gray-400">Các params xác định ngưỡng entry của account này</p>
+                </div>
+                <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {ocData && ([
+                    { label: 'OC Ratio', val: ocData.oc_config.OC_RATIO ?? 'auto-chain', note: 'Nhân bội vs OC base', highlight: true },
+                    { label: 'OC Percentile', val: `P${ocData.oc_config.OC_PERCENTILE}`, note: 'Mức P tính base', highlight: false },
+                    { label: 'Multiplier Override', val: ocData.oc_config.OC_MULTIPLIER_OVERRIDE ?? 'adaptive', note: 'null = tự động', highlight: false },
+                    { label: 'OC Lookback', val: `${ocData.oc_config.OC_LOOKBACK} nến`, note: 'Số nến lịch sử', highlight: false },
+                    { label: 'Max Multiplier', val: `×${ocData.oc_config.MAX_OC_MULTIPLIER}`, note: 'Trần adaptive', highlight: false },
+                    { label: 'Multiplier Decay', val: ocData.oc_config.OC_MULTIPLIER_DECAY, note: 'Per candle', highlight: false },
+                    { label: 'SL OC Bump', val: `+${ocData.oc_config.SL_OC_BUMP}`, note: 'Tăng khi hit SL', highlight: false },
+                    { label: 'TP OC Bump', val: `+${ocData.oc_config.TP_OC_BUMP}`, note: 'Tăng khi hit TP', highlight: false },
+                  ] as { label: string; val: string | number; note: string; highlight: boolean }[]).map(item => (
+                    <div key={item.label}>
+                      <p className="text-xs text-gray-400 mb-0.5">{item.label}</p>
+                      <p className={`text-sm font-bold font-mono ${
+                        item.highlight ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
+                      }`}>{String(item.val)}</p>
+                      <p className="text-xs text-gray-400">{item.note}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bảng Live OC per Symbol/TF */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">📡 Live OC per Symbol / TF</h3>
+                    <p className="text-xs text-gray-400">Dữ liệu real-time từ rolling window — cần bot đang chạy</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {ocData && ocData.live_oc.some(r => r.adaptive_multiplier > 1.001) && (
+                      <button
+                        onClick={handleResetOC}
+                        disabled={resettingOC}
+                        className="text-xs px-2.5 py-1 rounded-lg bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/60 transition font-medium disabled:opacity-50"
+                      >
+                        {resettingOC ? '⏳ Resetting...' : '🔄 Reset OC'}
+                      </button>
+                    )}
+                    <button
+                      onClick={async () => {
+                        setOcLoading(true);
+                        try { setOcData(await getAccountOcSummary(accountId)); } catch { /* silent */ }
+                        finally { setOcLoading(false); }
+                      }}
+                      className="text-xs text-blue-500 hover:text-blue-700 transition"
+                    >↻ Refresh</button>
+                  </div>
+                </div>
+                {!ocData || ocData.live_oc.length === 0 ? (
+                  <div className="px-5 py-10 text-center text-sm text-gray-400">
+                    Chưa có dữ liệu OC live — bot chưa chạy hoặc chưa bootstrap xong
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
+                          <th className="px-4 py-2.5 text-left font-medium">Symbol</th>
+                          <th className="px-4 py-2.5 text-left font-medium">TF</th>
+                          <th className="px-4 py-2.5 text-right font-medium">OC Base (P95)</th>
+                          <th className="px-4 py-2.5 text-right font-medium">OC Ratio</th>
+                          <th className="px-4 py-2.5 text-right font-medium">OC Chained</th>
+                          <th className="px-4 py-2.5 text-right font-medium">Multiplier</th>
+                          <th className="px-4 py-2.5 text-right font-medium">OC Effective</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
+                        {ocData.live_oc.map((row, i) => {
+                          const multActive = row.adaptive_multiplier > 1.001;
+                          return (
+                            <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition">
+                              <td className="px-4 py-2.5 font-mono font-medium text-gray-900 dark:text-white">{row.symbol}</td>
+                              <td className="px-4 py-2.5">
+                                <span className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-xs font-mono text-gray-600 dark:text-gray-300">{row.time_frame}</span>
+                              </td>
+                              <td className="px-4 py-2.5 text-right font-mono text-gray-600 dark:text-gray-300">{row.oc_base.toFixed(4)}%</td>
+                              <td className="px-4 py-2.5 text-right font-mono text-gray-500">
+                                {row.oc_ratio !== null ? `×${row.oc_ratio}` : 'auto'}
+                              </td>
+                              <td className="px-4 py-2.5 text-right font-mono text-gray-600 dark:text-gray-300">{row.oc_chained.toFixed(4)}%</td>
+                              <td className="px-4 py-2.5 text-right font-mono">
+                                <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
+                                  multActive
+                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+                                    : 'text-gray-400'
+                                }`}>×{row.adaptive_multiplier.toFixed(2)}</span>
+                              </td>
+                              <td className="px-4 py-2.5 text-right">
+                                <span className={`font-mono font-bold text-sm ${
+                                  multActive
+                                    ? 'text-amber-600 dark:text-amber-400'
+                                    : 'text-blue-600 dark:text-blue-400'
+                                }`}>{row.oc_effective.toFixed(4)}%</span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
 
