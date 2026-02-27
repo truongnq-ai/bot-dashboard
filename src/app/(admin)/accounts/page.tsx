@@ -188,7 +188,7 @@ export default function AccountsPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-900/50">
                 <tr>
-                  {['ID', 'Tên', 'User ID', 'Trade Amount', 'Leverage', 'OC Ratio', 'Max Sig', 'Max Pos', 'Trạng thái', 'Thao tác'].map(h => (
+                  {['ID', 'Tên', 'User ID', 'Trade Amount', 'Leverage', 'OC Ratio', 'Min OC', 'Max OC', 'Max Sig', 'Max Pos', 'Trạng thái', 'Thao tác'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
@@ -204,16 +204,17 @@ export default function AccountsPage() {
                       <td className="px-4 py-3 font-mono">${cfg?.TRADE_AMOUNT_USDT ?? '—'}</td>
                       <td className="px-4 py-3 font-mono">{cfg?.LEVERAGE ?? '—'}x</td>
                       <td className="px-4 py-3 font-mono">{cfg?.OC_RATIO ?? 'auto'}</td>
+                      <td className="px-4 py-3 font-mono text-xs">{String(cfg?.MIN_OC_PERCENT ?? 3.0)}%</td>
+                      <td className="px-4 py-3 font-mono text-xs">{String(cfg?.MAX_OC_PERCENT ?? 20.0)}%</td>
                       <td className="px-4 py-3 font-mono">{cfg?.MAX_OPEN_SIGNALS ?? '—'}</td>
                       <td className="px-4 py-3 font-mono">{cfg?.MAX_OPEN_POSITIONS ?? '—'}</td>
                       <td className="px-4 py-3">
                         <button
                           onClick={() => handleToggle(account.id, account.name, account.enabled)}
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition ${
-                            account.enabled
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 hover:bg-green-200'
-                              : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200'
-                          }`}
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition ${account.enabled
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 hover:bg-green-200'
+                            : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200'
+                            }`}
                         >
                           {account.enabled ? '● Enabled' : '○ Disabled'}
                         </button>
@@ -231,7 +232,7 @@ export default function AccountsPage() {
                   );
                 })}
                 {accounts.length === 0 && (
-                  <tr><td colSpan={10} className="px-4 py-8 text-center text-gray-400">Không có account nào</td></tr>
+                  <tr><td colSpan={12} className="px-4 py-8 text-center text-gray-400">Không có account nào</td></tr>
                 )}
               </tbody>
             </table>

@@ -11,12 +11,13 @@ import type { Account, AccountBalance } from '@/types/bot';
 import type { AccountOcSummary } from '@/lib/api/bot.service';
 
 // ─── Param metadata ───────────────────────────────────────────
-const TRADING_PARAMS = ['TRADE_AMOUNT_USDT', 'LEVERAGE', 'OC_RATIO', 'MAX_OPEN_SIGNALS', 'MAX_OPEN_POSITIONS', 'TIME_FRAMES'];
+const TRADING_PARAMS = ['TRADE_AMOUNT_USDT', 'LEVERAGE', 'OC_RATIO', 'MAX_OPEN_SIGNALS', 'MAX_OPEN_POSITIONS', 'TIME_FRAMES', 'MIN_OC_PERCENT', 'MAX_OC_PERCENT'];
 const ADVANCED_PARAMS = ['OC_PERCENTILE', 'OC_LOOKBACK', 'TRIGGER_RATIO', 'SL_OC_RATIO', 'TP_OC_RATIO', 'MIN_SL_OC_RATIO', 'DECAY_RATE', 'SL_OC_BUMP', 'TP_OC_BUMP', 'OC_MULTIPLIER_DECAY', 'MAX_OC_MULTIPLIER', 'MIN_VOLUME_USDT'];
 
 const PARAM_LABELS: Record<string, string> = {
   TRADE_AMOUNT_USDT: 'Vốn mỗi lệnh (USDT)', LEVERAGE: 'Đòn bẩy (×)', OC_RATIO: 'OC Ratio',
   MAX_OPEN_SIGNALS: 'Max Signals', MAX_OPEN_POSITIONS: 'Max Positions', TIME_FRAMES: 'Time Frames ⚠️',
+  MIN_OC_PERCENT: 'Min OC (%)', MAX_OC_PERCENT: 'Max OC (%)',
   OC_PERCENTILE: 'OC Percentile', OC_LOOKBACK: 'OC Lookback (nến)', TRIGGER_RATIO: 'Trigger Ratio (%)',
   SL_OC_RATIO: 'SL/OC Ratio', TP_OC_RATIO: 'TP/OC Ratio', MIN_SL_OC_RATIO: 'Min SL/OC Ratio',
   DECAY_RATE: 'Decay Rate', SL_OC_BUMP: 'SL OC Bump', TP_OC_BUMP: 'TP OC Bump',
@@ -357,6 +358,8 @@ export default function AccountDetailPage() {
                   {ocData && ([
                     { label: 'OC Ratio', val: ocData.oc_config.OC_RATIO ?? 'auto-chain', note: 'Nhân bội vs OC base', highlight: true },
                     { label: 'OC Percentile', val: `P${ocData.oc_config.OC_PERCENTILE}`, note: 'Mức P tính base', highlight: false },
+                    { label: 'Min OC (%)', val: `${ocData.oc_config.MIN_OC_PERCENT ?? 3.0}%`, note: 'OC eff tối thiểu', highlight: true },
+                    { label: 'Max OC (%)', val: `${ocData.oc_config.MAX_OC_PERCENT ?? 20.0}%`, note: 'OC eff tối đa', highlight: true },
                     { label: 'Multiplier Override', val: ocData.oc_config.OC_MULTIPLIER_OVERRIDE ?? 'adaptive', note: 'null = tự động', highlight: false },
                     { label: 'OC Lookback', val: `${ocData.oc_config.OC_LOOKBACK} nến`, note: 'Số nến lịch sử', highlight: false },
                     { label: 'Max Multiplier', val: `×${ocData.oc_config.MAX_OC_MULTIPLIER}`, note: 'Trần adaptive', highlight: false },
@@ -366,9 +369,8 @@ export default function AccountDetailPage() {
                   ] as { label: string; val: string | number; note: string; highlight: boolean }[]).map(item => (
                     <div key={item.label}>
                       <p className="text-xs text-gray-400 mb-0.5">{item.label}</p>
-                      <p className={`text-sm font-bold font-mono ${
-                        item.highlight ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
-                      }`}>{String(item.val)}</p>
+                      <p className={`text-sm font-bold font-mono ${item.highlight ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
+                        }`}>{String(item.val)}</p>
                       <p className="text-xs text-gray-400">{item.note}</p>
                     </div>
                   ))}
@@ -418,6 +420,7 @@ export default function AccountDetailPage() {
                           <th className="px-4 py-2.5 text-right font-medium">OC Chained</th>
                           <th className="px-4 py-2.5 text-right font-medium">Multiplier</th>
                           <th className="px-4 py-2.5 text-right font-medium">OC Effective</th>
+                          <th className="px-4 py-2.5 text-center font-medium">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
@@ -435,18 +438,29 @@ export default function AccountDetailPage() {
                               </td>
                               <td className="px-4 py-2.5 text-right font-mono text-gray-600 dark:text-gray-300">{row.oc_chained.toFixed(4)}%</td>
                               <td className="px-4 py-2.5 text-right font-mono">
-                                <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
-                                  multActive
+                                <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${multActive
                                     ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
                                     : 'text-gray-400'
-                                }`}>×{row.adaptive_multiplier.toFixed(2)}</span>
+                                  }`}>×{row.adaptive_multiplier.toFixed(2)}</span>
                               </td>
                               <td className="px-4 py-2.5 text-right">
-                                <span className={`font-mono font-bold text-sm ${
-                                  multActive
+                                <span className={`font-mono font-bold text-sm ${multActive
                                     ? 'text-amber-600 dark:text-amber-400'
                                     : 'text-blue-600 dark:text-blue-400'
-                                }`}>{row.oc_effective.toFixed(4)}%</span>
+                                  }`}>{row.oc_effective.toFixed(4)}%</span>
+                              </td>
+                              <td className="px-4 py-2.5 text-center">
+                                {(() => {
+                                  const minOc = Number(ocData?.oc_config?.MIN_OC_PERCENT ?? 3.0);
+                                  const maxOc = Number(ocData?.oc_config?.MAX_OC_PERCENT ?? 20.0);
+                                  const inRange = row.oc_effective >= minOc && row.oc_effective <= maxOc;
+                                  return (
+                                    <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${inRange
+                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+                                        : 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
+                                      }`}>{inRange ? '✅ In' : '❌ Out'}</span>
+                                  );
+                                })()}
                               </td>
                             </tr>
                           );

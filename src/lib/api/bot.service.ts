@@ -119,6 +119,8 @@ export interface AccountOcSummary {
     OC_MULTIPLIER_DECAY: number;
     SL_OC_BUMP: number;
     TP_OC_BUMP: number;
+    MIN_OC_PERCENT: number;
+    MAX_OC_PERCENT: number;
   };
   live_oc: Array<{
     symbol: string;
