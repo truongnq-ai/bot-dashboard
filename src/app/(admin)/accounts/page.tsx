@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getAccounts, updateAccount, seedBalance, checkAccountReadiness } from '@/lib/api/bot.service';
-import type { Account } from '@/types/bot';
+import { getAccounts, updateAccount, seedBalance, checkAccountReadiness, transferBalance } from '@/lib/api/bot.service';
+import type { Account, AccountBalance } from '@/types/bot';
 import Link from 'next/link';
 
 export default function AccountsPage() {
@@ -17,6 +17,17 @@ export default function AccountsPage() {
   const [seedAmount, setSeedAmount] = useState('1000');
   const [seeding, setSeeding] = useState(false);
   const [seedError, setSeedError] = useState<string | null>(null);
+
+  // Transfer Balance modal
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [transferAccountId, setTransferAccountId] = useState<number | null>(null);
+  const [transferAccountName, setTransferAccountName] = useState('');
+  const [transferBalances, setTransferBalances] = useState<AccountBalance[]>([]);
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferFrom, setTransferFrom] = useState<'SPOT' | 'FUTURES'>('SPOT');
+  const [transferTo, setTransferTo] = useState<'SPOT' | 'FUTURES'>('FUTURES');
+  const [transferring, setTransferring] = useState(false);
+  const [transferError, setTransferError] = useState<string | null>(null);
 
   // Readiness warning modal
   const [showWarning, setShowWarning] = useState(false);
@@ -96,6 +107,50 @@ export default function AccountsPage() {
     }
   };
 
+  // ────── Transfer Balance ──────
+  const openTransferModal = async (accountId: number, name: string) => {
+    setTransferAccountId(accountId);
+    setTransferAccountName(name);
+    setTransferAmount('');
+    setTransferError(null);
+    setTransferFrom('SPOT');
+    setTransferTo('FUTURES');
+    // Tải balances để hiện số dư
+    try {
+      const { getAccountBalances } = await import('@/lib/api/bot.service');
+      const data = await getAccountBalances(accountId);
+      setTransferBalances(data.balances);
+    } catch { setTransferBalances([]); }
+    setShowTransfer(true);
+  };
+
+  const handleTransfer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!transferAccountId) return;
+    const amount = parseFloat(transferAmount);
+    if (isNaN(amount) || amount <= 0) {
+      setTransferError('Số tiền phải > 0');
+      return;
+    }
+    if (transferFrom === transferTo) {
+      setTransferError('Ví nguồn và đích phải khác nhau');
+      return;
+    }
+    try {
+      setTransferring(true);
+      setTransferError(null);
+      const res = await transferBalance(transferAccountId, { from_type: transferFrom, to_type: transferTo, amount });
+      setShowTransfer(false);
+      alert(`✅ ${res.message}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Không thể chuyển tiền';
+      setTransferError(msg);
+    } finally {
+      setTransferring(false);
+    }
+  };
+
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -139,6 +194,69 @@ export default function AccountsPage() {
                 <button type="submit" disabled={seeding}
                   className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition font-medium">
                   {seeding ? 'Đang seed...' : 'Seed Balance'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Transfer Balance ── */}
+      {showTransfer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-sm mx-4">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Chuyển tiền — {transferAccountName}</h2>
+            </div>
+            <form onSubmit={handleTransfer} className="px-6 py-5 space-y-4">
+              {transferError && (
+                <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-sm text-red-600 dark:text-red-400">{transferError}</div>
+              )}
+              {/* Số dư hiện tại */}
+              <div className="grid grid-cols-2 gap-2">
+                {['SPOT', 'FUTURES'].map(type => {
+                  const bal = transferBalances.find(b => b.balance_type === type);
+                  return (
+                    <div key={type} className="rounded-lg bg-gray-50 dark:bg-gray-700/50 px-3 py-2 text-center">
+                      <p className="text-xs text-gray-400">{type}</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">
+                        ${bal ? bal.equity.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <label className="block text-xs text-gray-500 mb-1">Từ ví</label>
+                  <select value={transferFrom} onChange={e => setTransferFrom(e.target.value as 'SPOT' | 'FUTURES')}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
+                    <option value="SPOT">🏦 SPOT</option>
+                    <option value="FUTURES">⚡ FUTURES</option>
+                  </select>
+                </div>
+                <span className="text-gray-400 mt-5">→</span>
+                <div className="flex-1">
+                  <label className="block text-xs text-gray-500 mb-1">Đến ví</label>
+                  <select value={transferTo} onChange={e => setTransferTo(e.target.value as 'SPOT' | 'FUTURES')}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
+                    <option value="FUTURES">⚡ FUTURES</option>
+                    <option value="SPOT">🏦 SPOT</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số tiền (USDT) *</label>
+                <input type="number" value={transferAmount} onChange={e => setTransferAmount(e.target.value)} required min="0.01" step="any"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="50" />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowTransfer(false)}
+                  className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 transition">Hủy</button>
+                <button type="submit" disabled={transferring}
+                  className="px-4 py-2 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 transition font-medium">
+                  {transferring ? 'Đang chuyển...' : 'Chuyển tiền'}
                 </button>
               </div>
             </form>
@@ -223,6 +341,8 @@ export default function AccountsPage() {
                         <div className="flex items-center gap-2">
                           <button onClick={() => openSeedModal(account.id, account.name)}
                             className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline">Seed$</button>
+                          <button onClick={() => openTransferModal(account.id, account.name)}
+                            className="text-xs text-orange-500 dark:text-orange-400 hover:underline">Bơm FUTURE</button>
                           <Link href={`/accounts/${account.id}`} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
                             Chi tiết →
                           </Link>

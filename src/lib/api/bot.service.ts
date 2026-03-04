@@ -94,6 +94,22 @@ export async function seedBalance(accountId: number, data: { balance_type: 'SPOT
   return res.data;
 }
 
+export async function transferBalance(
+  accountId: number,
+  data: { from_type: 'SPOT' | 'FUTURES'; to_type: 'SPOT' | 'FUTURES'; amount: number }
+): Promise<{
+  account_id: number;
+  from_type: string;
+  to_type: string;
+  amount: number;
+  source_equity_after: number;
+  target_equity_after: number;
+  message: string;
+}> {
+  const res = await apiClient.post(`/accounts/${accountId}/balances/transfer`, data);
+  return res.data;
+}
+
 export async function checkAccountReadiness(accountId: number): Promise<{ ready: boolean; checks: Record<string, boolean>; warnings: string[] }> {
   const res = await apiClient.get(`/accounts/${accountId}/readiness`);
   return res.data;

@@ -5,19 +5,20 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   getAccountById, updateAccount, getAccountBalances,
   getAccountConfig, upsertAccountConfig,
-  checkAccountReadiness, seedBalance, getAccountOcSummary, resetAccountOC,
+  checkAccountReadiness, seedBalance, getAccountOcSummary, resetAccountOC, transferBalance,
 } from '@/lib/api/bot.service';
 import type { Account, AccountBalance } from '@/types/bot';
 import type { AccountOcSummary } from '@/lib/api/bot.service';
 
 // ─── Param metadata ───────────────────────────────────────────
-const TRADING_PARAMS = ['TRADE_AMOUNT_USDT', 'LEVERAGE', 'OC_RATIO', 'MAX_OPEN_SIGNALS', 'MAX_OPEN_POSITIONS', 'TIME_FRAMES', 'MIN_OC_PERCENT', 'MAX_OC_PERCENT'];
+const TRADING_PARAMS = ['TRADE_AMOUNT_USDT', 'LEVERAGE', 'OC_RATIO', 'MAX_OPEN_SIGNALS', 'MAX_OPEN_POSITIONS', 'TIME_FRAMES', 'MIN_OC_PERCENT', 'MAX_OC_PERCENT', 'MIN_FUTURE_BALANCE', 'FUTURE_PROFIT_SWEEP_PCT'];
 const ADVANCED_PARAMS = ['OC_PERCENTILE', 'OC_LOOKBACK', 'TRIGGER_RATIO', 'SL_OC_RATIO', 'TP_OC_RATIO', 'MIN_SL_OC_RATIO', 'DECAY_RATE', 'SL_OC_BUMP', 'TP_OC_BUMP', 'OC_MULTIPLIER_DECAY', 'MAX_OC_MULTIPLIER', 'MIN_VOLUME_USDT'];
 
 const PARAM_LABELS: Record<string, string> = {
   TRADE_AMOUNT_USDT: 'Vốn mỗi lệnh (USDT)', LEVERAGE: 'Đòn bẩy (×)', OC_RATIO: 'OC Ratio',
   MAX_OPEN_SIGNALS: 'Max Signals', MAX_OPEN_POSITIONS: 'Max Positions', TIME_FRAMES: 'Time Frames ⚠️',
   MIN_OC_PERCENT: 'Min OC (%)', MAX_OC_PERCENT: 'Max OC (%)',
+  MIN_FUTURE_BALANCE: 'Min Future Balance (USDT)', FUTURE_PROFIT_SWEEP_PCT: 'Profit Sweep % (ví dụ: 0.10 = 10%)',
   OC_PERCENTILE: 'OC Percentile', OC_LOOKBACK: 'OC Lookback (nến)', TRIGGER_RATIO: 'Trigger Ratio (%)',
   SL_OC_RATIO: 'SL/OC Ratio', TP_OC_RATIO: 'TP/OC Ratio', MIN_SL_OC_RATIO: 'Min SL/OC Ratio',
   DECAY_RATE: 'Decay Rate', SL_OC_BUMP: 'SL OC Bump', TP_OC_BUMP: 'TP OC Bump',
@@ -35,7 +36,9 @@ export default function AccountDetailPage() {
   const accountId = parseInt(id);
 
   const [account, setAccount] = useState<Account | null>(null);
-  const [balance, setBalance] = useState<AccountBalance | null>(null);
+  const [balances, setBalances] = useState<AccountBalance[]>([]);   // all balance types
+  const [balance, setBalance] = useState<AccountBalance | null>(null); // FUTURES shortcut
+  const [spotBalance, setSpotBalance] = useState<AccountBalance | null>(null);
   const [configData, setConfigData] = useState<{ effective_config: Record<string, unknown>; overrides: Record<string, string> } | null>(null);
   const [readiness, setReadiness] = useState<{ ready: boolean; warnings: string[] } | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>('info');
@@ -57,6 +60,14 @@ export default function AccountDetailPage() {
   const [seedAmount, setSeedAmount] = useState('1000');
   const [seeding, setSeeding] = useState(false);
 
+  // Transfer balance modal
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [transferFrom, setTransferFrom] = useState<'SPOT' | 'FUTURES'>('SPOT');
+  const [transferTo, setTransferTo] = useState<'SPOT' | 'FUTURES'>('FUTURES');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferring, setTransferring] = useState(false);
+  const [transferError, setTransferError] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     try {
       setLoading(true);
@@ -67,7 +78,9 @@ export default function AccountDetailPage() {
         checkAccountReadiness(accountId).catch(() => null),
       ]);
       setAccount(acc);
+      setBalances(balData?.balances ?? []);
       setBalance(balData?.balances.find(b => b.balance_type === 'FUTURES') ?? null);
+      setSpotBalance(balData?.balances.find(b => b.balance_type === 'SPOT') ?? null);
       setConfigData(cfgData ?? null);
       setReadiness(readData);
       // Init edit values from effective config
@@ -133,6 +146,23 @@ export default function AccountDetailPage() {
       await load();
     } catch { alert('Không thể seed balance (có thể đã tồn tại)'); }
     finally { setSeeding(false); }
+  };
+
+  const handleTransferSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amount = parseFloat(transferAmount);
+    if (isNaN(amount) || amount <= 0) { setTransferError('Số tiền phải > 0'); return; }
+    if (transferFrom === transferTo) { setTransferError('Ví nguồn và đích phải khác nhau'); return; }
+    try {
+      setTransferring(true);
+      setTransferError(null);
+      const res = await transferBalance(accountId, { from_type: transferFrom, to_type: transferTo, amount });
+      setShowTransfer(false);
+      alert(`✅ ${res.message}`);
+      await load();
+    } catch (err: unknown) {
+      setTransferError(err instanceof Error ? err.message : 'Không thể chuyển tiền');
+    } finally { setTransferring(false); }
   };
 
   const handleResetOC = async () => {
@@ -267,39 +297,130 @@ export default function AccountDetailPage() {
       {/* ─── Tab: Balance ─── */}
       {activeTab === 'balance' && (
         <div className="space-y-4">
-          {balance ? (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {[
-                  { label: 'Vốn ban đầu', val: `$${fmt(balance.initial_balance)}`, cls: 'text-gray-900 dark:text-white' },
-                  { label: 'Total Equity', val: `$${fmt(balance.total_equity ?? balance.equity)}`, cls: pnlCls((balance.total_equity ?? balance.equity) - balance.initial_balance) },
-                  { label: 'Available', val: `$${fmt(balance.available_equity)}`, cls: 'text-blue-600 dark:text-blue-400' },
-                  { label: 'Margin Lock', val: `$${fmt(balance.margin_used)}`, cls: 'text-amber-600 dark:text-amber-400' },
-                  { label: 'Unrealized PnL', val: `${balance.unrealized_pnl >= 0 ? '+' : ''}${fmt(balance.unrealized_pnl)}`, cls: pnlCls(balance.unrealized_pnl) },
-                  { label: 'Realized PnL', val: `${balance.realized_pnl >= 0 ? '+' : ''}${fmt(balance.realized_pnl)}`, cls: pnlCls(balance.realized_pnl) },
-                  { label: 'Fee tổng', val: fmt(balance.fee_total), cls: 'text-gray-500' },
-                  { label: 'Net PnL', val: `${(balance.realized_pnl - balance.fee_total) >= 0 ? '+' : ''}${fmt(balance.realized_pnl - balance.fee_total)}`, cls: pnlCls(balance.realized_pnl - balance.fee_total) },
-                ].map(c => (
-                  <div key={c.label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 shadow-sm">
-                    <p className="text-xs text-gray-400 mb-1">{c.label}</p>
-                    <p className={`text-base font-bold ${c.cls}`}>{c.val}</p>
-                  </div>
-                ))}
+          {/* Dual Wallet Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* SPOT Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex items-center gap-2">
+                <span className="text-base">🏦</span>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">SPOT — Kho tiền</h3>
               </div>
-              <p className="text-xs text-gray-400">Type: FUTURES | Balance ID: #{balance.id}</p>
-            </>
-          ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
-              <p className="text-gray-500 mb-3">Account chưa có FUTURES balance</p>
-              <button onClick={() => setShowSeed(true)} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
-                Seed Balance ngay
+              {spotBalance ? (
+                <div className="px-4 py-4 grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Vốn ban đầu', val: `$${fmt(spotBalance.initial_balance)}`, cls: 'text-gray-900 dark:text-white' },
+                    { label: 'Equity hiện tại', val: `$${fmt(spotBalance.equity)}`, cls: 'text-gray-900 dark:text-white font-bold' },
+                  ].map(c => (
+                    <div key={c.label}>
+                      <p className="text-xs text-gray-400 mb-1">{c.label}</p>
+                      <p className={`text-base font-semibold ${c.cls}`}>{c.val}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-4 py-6 text-center text-xs text-gray-400">Chưa seed SPOT balance</div>
+              )}
+            </div>
+            {/* FUTURES Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-blue-200 dark:border-blue-800 shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-blue-100 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 flex items-center gap-2">
+                <span className="text-base">⚡</span>
+                <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-300">FUTURES — Thực chiến</h3>
+              </div>
+              {balance ? (
+                <div className="px-4 py-4 grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Vốn ban đầu', val: `$${fmt(balance.initial_balance)}`, cls: 'text-gray-900 dark:text-white' },
+                    { label: 'Total Equity', val: `$${fmt(balance.total_equity ?? balance.equity)}`, cls: pnlCls((balance.total_equity ?? balance.equity) - balance.initial_balance) },
+                    { label: 'Available', val: `$${fmt(balance.available_equity)}`, cls: 'text-blue-600 dark:text-blue-400' },
+                    { label: 'Margin Lock', val: `$${fmt(balance.margin_used)}`, cls: 'text-amber-600 dark:text-amber-400' },
+                    { label: 'Unrealized PnL', val: `${balance.unrealized_pnl >= 0 ? '+' : ''}${fmt(balance.unrealized_pnl)}`, cls: pnlCls(balance.unrealized_pnl) },
+                    { label: 'Realized PnL', val: `${balance.realized_pnl >= 0 ? '+' : ''}${fmt(balance.realized_pnl)}`, cls: pnlCls(balance.realized_pnl) },
+                    { label: 'Fee tổng', val: fmt(balance.fee_total), cls: 'text-gray-500' },
+                    { label: 'Net PnL', val: `${(balance.realized_pnl - balance.fee_total) >= 0 ? '+' : ''}${fmt(balance.realized_pnl - balance.fee_total)}`, cls: pnlCls(balance.realized_pnl - balance.fee_total) },
+                  ].map(c => (
+                    <div key={c.label}>
+                      <p className="text-xs text-gray-400 mb-1">{c.label}</p>
+                      <p className={`text-base font-bold ${c.cls}`}>{c.val}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-4 py-4 text-center space-y-3">
+                  <p className="text-gray-500 text-sm">Account chưa có FUTURES balance</p>
+                  <button onClick={() => setShowSeed(true)} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                    Seed Balance ngay
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Transfer button */}
+          {(spotBalance || balance) && (
+            <div className="flex gap-2">
+              <button onClick={() => { setTransferFrom('SPOT'); setTransferTo('FUTURES'); setTransferAmount(''); setTransferError(null); setShowTransfer(true); }}
+                className="text-sm px-3 py-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-lg hover:bg-orange-200 transition font-medium">
+                🔄 Chuyển tiền SPOT ↔ FUTURES
               </button>
+              {balance && (
+                <button onClick={() => setShowSeed(true)} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                  + Seed thêm vốn
+                </button>
+              )}
             </div>
           )}
-          {balance && (
-            <button onClick={() => setShowSeed(true)} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-              + Seed thêm vốn
-            </button>
+
+          {/* Transfer Modal */}
+          {showTransfer && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-sm mx-4">
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Chuyển tiền — {account?.name}</h2>
+                </div>
+                <form onSubmit={handleTransferSubmit} className="px-6 py-5 space-y-4">
+                  {transferError && <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 px-3 py-2 text-sm text-red-600">{transferError}</div>}
+                  <div className="grid grid-cols-2 gap-2">
+                    {[spotBalance, balance].filter(Boolean).map(b => b && (
+                      <div key={b.balance_type} className="rounded-lg bg-gray-50 dark:bg-gray-700/50 px-3 py-2 text-center">
+                        <p className="text-xs text-gray-400">{b.balance_type}</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">${fmt(b.equity)}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-1">Từ ví</label>
+                      <select value={transferFrom} onChange={e => setTransferFrom(e.target.value as 'SPOT' | 'FUTURES')}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
+                        <option value="SPOT">🏦 SPOT</option>
+                        <option value="FUTURES">⚡ FUTURES</option>
+                      </select>
+                    </div>
+                    <span className="text-gray-400 mt-5">→</span>
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-1">Đến ví</label>
+                      <select value={transferTo} onChange={e => setTransferTo(e.target.value as 'SPOT' | 'FUTURES')}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
+                        <option value="FUTURES">⚡ FUTURES</option>
+                        <option value="SPOT">🏦 SPOT</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số tiền (USDT) *</label>
+                    <input type="number" value={transferAmount} onChange={e => setTransferAmount(e.target.value)} required min="0.01" step="any"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-orange-500" placeholder="50" />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button type="button" onClick={() => setShowTransfer(false)} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">Hủy</button>
+                    <button type="submit" disabled={transferring} className="px-4 py-2 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 transition font-medium">
+                      {transferring ? 'Đang chuyển...' : 'Chuyển tiền'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           )}
         </div>
       )}
