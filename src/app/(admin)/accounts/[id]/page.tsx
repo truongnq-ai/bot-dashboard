@@ -357,9 +357,9 @@ export default function AccountDetailPage() {
           </div>
 
           {/* Transfer button */}
-          {(spotBalance || balance) && (
+          {balance && (
             <div className="flex gap-2">
-              <button onClick={() => { setTransferFrom('SPOT'); setTransferTo('FUTURES'); setTransferAmount(''); setTransferError(null); setShowTransfer(true); }}
+              <button onClick={() => { setTransferFrom('FUTURES'); setTransferTo('SPOT'); setTransferAmount(''); setTransferError(null); setShowTransfer(true); }}
                 className="text-sm px-3 py-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-lg hover:bg-orange-200 transition font-medium">
                 🔄 Chuyển tiền SPOT ↔ FUTURES
               </button>
@@ -380,6 +380,11 @@ export default function AccountDetailPage() {
                 </div>
                 <form onSubmit={handleTransferSubmit} className="px-6 py-5 space-y-4">
                   {transferError && <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 px-3 py-2 text-sm text-red-600">{transferError}</div>}
+                  {!spotBalance && transferTo === 'SPOT' && (
+                    <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-3 py-2 text-xs text-blue-600 dark:text-blue-400">
+                      💡 Ví SPOT chưa tồn tại — sẽ được tạo tự động với số dư $0 khi chuyển tiền lần đầu
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-2">
                     {[spotBalance, balance].filter(Boolean).map(b => b && (
                       <div key={b.balance_type} className="rounded-lg bg-gray-50 dark:bg-gray-700/50 px-3 py-2 text-center">
