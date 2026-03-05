@@ -28,6 +28,7 @@ export default function AccountsPage() {
   const [transferTo, setTransferTo] = useState<'SPOT' | 'FUTURES'>('FUTURES');
   const [transferring, setTransferring] = useState(false);
   const [transferError, setTransferError] = useState<string | null>(null);
+  const [transferMinFutureBal, setTransferMinFutureBal] = useState<number>(0);
 
   // Readiness warning modal
   const [showWarning, setShowWarning] = useState(false);
@@ -115,12 +116,17 @@ export default function AccountsPage() {
     setTransferError(null);
     setTransferFrom('SPOT');
     setTransferTo('FUTURES');
-    // Tải balances để hiện số dư
+    setTransferMinFutureBal(0);
+    // Tải balances và config để hiện số dư + gợi ý
     try {
-      const { getAccountBalances } = await import('@/lib/api/bot.service');
-      const data = await getAccountBalances(accountId);
-      setTransferBalances(data.balances);
-    } catch { setTransferBalances([]); }
+      const { getAccountBalances, getAccountConfig } = await import('@/lib/api/bot.service');
+      const [balData, cfgData] = await Promise.all([
+        getAccountBalances(accountId),
+        getAccountConfig(accountId).catch(() => null),
+      ]);
+      setTransferBalances(balData.balances);
+      setTransferMinFutureBal(Number(cfgData?.effective_config?.['MIN_FUTURE_BALANCE'] ?? 0));
+    } catch { setTransferBalances([]); setTransferMinFutureBal(0); }
     setShowTransfer(true);
   };
 
@@ -202,67 +208,119 @@ export default function AccountsPage() {
       )}
 
       {/* ── Modal Transfer Balance ── */}
-      {showTransfer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-sm mx-4">
-            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Chuyển tiền — {transferAccountName}</h2>
+      {showTransfer && (() => {
+        // ─── Suggestion logic: SPOT → FUTURES ────────────────────────
+        const tfFmt = (n: number) => n.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const tfSpot = transferBalances.find(b => b.balance_type === 'SPOT');
+        const tfFutures = transferBalances.find(b => b.balance_type === 'FUTURES');
+        const isSpotToFutures = transferFrom === 'SPOT' && transferTo === 'FUTURES';
+        const futuresEq = tfFutures?.equity ?? 0;
+        const spotEq = tfSpot?.equity ?? 0;
+        const rawSugg = transferMinFutureBal > 0 && futuresEq < transferMinFutureBal
+          ? transferMinFutureBal - futuresEq
+          : 0;
+        const suggAmount = Math.min(rawSugg, spotEq);
+        const showSugg = isSpotToFutures && rawSugg > 0;
+        // ─────────────────────────────────────────────────────────────
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-sm mx-4">
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Chuyển tiền — {transferAccountName}</h2>
+              </div>
+              <form onSubmit={handleTransfer} className="px-6 py-5 space-y-4">
+                {transferError && (
+                  <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-sm text-red-600 dark:text-red-400">{transferError}</div>
+                )}
+                {/* Suggestion banner */}
+                {showSugg && (
+                  <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 px-3 py-2.5">
+                    <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-0.5">
+                      ⚠️ FUTURES đang thiếu vốn — MIN: <strong>${tfFmt(transferMinFutureBal)}</strong> / Hiện tại: <strong>${tfFmt(futuresEq)}</strong>
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">
+                      Cần bơm thêm: <strong>${tfFmt(rawSugg)}</strong>
+                      {spotEq < rawSugg && (
+                        <span className="ml-1 text-red-500 dark:text-red-400">(SPOT chỉ có ${tfFmt(spotEq)} → chuyển tất)</span>
+                      )}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setTransferAmount(suggAmount.toFixed(2))}
+                      className="text-xs px-2.5 py-1 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition font-medium"
+                    >
+                      Dùng ${tfFmt(suggAmount)}
+                    </button>
+                  </div>
+                )}
+                {/* Số dư hiện tại */}
+                <div className="grid grid-cols-2 gap-2">
+                  {['SPOT', 'FUTURES'].map(type => {
+                    const bal = transferBalances.find(b => b.balance_type === type);
+                    return (
+                      <div key={type} className="rounded-lg bg-gray-50 dark:bg-gray-700/50 px-3 py-2 text-center">
+                        <p className="text-xs text-gray-400">{type}</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">
+                          ${bal ? tfFmt(bal.equity) : '—'}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <label className="block text-xs text-gray-500 mb-1">Từ ví</label>
+                    <select
+                      value={transferFrom}
+                      onChange={e => {
+                        const val = e.target.value as 'SPOT' | 'FUTURES';
+                        setTransferFrom(val);
+                        setTransferTo(val === 'SPOT' ? 'FUTURES' : 'SPOT');
+                        setTransferAmount('');
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
+                    >
+                      <option value="SPOT">🏦 SPOT</option>
+                      <option value="FUTURES">⚡ FUTURES</option>
+                    </select>
+                  </div>
+                  <span className="text-gray-400 mt-5">→</span>
+                  <div className="flex-1">
+                    <label className="block text-xs text-gray-500 mb-1">Đến ví</label>
+                    <select
+                      value={transferTo}
+                      onChange={e => {
+                        const val = e.target.value as 'SPOT' | 'FUTURES';
+                        setTransferTo(val);
+                        setTransferFrom(val === 'SPOT' ? 'FUTURES' : 'SPOT');
+                        setTransferAmount('');
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
+                    >
+                      <option value="FUTURES">⚡ FUTURES</option>
+                      <option value="SPOT">🏦 SPOT</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số tiền (USDT) *</label>
+                  <input type="number" value={transferAmount} onChange={e => setTransferAmount(e.target.value)} required min="0.01" step="any"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="50" />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button type="button" onClick={() => setShowTransfer(false)}
+                    className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 transition">Hủy</button>
+                  <button type="submit" disabled={transferring}
+                    className="px-4 py-2 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 transition font-medium">
+                    {transferring ? 'Đang chuyển...' : 'Chuyển tiền'}
+                  </button>
+                </div>
+              </form>
             </div>
-            <form onSubmit={handleTransfer} className="px-6 py-5 space-y-4">
-              {transferError && (
-                <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-sm text-red-600 dark:text-red-400">{transferError}</div>
-              )}
-              {/* Số dư hiện tại */}
-              <div className="grid grid-cols-2 gap-2">
-                {['SPOT', 'FUTURES'].map(type => {
-                  const bal = transferBalances.find(b => b.balance_type === type);
-                  return (
-                    <div key={type} className="rounded-lg bg-gray-50 dark:bg-gray-700/50 px-3 py-2 text-center">
-                      <p className="text-xs text-gray-400">{type}</p>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">
-                        ${bal ? bal.equity.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <label className="block text-xs text-gray-500 mb-1">Từ ví</label>
-                  <select value={transferFrom} onChange={e => setTransferFrom(e.target.value as 'SPOT' | 'FUTURES')}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
-                    <option value="SPOT">🏦 SPOT</option>
-                    <option value="FUTURES">⚡ FUTURES</option>
-                  </select>
-                </div>
-                <span className="text-gray-400 mt-5">→</span>
-                <div className="flex-1">
-                  <label className="block text-xs text-gray-500 mb-1">Đến ví</label>
-                  <select value={transferTo} onChange={e => setTransferTo(e.target.value as 'SPOT' | 'FUTURES')}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
-                    <option value="FUTURES">⚡ FUTURES</option>
-                    <option value="SPOT">🏦 SPOT</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số tiền (USDT) *</label>
-                <input type="number" value={transferAmount} onChange={e => setTransferAmount(e.target.value)} required min="0.01" step="any"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="50" />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setShowTransfer(false)}
-                  className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 transition">Hủy</button>
-                <button type="submit" disabled={transferring}
-                  className="px-4 py-2 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 transition font-medium">
-                  {transferring ? 'Đang chuyển...' : 'Chuyển tiền'}
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── Modal Warning khi Enable ── */}
       {showWarning && (

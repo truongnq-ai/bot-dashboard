@@ -372,61 +372,111 @@ export default function AccountDetailPage() {
           )}
 
           {/* Transfer Modal */}
-          {showTransfer && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-sm mx-4">
-                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Chuyển tiền — {account?.name}</h2>
-                </div>
-                <form onSubmit={handleTransferSubmit} className="px-6 py-5 space-y-4">
-                  {transferError && <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 px-3 py-2 text-sm text-red-600">{transferError}</div>}
-                  {!spotBalance && transferTo === 'SPOT' && (
-                    <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-3 py-2 text-xs text-blue-600 dark:text-blue-400">
-                      💡 Ví SPOT chưa tồn tại — sẽ được tạo tự động với số dư $0 khi chuyển tiền lần đầu
-                    </div>
-                  )}
-                  <div className="grid grid-cols-2 gap-2">
-                    {[spotBalance, balance].filter(Boolean).map(b => b && (
-                      <div key={b.balance_type} className="rounded-lg bg-gray-50 dark:bg-gray-700/50 px-3 py-2 text-center">
-                        <p className="text-xs text-gray-400">{b.balance_type}</p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-white">${fmt(b.equity)}</p>
+          {showTransfer && (() => {
+            // ─── Suggestion logic: SPOT → FUTURES ───────────────────────────
+            const minFutBal = Number(configData?.effective_config?.['MIN_FUTURE_BALANCE'] ?? 0);
+            const futuresEquity = balance?.equity ?? 0;
+            const spotEquity = spotBalance?.equity ?? 0;
+            const isSpotToFutures = transferFrom === 'SPOT' && transferTo === 'FUTURES';
+            const rawSuggested = minFutBal > 0 && futuresEquity < minFutBal
+              ? minFutBal - futuresEquity
+              : 0;
+            const suggestedAmount = Math.min(rawSuggested, spotEquity);
+            const showSuggestion = isSpotToFutures && rawSuggested > 0;
+            // ────────────────────────────────────────────────────────────────
+            return (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-sm mx-4">
+                  <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Chuyển tiền — {account?.name}</h2>
+                  </div>
+                  <form onSubmit={handleTransferSubmit} className="px-6 py-5 space-y-4">
+                    {transferError && <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 px-3 py-2 text-sm text-red-600">{transferError}</div>}
+                    {!spotBalance && transferTo === 'SPOT' && (
+                      <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-3 py-2 text-xs text-blue-600 dark:text-blue-400">
+                        💡 Ví SPOT chưa tồn tại — sẽ được tạo tự động với số dư $0 khi chuyển tiền lần đầu
                       </div>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">Từ ví</label>
-                      <select value={transferFrom} onChange={e => setTransferFrom(e.target.value as 'SPOT' | 'FUTURES')}
-                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
-                        <option value="SPOT">🏦 SPOT</option>
-                        <option value="FUTURES">⚡ FUTURES</option>
-                      </select>
+                    )}
+                    {/* Suggestion banner */}
+                    {showSuggestion && (
+                      <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 px-3 py-2.5">
+                        <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-0.5">
+                          ⚠️ FUTURES đang thiếu vốn — MIN: <strong>${fmt(minFutBal)}</strong> / Hiện tại: <strong>${fmt(futuresEquity)}</strong>
+                        </p>
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">
+                          Cần bơm thêm: <strong>${fmt(rawSuggested)}</strong>
+                          {spotEquity < rawSuggested && (
+                            <span className="ml-1 text-red-500 dark:text-red-400">(SPOT chỉ có ${fmt(spotEquity)} → chuyển tất)</span>
+                          )}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setTransferAmount(suggestedAmount.toFixed(2))}
+                          className="text-xs px-2.5 py-1 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition font-medium"
+                        >
+                          Dùng ${fmt(suggestedAmount)}
+                        </button>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-2">
+                      {[spotBalance, balance].filter(Boolean).map(b => b && (
+                        <div key={b.balance_type} className="rounded-lg bg-gray-50 dark:bg-gray-700/50 px-3 py-2 text-center">
+                          <p className="text-xs text-gray-400">{b.balance_type}</p>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">${fmt(b.equity)}</p>
+                        </div>
+                      ))}
                     </div>
-                    <span className="text-gray-400 mt-5">→</span>
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">Đến ví</label>
-                      <select value={transferTo} onChange={e => setTransferTo(e.target.value as 'SPOT' | 'FUTURES')}
-                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
-                        <option value="FUTURES">⚡ FUTURES</option>
-                        <option value="SPOT">🏦 SPOT</option>
-                      </select>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <label className="block text-xs text-gray-500 mb-1">Từ ví</label>
+                        <select
+                          value={transferFrom}
+                          onChange={e => {
+                            const val = e.target.value as 'SPOT' | 'FUTURES';
+                            setTransferFrom(val);
+                            setTransferTo(val === 'SPOT' ? 'FUTURES' : 'SPOT');
+                            setTransferAmount('');
+                          }}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
+                        >
+                          <option value="SPOT">🏦 SPOT</option>
+                          <option value="FUTURES">⚡ FUTURES</option>
+                        </select>
+                      </div>
+                      <span className="text-gray-400 mt-5">→</span>
+                      <div className="flex-1">
+                        <label className="block text-xs text-gray-500 mb-1">Đến ví</label>
+                        <select
+                          value={transferTo}
+                          onChange={e => {
+                            const val = e.target.value as 'SPOT' | 'FUTURES';
+                            setTransferTo(val);
+                            setTransferFrom(val === 'SPOT' ? 'FUTURES' : 'SPOT');
+                            setTransferAmount('');
+                          }}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
+                        >
+                          <option value="FUTURES">⚡ FUTURES</option>
+                          <option value="SPOT">🏦 SPOT</option>
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số tiền (USDT) *</label>
-                    <input type="number" value={transferAmount} onChange={e => setTransferAmount(e.target.value)} required min="0.01" step="any"
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-orange-500" placeholder="50" />
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button type="button" onClick={() => setShowTransfer(false)} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">Hủy</button>
-                    <button type="submit" disabled={transferring} className="px-4 py-2 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 transition font-medium">
-                      {transferring ? 'Đang chuyển...' : 'Chuyển tiền'}
-                    </button>
-                  </div>
-                </form>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số tiền (USDT) *</label>
+                      <input type="number" value={transferAmount} onChange={e => setTransferAmount(e.target.value)} required min="0.01" step="any"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-orange-500" placeholder="50" />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                      <button type="button" onClick={() => setShowTransfer(false)} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">Hủy</button>
+                      <button type="submit" disabled={transferring} className="px-4 py-2 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 transition font-medium">
+                        {transferring ? 'Đang chuyển...' : 'Chuyển tiền'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       )}
 
