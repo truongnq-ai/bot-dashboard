@@ -25,7 +25,6 @@ const ADVANCED_DEFAULTS: Record<string, string> = {
   TP_OC_BUMP: '0.05',
   OC_MULTIPLIER_DECAY: '0.70',
   MAX_OC_MULTIPLIER: '2.0',
-  MIN_VOLUME_USDT: '1000000',
 };
 
 const PARAM_LABELS: Record<string, { label: string; desc: string }> = {
@@ -44,7 +43,6 @@ const PARAM_LABELS: Record<string, { label: string; desc: string }> = {
   TP_OC_BUMP:           { label: 'TP OC Bump',              desc: 'Bump thêm cho TP khi decay' },
   OC_MULTIPLIER_DECAY:  { label: 'OC Multiplier Decay',     desc: 'Hệ số giảm OC Multiplier mỗi nến' },
   MAX_OC_MULTIPLIER:    { label: 'Max OC Multiplier',       desc: 'Giới hạn oc_multiplier tối đa' },
-  MIN_VOLUME_USDT:      { label: 'Min Volume (USDT)',        desc: 'Volume 24h tối thiểu để trade symbol' },
 };
 
 export default function NewAccountPage() {

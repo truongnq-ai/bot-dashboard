@@ -110,7 +110,6 @@ export interface AccountEffectiveConfig {
   TP_OC_BUMP: number;
   OC_MULTIPLIER_DECAY: number;
   MAX_OC_MULTIPLIER: number;
-  MIN_VOLUME_USDT: number;
   TIME_FRAMES: string;
   [key: string]: unknown;
 }

@@ -12,7 +12,7 @@ import type { AccountOcSummary } from '@/lib/api/bot.service';
 
 // ─── Param metadata ───────────────────────────────────────────
 const TRADING_PARAMS = ['TRADE_AMOUNT_USDT', 'LEVERAGE', 'OC_RATIO', 'MAX_OPEN_SIGNALS', 'MAX_OPEN_POSITIONS', 'TIME_FRAMES', 'MIN_OC_PERCENT', 'MAX_OC_PERCENT', 'MIN_FUTURE_BALANCE', 'FUTURE_PROFIT_SWEEP_PCT'];
-const ADVANCED_PARAMS = ['TRIGGER_RATIO', 'SL_OC_RATIO', 'TP_OC_RATIO', 'MIN_SL_OC_RATIO', 'DECAY_RATE', 'SL_OC_BUMP', 'TP_OC_BUMP', 'OC_MULTIPLIER_DECAY', 'MAX_OC_MULTIPLIER', 'MIN_VOLUME_USDT'];
+const ADVANCED_PARAMS = ['TRIGGER_RATIO', 'SL_OC_RATIO', 'TP_OC_RATIO', 'MIN_SL_OC_RATIO', 'DECAY_RATE', 'SL_OC_BUMP', 'TP_OC_BUMP', 'OC_MULTIPLIER_DECAY', 'MAX_OC_MULTIPLIER'];
 
 const PARAM_LABELS: Record<string, string> = {
   TRADE_AMOUNT_USDT: 'Vốn mỗi lệnh (USDT)', LEVERAGE: 'Đòn bẩy (×)', OC_RATIO: 'OC Ratio',
@@ -22,7 +22,7 @@ const PARAM_LABELS: Record<string, string> = {
   TRIGGER_RATIO: 'Trigger Ratio (%)',
   SL_OC_RATIO: 'SL/OC Ratio', TP_OC_RATIO: 'TP/OC Ratio', MIN_SL_OC_RATIO: 'Min SL/OC Ratio',
   DECAY_RATE: 'Decay Rate', SL_OC_BUMP: 'SL OC Bump', TP_OC_BUMP: 'TP OC Bump',
-  OC_MULTIPLIER_DECAY: 'OC Multiplier Decay', MAX_OC_MULTIPLIER: 'Max OC Multiplier', MIN_VOLUME_USDT: 'Min Volume (USDT)',
+  OC_MULTIPLIER_DECAY: 'OC Multiplier Decay', MAX_OC_MULTIPLIER: 'Max OC Multiplier',
 };
 
 const fmt = (n: number) => n.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
