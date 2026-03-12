@@ -128,9 +128,7 @@ export interface AccountOcSummary {
   account_id: number;
   oc_config: {
     OC_RATIO: number | null;
-    OC_PERCENTILE: number;
     OC_MULTIPLIER_OVERRIDE: number | null;
-    OC_LOOKBACK: number;
     MAX_OC_MULTIPLIER: number;
     OC_MULTIPLIER_DECAY: number;
     SL_OC_BUMP: number;

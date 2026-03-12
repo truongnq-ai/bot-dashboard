@@ -101,8 +101,6 @@ export interface AccountEffectiveConfig {
   MAX_OPEN_POSITIONS: number;
   OC_RATIO: number | null;
   OC_MULTIPLIER_OVERRIDE: number | null;
-  OC_PERCENTILE: number;
-  OC_LOOKBACK: number;
   TRIGGER_RATIO: number;
   SL_OC_RATIO: number;
   TP_OC_RATIO: number;

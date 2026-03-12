@@ -12,14 +12,14 @@ import type { AccountOcSummary } from '@/lib/api/bot.service';
 
 // ─── Param metadata ───────────────────────────────────────────
 const TRADING_PARAMS = ['TRADE_AMOUNT_USDT', 'LEVERAGE', 'OC_RATIO', 'MAX_OPEN_SIGNALS', 'MAX_OPEN_POSITIONS', 'TIME_FRAMES', 'MIN_OC_PERCENT', 'MAX_OC_PERCENT', 'MIN_FUTURE_BALANCE', 'FUTURE_PROFIT_SWEEP_PCT'];
-const ADVANCED_PARAMS = ['OC_PERCENTILE', 'OC_LOOKBACK', 'TRIGGER_RATIO', 'SL_OC_RATIO', 'TP_OC_RATIO', 'MIN_SL_OC_RATIO', 'DECAY_RATE', 'SL_OC_BUMP', 'TP_OC_BUMP', 'OC_MULTIPLIER_DECAY', 'MAX_OC_MULTIPLIER', 'MIN_VOLUME_USDT'];
+const ADVANCED_PARAMS = ['TRIGGER_RATIO', 'SL_OC_RATIO', 'TP_OC_RATIO', 'MIN_SL_OC_RATIO', 'DECAY_RATE', 'SL_OC_BUMP', 'TP_OC_BUMP', 'OC_MULTIPLIER_DECAY', 'MAX_OC_MULTIPLIER', 'MIN_VOLUME_USDT'];
 
 const PARAM_LABELS: Record<string, string> = {
   TRADE_AMOUNT_USDT: 'Vốn mỗi lệnh (USDT)', LEVERAGE: 'Đòn bẩy (×)', OC_RATIO: 'OC Ratio',
   MAX_OPEN_SIGNALS: 'Max Signals', MAX_OPEN_POSITIONS: 'Max Positions', TIME_FRAMES: 'Time Frames ⚠️',
   MIN_OC_PERCENT: 'Min OC (%)', MAX_OC_PERCENT: 'Max OC (%)',
   MIN_FUTURE_BALANCE: 'Min Future Balance (USDT)', FUTURE_PROFIT_SWEEP_PCT: 'Profit Sweep % (ví dụ: 0.10 = 10%)',
-  OC_PERCENTILE: 'OC Percentile', OC_LOOKBACK: 'OC Lookback (nến)', TRIGGER_RATIO: 'Trigger Ratio (%)',
+  TRIGGER_RATIO: 'Trigger Ratio (%)',
   SL_OC_RATIO: 'SL/OC Ratio', TP_OC_RATIO: 'TP/OC Ratio', MIN_SL_OC_RATIO: 'Min SL/OC Ratio',
   DECAY_RATE: 'Decay Rate', SL_OC_BUMP: 'SL OC Bump', TP_OC_BUMP: 'TP OC Bump',
   OC_MULTIPLIER_DECAY: 'OC Multiplier Decay', MAX_OC_MULTIPLIER: 'Max OC Multiplier', MIN_VOLUME_USDT: 'Min Volume (USDT)',
@@ -533,11 +533,9 @@ export default function AccountDetailPage() {
                 <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {ocData && ([
                     { label: 'OC Ratio', val: ocData.oc_config.OC_RATIO ?? 'auto-chain', note: 'Nhân bội vs OC base', highlight: true },
-                    { label: 'OC Percentile', val: `P${ocData.oc_config.OC_PERCENTILE}`, note: 'Mức P tính base', highlight: false },
                     { label: 'Min OC (%)', val: `${ocData.oc_config.MIN_OC_PERCENT ?? 3.0}%`, note: 'OC eff tối thiểu', highlight: true },
                     { label: 'Max OC (%)', val: `${ocData.oc_config.MAX_OC_PERCENT ?? 20.0}%`, note: 'OC eff tối đa', highlight: true },
                     { label: 'Multiplier Override', val: ocData.oc_config.OC_MULTIPLIER_OVERRIDE ?? 'adaptive', note: 'null = tự động', highlight: false },
-                    { label: 'OC Lookback', val: `${ocData.oc_config.OC_LOOKBACK} nến`, note: 'Số nến lịch sử', highlight: false },
                     { label: 'Max Multiplier', val: `×${ocData.oc_config.MAX_OC_MULTIPLIER}`, note: 'Trần adaptive', highlight: false },
                     { label: 'Multiplier Decay', val: ocData.oc_config.OC_MULTIPLIER_DECAY, note: 'Per candle', highlight: false },
                     { label: 'SL OC Bump', val: `+${ocData.oc_config.SL_OC_BUMP}`, note: 'Tăng khi hit SL', highlight: false },

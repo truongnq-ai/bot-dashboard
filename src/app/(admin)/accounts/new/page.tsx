@@ -16,8 +16,6 @@ const TRADING_DEFAULTS: Record<string, string> = {
 };
 
 const ADVANCED_DEFAULTS: Record<string, string> = {
-  OC_PERCENTILE: '80',
-  OC_LOOKBACK: '1000',
   TRIGGER_RATIO: '80.0',
   SL_OC_RATIO: '1.5',
   TP_OC_RATIO: '2.0',
@@ -37,8 +35,6 @@ const PARAM_LABELS: Record<string, { label: string; desc: string }> = {
   MAX_OPEN_SIGNALS:     { label: 'Max Signals đang mở',      desc: 'Số lượng signals ACTIVE tối đa đồng thời' },
   MAX_OPEN_POSITIONS:   { label: 'Max Positions đang mở',    desc: 'Số lượng positions OPEN tối đa đồng thời' },
   TIME_FRAMES:          { label: 'Time Frames',              desc: 'Khung thời gian, VD: 5m,15m. ⚠️ Cần restart bot khi thay đổi!' },
-  OC_PERCENTILE:        { label: 'OC Percentile',            desc: 'Percentile để tính rolling OC' },
-  OC_LOOKBACK:          { label: 'OC Lookback (nến)',        desc: 'Số nến lịch sử dùng tính OC' },
   TRIGGER_RATIO:        { label: 'Trigger Ratio (%)',        desc: 'Tỷ lệ % OC để kích hoạt lệnh' },
   SL_OC_RATIO:          { label: 'SL/OC Ratio',             desc: 'Tỷ lệ OC dùng tính Stop Loss' },
   TP_OC_RATIO:          { label: 'TP/OC Ratio',             desc: 'Tỷ lệ OC dùng tính Take Profit' },
