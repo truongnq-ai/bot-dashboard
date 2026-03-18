@@ -28,7 +28,7 @@ const PARAM_LABELS: Record<string, string> = {
 const fmt = (n: number) => n.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pnlCls = (v: number) => v > 0 ? 'text-green-600 dark:text-green-400' : v < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500';
 
-type ActiveTab = 'info' | 'balance' | 'config' | 'oc';
+type ActiveTab = 'info' | 'balance' | 'config' | 'oc' | 'blacklist';
 
 export default function AccountDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -54,6 +54,12 @@ export default function AccountDetailPage() {
   const [ocData, setOcData] = useState<AccountOcSummary | null>(null);
   const [ocLoading, setOcLoading] = useState(false);
   const [resettingOC, setResettingOC] = useState(false);
+
+  // Blacklist tab
+  const [blacklistSymbols, setBlacklistSymbols] = useState<string[]>([]);
+  const [blacklistInput, setBlacklistInput] = useState('');
+  const [savingBlacklist, setSavingBlacklist] = useState(false);
+  const [blacklistMsg, setBlacklistMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
   // Seed balance modal
   const [showSeed, setShowSeed] = useState(false);
@@ -90,6 +96,9 @@ export default function AccountDetailPage() {
           init[k] = v === null || v === undefined ? 'null' : String(v);
         }
         setEditValues(init);
+        // Init blacklist from effective config
+        const rawBlacklist = (cfgData.effective_config['BLACKLIST_SYMBOLS'] as string) || '';
+        setBlacklistSymbols(rawBlacklist ? rawBlacklist.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : []);
       }
       setError(null);
     } catch {
@@ -225,11 +234,45 @@ export default function AccountDetailPage() {
     );
   };
 
+  const saveBlacklist = async (newList: string[]) => {
+    setSavingBlacklist(true);
+    setBlacklistMsg(null);
+    try {
+      await upsertAccountConfig(accountId, 'BLACKLIST_SYMBOLS', newList.join(','));
+      setBlacklistMsg({ type: 'ok', text: `✅ Đã lưu blacklist (${newList.length} symbols)` });
+    } catch {
+      setBlacklistMsg({ type: 'err', text: '❌ Không thể lưu blacklist' });
+    } finally {
+      setSavingBlacklist(false);
+    }
+  };
+
+  const handleBlacklistAdd = () => {
+    const sym = blacklistInput.trim().toUpperCase();
+    if (!sym) return;
+    if (blacklistSymbols.includes(sym)) {
+      setBlacklistMsg({ type: 'err', text: `${sym} đã có trong blacklist` });
+      setBlacklistInput('');
+      return;
+    }
+    const newList = [...blacklistSymbols, sym];
+    setBlacklistSymbols(newList);
+    setBlacklistInput('');
+    saveBlacklist(newList);
+  };
+
+  const handleBlacklistRemove = (sym: string) => {
+    const newList = blacklistSymbols.filter(s => s !== sym);
+    setBlacklistSymbols(newList);
+    saveBlacklist(newList);
+  };
+
   const tabs: { key: ActiveTab; label: string }[] = [
     { key: 'info', label: '📋 Thông tin' },
     { key: 'balance', label: '💰 Balance' },
     { key: 'config', label: '⚙️ Config' },
     { key: 'oc', label: '📊 OC' },
+    { key: 'blacklist', label: `🚫 Blacklist${blacklistSymbols.length > 0 ? ` (${blacklistSymbols.length})` : ''}` },
   ];
 
   return (
@@ -646,6 +689,88 @@ export default function AccountDetailPage() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* ─── Tab: Blacklist ─── */}
+      {activeTab === 'blacklist' && (
+        <div className="space-y-4">
+          {/* Info callout */}
+          <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+            <p className="font-semibold mb-1">🤖 Auto-Blacklist đang kích hoạt</p>
+            <p className="text-xs">Bot sẽ tự động thêm symbol vào blacklist khi dính SL liên tiếp ≥ 3 lần trong 1 giờ. Để gỡ symbol khỏi blacklist, nhấn nút ✕ bên cạnh symbol đó.</p>
+          </div>
+
+          {/* Blacklist management card */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">🚫 Symbol Blacklist của Account</h3>
+              <p className="text-xs text-gray-400">Các symbol trong danh sách này sẽ bị chặn mở lệnh mới (có hiệu lực ngay lập tức).</p>
+            </div>
+            <div className="px-5 py-5 space-y-4">
+              {/* Add symbol input */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={blacklistInput}
+                  onChange={e => setBlacklistInput(e.target.value.toUpperCase())}
+                  onKeyDown={e => e.key === 'Enter' && handleBlacklistAdd()}
+                  placeholder="VD: BDXNUSDT"
+                  className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm font-mono focus:ring-2 focus:ring-red-500 focus:border-transparent uppercase"
+                />
+                <button
+                  onClick={handleBlacklistAdd}
+                  disabled={!blacklistInput.trim() || savingBlacklist}
+                  className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition font-medium whitespace-nowrap"
+                >
+                  {savingBlacklist ? '...' : '+ Thêm'}
+                </button>
+              </div>
+
+              {/* Status message */}
+              {blacklistMsg && (
+                <div className={`text-xs px-3 py-2 rounded-lg ${blacklistMsg.type === 'ok'
+                  ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                  : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                }`}>
+                  {blacklistMsg.text}
+                </div>
+              )}
+
+              {/* Chips */}
+              <div className="min-h-[80px]">
+                {blacklistSymbols.length === 0 ? (
+                  <div className="flex items-center justify-center h-20 text-sm text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+                    Chưa có symbol nào bị blacklist ✅
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {blacklistSymbols.map(sym => (
+                      <div
+                        key={sym}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-full text-sm font-mono text-red-700 dark:text-red-400"
+                      >
+                        <span className="text-xs">🚫</span>
+                        <span className="font-semibold">{sym}</span>
+                        <button
+                          onClick={() => handleBlacklistRemove(sym)}
+                          className="ml-1 text-red-400 hover:text-red-700 dark:hover:text-red-200 font-bold leading-none transition text-base"
+                          title={`Xóa ${sym} khỏi blacklist`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <p className="text-xs text-gray-400">
+                Tổng cộng: <strong>{blacklistSymbols.length}</strong> symbols bị chặn.
+                Cache BE sẽ tự refresh trong vòng 60 giây.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
